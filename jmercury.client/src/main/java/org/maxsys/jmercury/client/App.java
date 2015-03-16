@@ -1,9 +1,7 @@
 package org.maxsys.jmercury.client;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.logging.FileHandler;
@@ -48,7 +46,7 @@ public class App {
         }
 
         Vars.LoadProperties();
-        
+
         MainFrame frm = new MainFrame();
         frm.setLocationRelativeTo(null);
         frm.setVisible(true);
