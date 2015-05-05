@@ -525,7 +525,7 @@ public class App extends javax.swing.JFrame {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        EMeter[] objects = new EMeter[36];
+        EMeter[] objects = new EMeter[34];
 
         objects[0] = new EMeter("Котельная 1", "Котельная", 60, "COM2", 99, 0);
         objects[1] = new EMeter("Котельная 2", "Котельная", 60, "COM3", 148, 0);
@@ -561,8 +561,8 @@ public class App extends javax.swing.JFrame {
         objects[31] = new EMeter("Коттедж 18.2", "", 20, "COM35", 8, 0);
         objects[32] = new EMeter("Коттедж 19.1", "", 20, "COM40", 61, 0);
         objects[33] = new EMeter("Коттедж 19.2", "", 20, "COM39", 31, 0);
-        objects[34] = new EMeter("Коттедж 20.1", "", 20, "COM38", 38, 0);
-        objects[35] = new EMeter("Коттедж 20.2", "", 20, "COM37", 28, 0);
+        //objects[34] = new EMeter("Коттедж 20.1", "", 20, "COM38", 38, 0);
+        //objects[35] = new EMeter("Коттедж 20.2", "", 20, "COM37", 28, 0);
 
         for (EMeter o : objects) {
             if (o == null) {
@@ -578,8 +578,9 @@ public class App extends javax.swing.JFrame {
             int errs = 0;
             while (errs < 10) {
                 try {
-                    aprpb = meter.getAplusRplusMonthBegining(2);
-                    aprpe = meter.getAplusRplusMonthBegining(3);
+                    aprpb = meter.getAplusRplusMonthBegining(4);
+                    aprpe = meter.getAplusRplusMonthBegining(5);
+                    //aprpe = meter.getAplusRplusFromReset();
                     metersn = meter.getMeterSN();
 
                     if (aprpb == null || aprpe == null) {
