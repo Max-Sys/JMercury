@@ -578,9 +578,9 @@ public class App extends javax.swing.JFrame {
             int errs = 0;
             while (errs < 10) {
                 try {
-                    aprpb = meter.getAplusRplusMonthBegining(4);
-                    aprpe = meter.getAplusRplusMonthBegining(5);
-                    //aprpe = meter.getAplusRplusFromReset();
+                    aprpb = meter.getAplusRplusMonthBegining(5);
+                    //aprpe = meter.getAplusRplusMonthBegining(5);
+                    aprpe = meter.getAplusRplusFromReset();
                     metersn = meter.getMeterSN();
 
                     if (aprpb == null || aprpe == null) {
