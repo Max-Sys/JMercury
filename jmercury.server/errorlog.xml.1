@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="windows-1251" standalone="no"?>
+<!DOCTYPE log SYSTEM "logger.dtd">
+<log>
+<record>
+  <date>2015-06-29T14:09:03</date>
+  <millis>1435579743300</millis>
+  <sequence>0</sequence>
+  <logger>org.maxsys.jmercury.server.NetServer</logger>
+  <level>SEVERE</level>
+  <class>org.maxsys.jmercury.server.NetServer</class>
+  <method>run</method>
+  <thread>16</thread>
+  <exception>
+    <message>java.net.BindException: Address already in use: JVM_Bind</message>
+    <frame>
+      <class>java.net.TwoStacksPlainSocketImpl</class>
+      <method>socketBind</method>
+    </frame>
+    <frame>
+      <class>java.net.TwoStacksPlainSocketImpl</class>
+      <method>socketBind</method>
+      <line>137</line>
+    </frame>
+    <frame>
+      <class>java.net.AbstractPlainSocketImpl</class>
+      <method>bind</method>
+      <line>382</line>
+    </frame>
+    <frame>
+      <class>java.net.TwoStacksPlainSocketImpl</class>
+      <method>bind</method>
+      <line>110</line>
+    </frame>
+    <frame>
+      <class>java.net.PlainSocketImpl</class>
+      <method>bind</method>
+      <line>190</line>
+    </frame>
+    <frame>
+      <class>java.net.ServerSocket</class>
+      <method>bind</method>
+      <line>375</line>
+    </frame>
+    <frame>
+      <class>java.net.ServerSocket</class>
+      <method>&lt;init&gt;</method>
+      <line>237</line>
+    </frame>
+    <frame>
+      <class>java.net.ServerSocket</class>
+      <method>&lt;init&gt;</method>
+      <line>128</line>
+    </frame>
+    <frame>
+      <class>org.maxsys.jmercury.server.NetServer</class>
+      <method>run</method>
+      <line>27</line>
+    </frame>
+    <frame>
+      <class>java.lang.Thread</class>
+      <method>run</method>
+      <line>745</line>
+    </frame>
+  </exception>
+</record>
+</log>

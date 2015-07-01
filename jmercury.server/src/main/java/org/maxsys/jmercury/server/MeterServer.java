@@ -4,18 +4,12 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JTable;
 import org.maxsys.dblib.PDM;
 
 public class MeterServer implements Runnable {
 
     private boolean isMsvrRunning = true;
     private boolean isMsvrPaused = true;
-    private final JTable jTable1;
-
-    public MeterServer(JTable jtable) {
-        jTable1 = jtable;
-    }
 
     @Override
     public void run() {
@@ -23,11 +17,11 @@ public class MeterServer implements Runnable {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
-                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
             }
             if (isMsvrPaused) {
-                for (int r = 0; r < jTable1.getRowCount(); r++) {
-                    jTable1.setValueAt("---", r, 1);
+                for (EMeter em : Vars.meters.values()) {
+                    em.setStatus("---");
                 }
                 continue;
             }
@@ -38,7 +32,7 @@ public class MeterServer implements Runnable {
                 String osv = em.getMeterFlag("osv") == null ? "no" : em.getMeterFlag("osv");
                 if (osv.equals("yes")) {
                     //System.out.println(em.getMeterName() + " is out of service!");
-                    SetStatusInTable(em.getIdInDB(), "Out of service!");
+                    em.setStatus("Out of service!");
                     continue;
                 }
 
@@ -50,9 +44,9 @@ public class MeterServer implements Runnable {
 
                     String statusstr = em.getMeterFlag("statusstr") == null ? "" : em.getMeterFlag("statusstr");
                     if (statusstr.isEmpty()) {
-                        SetStatusInTable(em.getIdInDB(), "Busy (tte = " + busytimer + ")");
+                        em.setStatus("Busy (tte = " + busytimer + ")");
                     } else {
-                        SetStatusInTable(em.getIdInDB(), "Busy (" + statusstr + ")");
+                        em.setStatus("Busy (" + statusstr + ")");
                     }
 
                     if (busytimer > 0) {
@@ -225,7 +219,7 @@ public class MeterServer implements Runnable {
                                     try {
                                         Thread.sleep(250);
                                     } catch (InterruptedException ex) {
-                                        Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+                                        Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
                                     }
                                     em.setMeterFlag("busy_timer", "10");
                                 }
@@ -271,7 +265,7 @@ public class MeterServer implements Runnable {
                                     try {
                                         Thread.sleep(500);
                                     } catch (InterruptedException ex) {
-                                        Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+                                        Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
                                     }
                                     em.setMeterFlag("busy_timer", "10");
                                 }
@@ -292,23 +286,13 @@ public class MeterServer implements Runnable {
                 // Set status in table
                 long secs = Math.min(Math.min(AvgARsTask_secs, DaysTask_secs), MonthTask_secs);
                 if (secs == 1000000) {
-                    SetStatusInTable(em.getIdInDB(), "Standby (no tasks)");
+                    em.setStatus("Standby (no tasks)");
                 } else {
-                    SetStatusInTable(em.getIdInDB(), "Standby (" + secs + ")");
+                    em.setStatus("Standby (" + secs + ")");
                 }
             }
         }
         System.out.println("msvr closed!");
-        System.exit(0);
-    }
-
-    private void SetStatusInTable(int idindb, String status) {
-        for (int r = 0; r < jTable1.getRowCount(); r++) {
-            IntString is = (IntString) jTable1.getValueAt(r, 0);
-            if (is.getInt() == idindb) {
-                jTable1.setValueAt(status, r, 1);
-            }
-        }
     }
 
     public void setMsvrRunning(boolean isMsvrRunning) {

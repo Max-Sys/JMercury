@@ -16,6 +16,7 @@ public class Vars {
     public static Properties prop = new Properties();
     public static String PropFileName = "";
     public static String PropPath = "";
+    public static String SrvAddr = "localhost";
     public static HashMap<Integer, EMeter> meters = new HashMap<>();
 
     public static void SaveProperties() {
@@ -26,11 +27,12 @@ public class Vars {
         }
     }
 
-    public static void LoadProperties() {
+    public static boolean LoadProperties() {
         try {
             Vars.prop.loadFromXML(new FileInputStream(PropFileName));
+            return true;
         } catch (IOException ex) {
-            Logger.getLogger(Vars.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
         }
     }
 

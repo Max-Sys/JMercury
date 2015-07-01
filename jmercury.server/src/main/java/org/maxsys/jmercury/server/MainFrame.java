@@ -7,15 +7,14 @@ import java.awt.TrayIcon;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -23,14 +22,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import org.maxsys.dblib.PDM;
 
-public class App extends javax.swing.JFrame {
+public class MainFrame extends javax.swing.JFrame {
 
-    Thread msrvt;
-    MeterServer msrv;
-    Thread nsrvt;
-    NetServer nsrv;
-
-    public App() {
+    public MainFrame() {
         initComponents();
         setMinimumSize(getSize());
 
@@ -71,7 +65,7 @@ public class App extends javax.swing.JFrame {
         try {
             SystemTray.getSystemTray().add(trayIcon);
         } catch (AWTException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         jTable1.setModel(new DefaultTableModel(
@@ -91,67 +85,47 @@ public class App extends javax.swing.JFrame {
         jPasswordField2.setText(Vars.prop.getProperty("Userpass"));
         jTextField3.setText(Vars.prop.getProperty("Servername"));
 
-        nsrv = new NetServer();
-        nsrvt = new Thread(nsrv);
-
-        msrv = new MeterServer(jTable1);
-        msrvt = new Thread(msrv);
-
         SaveAndRun();
         SrvStop();
     }
 
     private Boolean SaveAndConnect() {
+        Vars.serverID = -1;
+
+        String servername = jTextField3.getText().trim();
         String dburl = jTextField1.getText();
         String username = jTextField2.getText().trim();
         String password = String.valueOf(jPasswordField2.getPassword());
-        String servername = jTextField3.getText().trim();
-
-        Vars.serverID = -1;
+        String parameters = servername + ";" + dburl + ";" + username + ";" + password;
 
         if (servername.length() == 0) {
             return false;
         }
-        
-        PDM pdm = new PDM("em", username, password, dburl);
 
-        Boolean isNewServer = true;
-        ResultSet rs = null;
-        try {
-            rs = pdm.getResultSet("em", "SELECT k, `name` FROM servers WHERE hide = 0;");
-            while (rs.next()) {
-                String srvn = PDM.getStringFromHex(rs.getString("name"));
-                if (srvn.equals(servername)) {
-                    isNewServer = false;
-                    Vars.serverID = rs.getInt("k");
-                }
-            }
-            pdm.closeResultSet();
-        } catch (Exception e) {
-        }
-        if (rs == null) {
-            return false;
-        }
+        Socket socket = NetServer.GetNewSocket();
+        NetServer.SendToSrv(socket, "SaveAndConnect");
+        NetServer.SendToSrv(socket, parameters);
 
-        if (isNewServer) {
+        String resp = NetServer.GetRespFromSrv(socket);
+
+        if (resp.equals("NewServer")) {
             if (JOptionPane.showConfirmDialog(this, "Add new server instance? (" + servername + ")", "Server configuration", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-                Vars.serverID = pdm.executeNonQueryAI("em", "INSERT INTO servers (`name`, hide) VALUES ('" + PDM.getHexString(servername) + "', 0)");
+                NetServer.SendToSrv(socket, "AddNewServerInstance");
+                NetServer.SendToSrv(socket, parameters);
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                resp = "Ok";
             } else {
                 return false;
             }
         }
 
-        if (Vars.serverID == -1) {
-            return false;
-        }
+        NetServer.CloseSocket(socket);
 
-        Vars.prop.setProperty("DB_URL", dburl);
-        Vars.prop.setProperty("Username", username);
-        Vars.prop.setProperty("Userpass", password);
-        Vars.prop.setProperty("Servername", servername);
-        Vars.SaveProperties();
-
-        return true;
+        return resp.equals("Ok") && Vars.serverID != -1;
     }
 
     private void RefreshTable() {
@@ -196,7 +170,7 @@ public class App extends javax.swing.JFrame {
                 tm.addRow(rowdata);
             }
         } catch (SQLException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
         pdm.closeResultSet();
     }
@@ -450,12 +424,12 @@ public class App extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         dispose();
-        msrv.setMsvrRunning(false);
+        NetServer.sendStopServer();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void menuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItem1ActionPerformed
         dispose();
-        msrv.setMsvrRunning(false);
+        NetServer.sendStopServer();
     }//GEN-LAST:event_menuItem1ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
@@ -474,12 +448,6 @@ public class App extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void SaveAndRun() {
-        if (!msrvt.isAlive()) {
-            msrvt.start();
-        }
-        if (!nsrvt.isAlive()) {
-            nsrvt.start();
-        }
         if (SaveAndConnect()) {
             jTextField1.setEnabled(false);
             jTextField2.setEnabled(false);
@@ -491,7 +459,7 @@ public class App extends javax.swing.JFrame {
             jButton6.setEnabled(false);
             jButton7.setEnabled(false);
             RefreshTable();
-            msrv.setMsvrPaused(false);
+            NetServer.sendMsvrRun();
         }
     }
 
@@ -509,7 +477,7 @@ public class App extends javax.swing.JFrame {
         jButton5.setEnabled(true);
         jButton6.setEnabled(true);
         jButton7.setEnabled(true);
-        msrv.setMsvrPaused(true);
+        NetServer.sendMsvrPause();
     }
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
@@ -519,10 +487,9 @@ public class App extends javax.swing.JFrame {
             try {
                 bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("outfile.txt"), "UTF-8"));
             } catch (UnsupportedEncodingException ex) {
-                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
             }
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         EMeter[] objects = new EMeter[34];
@@ -578,7 +545,7 @@ public class App extends javax.swing.JFrame {
             int errs = 0;
             while (errs < 10) {
                 try {
-                    aprpb = meter.getAplusRplusMonthBegining(5);
+                    aprpb = meter.getAplusRplusMonthBegining(6);
                     //aprpe = meter.getAplusRplusMonthBegining(5);
                     aprpe = meter.getAplusRplusFromReset();
                     metersn = meter.getMeterSN();
@@ -612,14 +579,14 @@ public class App extends javax.swing.JFrame {
                 bw.write(ostr);
                 bw.newLine();
             } catch (IOException ex) {
-                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
         try {
             bw.close();
         } catch (IOException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jButton3ActionPerformed
 
@@ -649,9 +616,8 @@ public class App extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton7ActionPerformed
 
-
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
-
+        System.out.println("sac = " + SaveAndConnect());
 //        Socket socket;
 //        try {
 //            socket = new Socket("localhost", 4545);
@@ -689,7 +655,7 @@ public class App extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton8ActionPerformed
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
-        if (evt.getButton() == 1 && evt.getClickCount() == 2 && msrv.isIsMsvrPaused()) {
+        if (evt.getButton() == 1 && evt.getClickCount() == 2 && NetServer.isMsrvPaused()) {
             if (jTable1.getSelectedRow() == -1) {
                 return;
             }
@@ -710,39 +676,6 @@ public class App extends javax.swing.JFrame {
         dlg.setVisible(true);
     }//GEN-LAST:event_jButton9ActionPerformed
 
-    public static void main(String args[]) {
-        // Logger
-        try {
-            Logger.getLogger("").addHandler(new FileHandler("errorlog.xml"));
-        } catch (IOException | SecurityException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(App.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-
-        // Initialisation and Properties
-        Vars.PropPath = System.getProperty("user.home") + "/.JMercuryServer";
-        Vars.PropFileName = Vars.PropPath + "/Options.xml";
-        File dir = new File(Vars.PropPath);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
-        Vars.LoadProperties();
-
-        App app = new App();
-        app.setLocationRelativeTo(null);
-        app.setVisible(true);
-    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;

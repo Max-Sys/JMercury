@@ -18,7 +18,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.maxsys.jmercury.server.App</mainClass>
+                            <mainClass>org.maxsys.jmercury.server.Main</mainClass>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>dependency</classpathPrefix>
                         </manifest>
