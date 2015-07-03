@@ -99,6 +99,7 @@ public class Main {
             }
         }
 
+        // Если подключаемся к удаленному серверу, то надо брать его параметры.
         if (!Vars.LoadProperties()) {
             System.out.println("This server is not configured properly!");
             System.out.println("Use --configure switch.");
@@ -125,9 +126,11 @@ public class Main {
                 nsrvt.start();
             }
 
-            MainFrame frm = new MainFrame();
-            frm.setLocationRelativeTo(null);
-            frm.setVisible(true);
+            if (!Vars.isConsole) {
+                MainFrame frm = new MainFrame();
+                frm.setLocationRelativeTo(null);
+                frm.setVisible(true);
+            }
         }
     }
 

@@ -5,10 +5,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jssc.SerialPortList;
 import org.maxsys.dblib.PDM;
 
 public class NetServer implements Runnable {
@@ -59,7 +59,7 @@ public class NetServer implements Runnable {
         return si;
     }
 
-    public static boolean isMsrvPaused() {
+    public static boolean sendIsMsrvPaused() {
         Socket socket = NetServer.GetNewSocket();
         NetServer.SendToSrv(socket, "GetMsvrStatus");
         String resp = NetServer.GetRespFromSrv(socket);
@@ -93,13 +93,28 @@ public class NetServer implements Runnable {
         return resp.equals("Ok");
     }
 
-    public static String getMetersData() {
+    public static String sendGetMetersData() {
         Socket socket = NetServer.GetNewSocket();
         NetServer.SendToSrv(socket, "getMetersData");
         String resp = NetServer.GetRespFromSrv(socket);
         NetServer.CloseSocket(socket);
         String metersData = PDM.getStringFromHex(resp);
         return metersData;
+    }
+
+    public static void sendDeleteMeterFromDB(int idInDB) {
+        Socket socket = NetServer.GetNewSocket();
+        NetServer.SendToSrv(socket, "deleteMeterFromDB");
+        NetServer.SendToSrv(socket, String.valueOf(idInDB));
+        NetServer.CloseSocket(socket);
+    }
+
+    public static String[] sendGetSerialPortNames() {
+        Socket socket = NetServer.GetNewSocket();
+        NetServer.SendToSrv(socket, "GetSerialPortNames");
+        String resp = PDM.getStringFromHex(NetServer.GetRespFromSrv(socket));
+        NetServer.CloseSocket(socket);
+        return resp.split("\n");
     }
 
     @Override
@@ -170,6 +185,8 @@ public class NetServer implements Runnable {
                          GetMsvrStatus - взять статус сервера счетчиков.
                          getMetersData - взять строчку с данными всех счетчиков.
                          newMeterStatusChannel - взять статус счетчика.
+                         deleteMeterFromDB - удалить счетчик из базы данных.
+                         GetSerialPortNames - взять имена портов.
                          */
                         switch (cmd) {
                             case "StopServer":
@@ -201,6 +218,12 @@ public class NetServer implements Runnable {
                                 break;
                             case "newMeterStatusChannel":
                                 newMeterStatusChannel(sock);
+                                break;
+                            case "deleteMeterFromDB":
+                                deleteMeterFromDB(sock);
+                                break;
+                            case "GetSerialPortNames":
+                                GetSerialPortNames(sock);
                                 break;
                         }
                     }
@@ -395,6 +418,28 @@ public class NetServer implements Runnable {
                             break;
                         }
                     }
+                }
+
+                private void deleteMeterFromDB(Socket sock) {
+                    String ki = NetServer.GetRespFromSrv(sock);
+                    PDM pdm = new PDM();
+                    pdm.executeNonQueryUpdate("em", "UPDATE meters SET hide = 1 WHERE k = " + ki);
+                }
+
+                private void GetSerialPortNames(Socket sock) {
+                    String[] strs;
+                    if (System.getProperty("os.name").startsWith("Win")) {
+                        strs = SerialPortList.getPortNames();
+                    } else {
+                        strs = Vars.getNixPortNames();
+                    }
+
+                    String resp = "";
+                    for (String pn : strs) {
+                        resp += pn + "\n";
+                    }
+
+                    NetServer.SendToSrv(sock, PDM.getHexString(resp));
                 }
             }
             );

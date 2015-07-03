@@ -1,7 +1,9 @@
 package org.maxsys.jmercury.server;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Properties;
@@ -40,5 +42,22 @@ public class Vars {
     public static void SaveMeterState(EMeter meter) {
         PDM pdm = new PDM();
         pdm.executeNonQueryUpdate("em", "UPDATE meters SET flags = '" + meter.getMeterFlags() + "' WHERE k = " + meter.getIdInDB());
+    }
+
+    public static String[] getNixPortNames() {
+        File devdir = new File("/dev");
+        String[] devs = devdir.list(new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.matches("tty[a-zA-Z]+[0-9]+");
+            }
+        });
+
+        for (int devn = 0; devn < devs.length; devn++) {
+            devs[devn] = "/dev/" + devs[devn];
+        }
+
+        return devs;
     }
 }

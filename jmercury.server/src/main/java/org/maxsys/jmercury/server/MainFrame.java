@@ -223,7 +223,7 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
         if (NetServer.sendRefreshMeters()) {
-            String[] metersData = NetServer.getMetersData().split("\n");
+            String[] metersData = NetServer.sendGetMetersData().split("\n");
 
             for (String meterdata : metersData) {
                 String[] mds = meterdata.split("\001");
@@ -689,11 +689,10 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
-        Integer ki = ((IntString) jTable1.getValueAt(jTable1.getSelectedRow(), 0)).getInt();
+        int ki = ((IntString) jTable1.getValueAt(jTable1.getSelectedRow(), 0)).getInt();
 
         if (JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this item?", "Confirm item remove", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-            PDM pdm = new PDM();
-            pdm.executeNonQueryUpdate("em", "UPDATE meters SET hide = 1 WHERE k = " + ki);
+            NetServer.sendDeleteMeterFromDB(ki);
             RefreshTable();
         }
     }//GEN-LAST:event_jButton7ActionPerformed
@@ -736,7 +735,7 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton8ActionPerformed
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
-        if (evt.getButton() == 1 && evt.getClickCount() == 2 && NetServer.isMsrvPaused()) {
+        if (evt.getButton() == 1 && evt.getClickCount() == 2 && NetServer.sendIsMsrvPaused()) {
             if (jTable1.getSelectedRow() == -1) {
                 return;
             }

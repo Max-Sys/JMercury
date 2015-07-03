@@ -1,13 +1,8 @@
 package org.maxsys.jmercury.server;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
-import jssc.SerialPortList;
 import org.maxsys.dblib.PDM;
 
 public class NewMeterDialog extends javax.swing.JDialog {
@@ -16,24 +11,24 @@ public class NewMeterDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        String[] strs = SerialPortList.getPortNames();
+        String[] strs = NetServer.sendGetSerialPortNames();
         DefaultComboBoxModel cm = new DefaultComboBoxModel(strs);
         cm.addElement("null");
         jComboBox1.setModel(cm);
 
-        PDM pdm = new PDM();
+        // Надо брать названия групп с сервера.
         DefaultComboBoxModel cm1 = new DefaultComboBoxModel();
-        ResultSet rs = pdm.getResultSet("em", "SELECT k, groupname FROM metergroups WHERE hide = 0");
-        try {
-            while (rs.next()) {
-                IntString is = new IntString(rs.getInt("k"), PDM.getStringFromHex(rs.getString("groupname")));
-                cm1.addElement(is);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(NewMeterDialog.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        pdm.closeResultSet();
-
+//        PDM pdm = new PDM();
+//        ResultSet rs = pdm.getResultSet("em", "SELECT k, groupname FROM metergroups WHERE hide = 0");
+//        try {
+//            while (rs.next()) {
+//                IntString is = new IntString(rs.getInt("k"), PDM.getStringFromHex(rs.getString("groupname")));
+//                cm1.addElement(is);
+//            }
+//        } catch (SQLException ex) {
+//            Logger.getLogger(NewMeterDialog.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        pdm.closeResultSet();
         jComboBox2.setModel(cm1);
     }
 
