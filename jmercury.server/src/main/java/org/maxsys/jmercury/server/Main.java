@@ -67,6 +67,11 @@ public class Main {
             }
 
             if (args[0].equals("--remote")) {
+                if (args.length < 2) {
+                    System.out.println("using:");
+                    System.out.println("jmercury.server --remote ServerAddress [Stop]");
+                    return;
+                }
                 if (args.length == 2) {
                     Vars.SrvAddr = args[1];
                     System.out.println("Connecting to remote server: " + Vars.SrvAddr + "...");
@@ -100,14 +105,26 @@ public class Main {
             return;
         }
 
-        if (Vars.SrvAddr.equals("localhost")) {
-            Thread nsrvt = new Thread(new NetServer());
-            nsrvt.start();
-        }
-
-        if (java.awt.GraphicsEnvironment.isHeadless()) {
+        if (Vars.isConsole || java.awt.GraphicsEnvironment.isHeadless()) {
             System.out.println("Starting console mode...");
+            if (Vars.SrvAddr.equals("localhost")) {
+                Thread nsrvt = new Thread(new NetServer());
+                nsrvt.start();
+            } else {
+                System.out.println("Cannot connect to remote server in console mode! Closing...");
+            }
         } else {
+            if (Vars.SrvAddr.equals("localhost")) {
+                LocalNeLocal lnl = new LocalNeLocal(null, true);
+                lnl.setLocationRelativeTo(null);
+                lnl.setVisible(true);
+            }
+
+            if (Vars.SrvAddr.equals("localhost")) {
+                Thread nsrvt = new Thread(new NetServer());
+                nsrvt.start();
+            }
+
             MainFrame frm = new MainFrame();
             frm.setLocationRelativeTo(null);
             frm.setVisible(true);

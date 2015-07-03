@@ -13,8 +13,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -24,13 +22,105 @@ import org.maxsys.dblib.PDM;
 
 public class MainFrame extends javax.swing.JFrame {
 
+    private class TableWatcher implements Runnable {
+
+        private boolean Running = true;
+        private boolean Paused = false;
+
+        @Override
+        public void run() {
+            Socket sock = NetServer.GetNewSocket();
+            NetServer.SendToSrv(sock, "newMeterStatusChannel");
+            while (this.Running) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                if (this.Paused) {
+                    continue;
+                }
+
+                NetServer.SendToSrv(sock, "get");
+                String statusstr = NetServer.GetRespFromSrv(sock);
+                String[] statuses = PDM.getStringFromHex(statusstr).split("\n");
+                for (String status : statuses) {
+                    String[] statusfields = status.split("\001");
+                    int idInDB = Integer.valueOf(statusfields[0]);
+                    String statusval = statusfields[1];
+                    if (idInDB == -1) {
+                        if (statusval.equals("MsvrRunning")) {
+                            jTextField1.setEnabled(false);
+                            jTextField2.setEnabled(false);
+                            jTextField3.setEnabled(false);
+                            jPasswordField2.setEnabled(false);
+                            jButton2.setEnabled(false);
+                            jButton4.setEnabled(true);
+                            jButton5.setEnabled(false);
+                            jButton6.setEnabled(false);
+                            jButton7.setEnabled(false);
+                        } else {
+                            jTextField1.setEnabled(true);
+                            jTextField2.setEnabled(true);
+                            jTextField3.setEnabled(true);
+                            jPasswordField2.setEnabled(true);
+                            jButton2.setEnabled(true);
+                            jButton4.setEnabled(false);
+                            jButton5.setEnabled(true);
+                            jButton6.setEnabled(true);
+                            jButton7.setEnabled(true);
+                        }
+                    } else {
+                        for (int r = 0; r < jTable1.getRowCount(); r++) {
+                            IntString is = (IntString) jTable1.getValueAt(r, 0);
+                            if (is.getInt() == idInDB) {
+                                jTable1.setValueAt(statusval, r, 1);
+                            }
+                        }
+                    }
+                }
+            }
+            NetServer.SendToSrv(sock, "close");
+        }
+
+        public void Stop() {
+            this.Running = false;
+        }
+
+        public boolean isPaused() {
+            return Paused;
+        }
+
+        public void Pause() {
+            this.Paused = true;
+            for (int r = 0; r < jTable1.getRowCount(); r++) {
+                jTable1.setValueAt("---", r, 1);
+            }
+        }
+
+        public void Go() {
+            this.Paused = false;
+        }
+
+    }
+    private TableWatcher tableWatcher = new TableWatcher();
+    private Thread TableWatcherT = new Thread(tableWatcher);
+
     public MainFrame() {
         initComponents();
         setMinimumSize(getSize());
 
         Image icon = new javax.swing.ImageIcon(getClass().getResource("/org/maxsys/jmercury/server/resources/icon_1_1.png")).getImage();
         setIconImage(icon);
-        setTitle(Vars.Version);
+
+        if (Vars.SrvAddr.equals("localhost")) {
+            setTitle(Vars.Version + " - local mode");
+        } else {
+            setTitle(Vars.Version + " - remote mode");
+            jButton1.setText("Exit / Shut down");
+            menuItem1.setLabel("Exit / Shut down JMercury Server");
+        }
 
         TrayIcon trayIcon = new TrayIcon(icon);
         trayIcon.addMouseListener(new MouseListener() {
@@ -90,8 +180,6 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private Boolean SaveAndConnect() {
-        Vars.serverID = -1;
-
         String servername = jTextField3.getText().trim();
         String dburl = jTextField1.getText();
         String username = jTextField2.getText().trim();
@@ -125,7 +213,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         NetServer.CloseSocket(socket);
 
-        return resp.equals("Ok") && Vars.serverID != -1;
+        return resp.equals("Ok");
     }
 
     private void RefreshTable() {
@@ -134,45 +222,22 @@ public class MainFrame extends javax.swing.JFrame {
             tm.removeRow(0);
         }
 
-        Vars.meters.clear();
+        if (NetServer.sendRefreshMeters()) {
+            String[] metersData = NetServer.getMetersData().split("\n");
 
-        if (Vars.serverID == -1) {
-            return;
-        }
-
-        PDM pdm = new PDM();
-        ResultSet rs = pdm.getResultSet("em", "SELECT meters.k, meters.`name`, meters.group_id, meters.comport, meters.rsaddr, meters.serial, meters.ki, meters.flags, metergroups.groupname FROM meters LEFT JOIN metergroups ON meters.group_id = metergroups.k WHERE meters.server_id = " + Vars.serverID + " AND meters.hide = 0 ORDER BY meters.group_id, meters.`name`");
-        try {
-            while (rs.next()) {
-                Integer k = rs.getInt("meters.k");
-                String metername = PDM.getStringFromHex(rs.getString("meters.name"));
-                String groupname = PDM.getStringFromHex(rs.getString("metergroups.groupname"));
-                String comport = rs.getString("meters.comport");
-                Integer rsaddr = rs.getInt("meters.rsaddr");
-                String serial = rs.getString("meters.serial");
-                Integer ki = rs.getInt("meters.ki");
-                String flags = rs.getString("meters.flags");
-                EMeter emeter = new EMeter(metername, groupname, ki, comport, rsaddr, k);
-                emeter.setMeterSN(serial);
-                emeter.setMeterFlags(flags);
-                emeter.setMeterFlag("busy", "no");
-
-                Vars.meters.put(emeter.getIdInDB(), emeter);
-
+            for (String meterdata : metersData) {
+                String[] mds = meterdata.split("\001");
                 Object[] rowdata = new Object[2];
-                String intab = "<html><b>" + emeter.getMeterName() + "</b>/" + emeter.getGroupName() + ", "
-                        + emeter.getMeterComPort() + "/" + (emeter.getMeterAddress() & 0xFF)
-                        + ", Ki:" + emeter.getMeterKi()
+                String intab = "<html><b>" + mds[1] + "</b>/" + mds[2] + ", "
+                        + mds[3] + "/" + mds[4]
+                        + ", Ki:" + mds[5]
                         + "</html>";
-                rowdata[0] = new IntString(emeter.getIdInDB(), intab);
-                rowdata[1] = "Ok";
+                rowdata[0] = new IntString(Integer.valueOf(mds[0]), intab);
+                rowdata[1] = "---";
 
                 tm.addRow(rowdata);
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
-        pdm.closeResultSet();
     }
 
     @SuppressWarnings("unchecked")
@@ -424,19 +489,33 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         dispose();
-        NetServer.sendStopServer();
+        if (Vars.SrvAddr.equals("localhost")) {
+            NetServer.sendStopServer();
+        } else {
+            if (JOptionPane.showConfirmDialog(this, "Do you want to shut down remote server?", "Confirm shuting down server", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                NetServer.sendStopServer();
+            }
+            System.exit(0);
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void menuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItem1ActionPerformed
         dispose();
-        NetServer.sendStopServer();
+        if (Vars.SrvAddr.equals("localhost")) {
+            NetServer.sendStopServer();
+        } else {
+            if (JOptionPane.showConfirmDialog(this, "Do you want to shut down remote server?", "Confirm shuting down server", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                NetServer.sendStopServer();
+            }
+            System.exit(0);
+        }
     }//GEN-LAST:event_menuItem1ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        if (Vars.serverID == -1) {
-            JOptionPane.showMessageDialog(this, "The server name (" + jTextField3.getText().trim() + ") is not registered!", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+//        if (Vars.serverID == -1) {
+//            JOptionPane.showMessageDialog(this, "The server name (" + jTextField3.getText().trim() + ") is not registered!", "Error", JOptionPane.ERROR_MESSAGE);
+//            return;
+//        }
         NewMeterDialog dlg = new NewMeterDialog(this, true);
         dlg.setLocationRelativeTo(null);
         dlg.setVisible(true);
@@ -449,17 +528,20 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void SaveAndRun() {
         if (SaveAndConnect()) {
-            jTextField1.setEnabled(false);
-            jTextField2.setEnabled(false);
-            jTextField3.setEnabled(false);
-            jPasswordField2.setEnabled(false);
-            jButton2.setEnabled(false);
-            jButton4.setEnabled(true);
-            jButton5.setEnabled(false);
-            jButton6.setEnabled(false);
-            jButton7.setEnabled(false);
+//            jTextField1.setEnabled(false);
+//            jTextField2.setEnabled(false);
+//            jTextField3.setEnabled(false);
+//            jPasswordField2.setEnabled(false);
+//            jButton2.setEnabled(false);
+//            jButton4.setEnabled(true);
+//            jButton5.setEnabled(false);
+//            jButton6.setEnabled(false);
+//            jButton7.setEnabled(false);
             RefreshTable();
             NetServer.sendMsvrRun();
+            if (!TableWatcherT.isAlive()) {
+                TableWatcherT.start();
+            }
         }
     }
 
@@ -468,15 +550,15 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void SrvStop() {
-        jTextField1.setEnabled(true);
-        jTextField2.setEnabled(true);
-        jTextField3.setEnabled(true);
-        jPasswordField2.setEnabled(true);
-        jButton2.setEnabled(true);
-        jButton4.setEnabled(false);
-        jButton5.setEnabled(true);
-        jButton6.setEnabled(true);
-        jButton7.setEnabled(true);
+//        jTextField1.setEnabled(true);
+//        jTextField2.setEnabled(true);
+//        jTextField3.setEnabled(true);
+//        jPasswordField2.setEnabled(true);
+//        jButton2.setEnabled(true);
+//        jButton4.setEnabled(false);
+//        jButton5.setEnabled(true);
+//        jButton6.setEnabled(true);
+//        jButton7.setEnabled(true);
         NetServer.sendMsvrPause();
     }
 
@@ -617,7 +699,6 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
-        System.out.println("sac = " + SaveAndConnect());
 //        Socket socket;
 //        try {
 //            socket = new Socket("localhost", 4545);

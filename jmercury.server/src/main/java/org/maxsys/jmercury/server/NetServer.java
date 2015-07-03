@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,11 +21,12 @@ public class NetServer implements Runnable {
 
     public static Socket GetNewSocket() {
         try {
-            return new Socket(Vars.SrvAddr, 4545);
+            Socket newsocket = new Socket(Vars.SrvAddr, 4545);
+            return newsocket;
         } catch (IOException ex) {
             Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
         }
+        return null;
     }
 
     public static void CloseSocket(Socket socket) {
@@ -51,7 +53,8 @@ public class NetServer implements Runnable {
                 si += (char) ci;
             }
         } catch (IOException ex) {
-            Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+            //Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+            return "";
         }
         return si;
     }
@@ -80,6 +83,23 @@ public class NetServer implements Runnable {
         Socket socket = NetServer.GetNewSocket();
         NetServer.SendToSrv(socket, "StopServer");
         NetServer.CloseSocket(socket);
+    }
+
+    public static boolean sendRefreshMeters() {
+        Socket socket = NetServer.GetNewSocket();
+        NetServer.SendToSrv(socket, "RefreshMeters");
+        String resp = NetServer.GetRespFromSrv(socket);
+        NetServer.CloseSocket(socket);
+        return resp.equals("Ok");
+    }
+
+    public static String getMetersData() {
+        Socket socket = NetServer.GetNewSocket();
+        NetServer.SendToSrv(socket, "getMetersData");
+        String resp = NetServer.GetRespFromSrv(socket);
+        NetServer.CloseSocket(socket);
+        String metersData = PDM.getStringFromHex(resp);
+        return metersData;
     }
 
     @Override
@@ -120,19 +140,6 @@ public class NetServer implements Runnable {
 
                 private final int mySocket = LastOpenedSocket;
 
-                private String readStringFromSock(Socket sock) {
-                    String resp = "";
-                    try {
-                        int ci;
-                        while ((ci = sock.getInputStream().read()) != -1 && ci != 0 && (char) ci != '!') {
-                            resp += (char) ci;
-                        }
-                    } catch (IOException ex) {
-                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    return resp;
-                }
-
                 @Override
                 public void run() {
                     Socket sock = sockets.get(mySocket);
@@ -140,7 +147,7 @@ public class NetServer implements Runnable {
                     while (!sock.isClosed()) {
 
                         // Read command
-                        String cmd = readStringFromSock(sock);
+                        String cmd = NetServer.GetRespFromSrv(sock);
 
                         if (cmd.isEmpty()) {
                             try {
@@ -160,37 +167,42 @@ public class NetServer implements Runnable {
                          AddNewServerInstance - добавить новый инстанс сервера в базу данных.
                          MsvrRun - пуск сервера счетчиков.
                          MsvrPause - пауза сервера счетчиков.
-                         GetMsvrStatus - взять статус сервера счетчиков
-                        
+                         GetMsvrStatus - взять статус сервера счетчиков.
+                         getMetersData - взять строчку с данными всех счетчиков.
+                         newMeterStatusChannel - взять статус счетчика.
                          */
-                        if (cmd.equals("StopServer")) {
-                            StopServer();
+                        switch (cmd) {
+                            case "StopServer":
+                                StopServer();
+                                break;
+                            case "getStatus":
+                                getStatus(sock);
+                                break;
+                            case "SaveAndConnect":
+                                SaveAndConnect(sock);
+                                break;
+                            case "AddNewServerInstance":
+                                AddNewServerInstance(sock);
+                                break;
+                            case "MsvrRun":
+                                MsvrRun();
+                                break;
+                            case "MsvrPause":
+                                MsvrPause();
+                                break;
+                            case "GetMsvrStatus":
+                                GetMsvrStatus(sock);
+                                break;
+                            case "RefreshMeters":
+                                RefreshMeters(sock);
+                                break;
+                            case "getMetersData":
+                                getMetersData(sock);
+                                break;
+                            case "newMeterStatusChannel":
+                                newMeterStatusChannel(sock);
+                                break;
                         }
-
-                        if (cmd.equals("getStatus")) {
-                            getStatus(sock);
-                        }
-
-                        if (cmd.equals("SaveAndConnect")) {
-                            SaveAndConnect(sock);
-                        }
-
-                        if (cmd.equals("AddNewServerInstance")) {
-                            AddNewServerInstance(sock);
-                        }
-
-                        if (cmd.equals("MsvrRun")) {
-                            MsvrRun();
-                        }
-
-                        if (cmd.equals("MsvrPause")) {
-                            MsvrPause();
-                        }
-
-                        if (cmd.equals("GetMsvrStatus")) {
-                            GetMsvrStatus(sock);
-                        }
-
                     }
                     sockets.remove(mySocket);
                 }
@@ -212,24 +224,19 @@ public class NetServer implements Runnable {
                     String status = Vars.Version + "\n";
                     status += "Server name: " + Vars.prop.getProperty("Servername") + "\n";
                     status += "Meters registred: " + Vars.meters.size();
-                    status += "\000";
-                    try {
-                        socket.getOutputStream().write(status.getBytes());
-                    } catch (IOException ex) {
-                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    NetServer.SendToSrv(socket, status);
                 }
 
                 private void SaveAndConnect(Socket socket) {
-                    String resp = "Ok\000";
+                    String resp = "Ok";
 
-                    String paramstring = readStringFromSock(socket);
+                    String paramstring = NetServer.GetRespFromSrv(socket);
                     String[] parameters = paramstring.split(";");
                     if (parameters.length != 4) {
-                        resp = "Err\000";
+                        resp = "Err";
                     }
 
-                    if (!resp.equals("Err\000")) {
+                    if (!resp.equals("Err")) {
 
                         String servername = parameters[0];
                         String dburl = parameters[1];
@@ -255,7 +262,7 @@ public class NetServer implements Runnable {
                         pdm.closeResultSet();
 
                         if (isNewServer) {
-                            resp = "NewServer\000";
+                            resp = "NewServer";
                         } else {
                             Vars.prop.setProperty("DB_URL", dburl);
                             Vars.prop.setProperty("Username", username);
@@ -264,16 +271,11 @@ public class NetServer implements Runnable {
                             Vars.SaveProperties();
                         }
                     }
-
-                    try {
-                        socket.getOutputStream().write(resp.getBytes());
-                    } catch (IOException ex) {
-                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    NetServer.SendToSrv(socket, resp);
                 }
 
                 private void AddNewServerInstance(Socket socket) {
-                    String paramstring = readStringFromSock(socket);
+                    String paramstring = NetServer.GetRespFromSrv(socket);
                     String[] parameters = paramstring.split(";");
                     if (parameters.length == 4) {
                         String servername = parameters[0];
@@ -310,11 +312,88 @@ public class NetServer implements Runnable {
                     } else {
                         status += "Running";
                     }
-                    status += "\000";
-                    try {
-                        sock.getOutputStream().write(status.getBytes());
-                    } catch (IOException ex) {
-                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    NetServer.SendToSrv(sock, status);
+                }
+
+                private void RefreshMeters(Socket sock) {
+                    Vars.meters.clear();
+
+                    String resp;
+
+                    if (Vars.serverID > -1) {
+                        PDM pdm = new PDM();
+                        ResultSet rs = pdm.getResultSet("em", "SELECT meters.k, meters.`name`, meters.group_id, meters.comport, meters.rsaddr, meters.serial, meters.ki, meters.flags, metergroups.groupname FROM meters LEFT JOIN metergroups ON meters.group_id = metergroups.k WHERE meters.server_id = " + Vars.serverID + " AND meters.hide = 0 ORDER BY meters.group_id, meters.`name`");
+                        try {
+                            while (rs.next()) {
+                                Integer k = rs.getInt("meters.k");
+                                String metername = PDM.getStringFromHex(rs.getString("meters.name"));
+                                String groupname = PDM.getStringFromHex(rs.getString("metergroups.groupname"));
+                                String comport = rs.getString("meters.comport");
+                                Integer rsaddr = rs.getInt("meters.rsaddr");
+                                String serial = rs.getString("meters.serial");
+                                Integer ki = rs.getInt("meters.ki");
+                                String flags = rs.getString("meters.flags");
+                                EMeter emeter = new EMeter(metername, groupname, ki, comport, rsaddr, k);
+                                emeter.setMeterSN(serial);
+                                emeter.setMeterFlags(flags);
+                                emeter.setMeterFlag("busy", "no");
+                                Vars.meters.put(emeter.getIdInDB(), emeter);
+                            }
+                        } catch (SQLException ex) {
+                            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        pdm.closeResultSet();
+                        resp = "Ok";
+                    } else {
+                        resp = "Err";
+                    }
+                    NetServer.SendToSrv(sock, resp);
+                }
+
+                private void getMetersData(Socket sock) {
+                    String mdstr = "";
+                    for (EMeter em : Vars.meters.values()) {
+                        mdstr += em.getIdInDB();
+                        mdstr += "\001";
+                        mdstr += em.getMeterName();
+                        mdstr += "\001";
+                        mdstr += em.getGroupName();
+                        mdstr += "\001";
+                        mdstr += em.getMeterComPort();
+                        mdstr += "\001";
+                        mdstr += (em.getMeterAddress() & 0xFF);
+                        mdstr += "\001";
+                        mdstr += em.getMeterKi();
+                        mdstr += "\001";
+                        mdstr += "\n";
+                    }
+                    NetServer.SendToSrv(sock, PDM.getHexString(mdstr));
+                }
+
+                private void newMeterStatusChannel(Socket sock) {
+                    String statcmd = "";
+                    while (!statcmd.equals("close")) {
+                        statcmd = GetRespFromSrv(sock);
+                        if (statcmd.equals("get")) {
+                            String statuses = "-1\001";
+                            if (msrv.isIsMsvrPaused()) {
+                                statuses += "MsvrPaused\n";
+                            } else {
+                                statuses += "MsvrRunning\n";
+                            }
+
+                            for (EMeter em : Vars.meters.values()) {
+                                statuses += em.getIdInDB();
+                                statuses += "\001";
+                                statuses += em.getStatus();
+                                statuses += "\n";
+                            }
+
+                            NetServer.SendToSrv(sock, PDM.getHexString(statuses));
+                        }
+                        if (statcmd.isEmpty()) {
+                            break;
+                        }
                     }
                 }
             }

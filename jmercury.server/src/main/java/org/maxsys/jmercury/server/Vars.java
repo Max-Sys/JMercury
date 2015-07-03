@@ -17,6 +17,7 @@ public class Vars {
     public static String PropFileName = "";
     public static String PropPath = "";
     public static String SrvAddr = "localhost";
+    public static boolean isConsole = false;
     public static HashMap<Integer, EMeter> meters = new HashMap<>();
 
     public static void SaveProperties() {
