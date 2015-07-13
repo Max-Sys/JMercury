@@ -16,19 +16,11 @@ public class NewMeterDialog extends javax.swing.JDialog {
         cm.addElement("null");
         jComboBox1.setModel(cm);
 
-        // Надо брать названия групп с сервера.
         DefaultComboBoxModel cm1 = new DefaultComboBoxModel();
-//        PDM pdm = new PDM();
-//        ResultSet rs = pdm.getResultSet("em", "SELECT k, groupname FROM metergroups WHERE hide = 0");
-//        try {
-//            while (rs.next()) {
-//                IntString is = new IntString(rs.getInt("k"), PDM.getStringFromHex(rs.getString("groupname")));
-//                cm1.addElement(is);
-//            }
-//        } catch (SQLException ex) {
-//            Logger.getLogger(NewMeterDialog.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        pdm.closeResultSet();
+        IntString[] iss = NetServer.sendGetMeterGroupNames();
+        for (IntString is : iss) {
+            cm1.addElement(is);
+        }
         jComboBox2.setModel(cm1);
     }
 
@@ -190,12 +182,11 @@ public class NewMeterDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        EMeter meter = new EMeter("", "", 1, jComboBox1.getSelectedItem().toString(), 0, 0);
-        byte b = 0;
-        try {
-            b = meter.getMeterAddress();
-        } catch (Exception e) {
+        Byte b = NetServer.sendGetMeterAddress(jComboBox1.getSelectedItem().toString());
+        if (b == null) {
             JOptionPane.showMessageDialog(null, "К порту \"" + jComboBox1.getSelectedItem().toString() + "\" не подключен ни один счетчик.", "Ошибка", JOptionPane.ERROR_MESSAGE);
+            jSpinner1.setValue(0);
+            return;
         }
         jSpinner1.setValue(b & 0xFF);
     }//GEN-LAST:event_jButton1ActionPerformed
@@ -205,8 +196,7 @@ public class NewMeterDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        EMeter meter = new EMeter("", "", 1, jComboBox1.getSelectedItem().toString(), 0, 0);
-        String s = meter.getMeterSN();
+        String s = NetServer.sendGetMeterSN(jComboBox1.getSelectedItem().toString());
         if (s == null) {
             jTextField2.setText("");
         } else {

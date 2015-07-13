@@ -19,6 +19,7 @@ public class Vars {
     public static String PropFileName = "";
     public static String PropPath = "";
     public static String SrvAddr = "localhost";
+    public static boolean isLocal = true;
     public static boolean isConsole = false;
     public static HashMap<Integer, EMeter> meters = new HashMap<>();
 
@@ -33,10 +34,16 @@ public class Vars {
     public static boolean LoadProperties() {
         try {
             Vars.prop.loadFromXML(new FileInputStream(PropFileName));
-            return true;
         } catch (IOException ex) {
             return false;
         }
+        if (!Vars.isLocal) {
+            Vars.prop.remove("Username");
+            Vars.prop.remove("Userpass");
+            Vars.prop.remove("Servername");
+            Vars.prop.remove("DB_URL");
+        }
+        return true;
     }
 
     public static void SaveMeterState(EMeter meter) {

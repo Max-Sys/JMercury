@@ -1,4 +1,46 @@
 <?xml version="1.0" encoding="windows-1251" standalone="no"?>
 <!DOCTYPE log SYSTEM "logger.dtd">
 <log>
+<record>
+  <date>2015-07-13T12:38:55</date>
+  <millis>1436783935425</millis>
+  <sequence>0</sequence>
+  <logger>org.maxsys.jmercury.server.NetServer</logger>
+  <level>SEVERE</level>
+  <class>org.maxsys.jmercury.server.NetServer</class>
+  <method>SendToSrv</method>
+  <thread>15</thread>
+  <exception>
+    <message>java.net.SocketException: Connection reset by peer: socket write error</message>
+    <frame>
+      <class>java.net.SocketOutputStream</class>
+      <method>socketWrite0</method>
+    </frame>
+    <frame>
+      <class>java.net.SocketOutputStream</class>
+      <method>socketWrite</method>
+      <line>109</line>
+    </frame>
+    <frame>
+      <class>java.net.SocketOutputStream</class>
+      <method>write</method>
+      <line>141</line>
+    </frame>
+    <frame>
+      <class>org.maxsys.jmercury.server.NetServer</class>
+      <method>SendToSrv</method>
+      <line>43</line>
+    </frame>
+    <frame>
+      <class>org.maxsys.jmercury.server.MainFrame$TableWatcher</class>
+      <method>run</method>
+      <line>46</line>
+    </frame>
+    <frame>
+      <class>java.lang.Thread</class>
+      <method>run</method>
+      <line>745</line>
+    </frame>
+  </exception>
+</record>
 </log>

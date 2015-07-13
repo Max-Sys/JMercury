@@ -89,16 +89,19 @@ public class LocalNeLocal extends javax.swing.JDialog {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         if (jRadioButton1.isSelected()) {
             Vars.SrvAddr = "localhost";
+            Vars.isLocal = true;
         }
         if (jRadioButton2.isSelected()) {
             if (jTextField1.getText().isEmpty()) {
                 return;
             }
             Vars.SrvAddr = jTextField1.getText();
+            Vars.isLocal = false;
         }
         if (jRadioButton3.isSelected()) {
             Vars.SrvAddr = "localhost";
             Vars.isConsole = true;
+            Vars.isLocal = true;
         }
         dispose();
     }//GEN-LAST:event_jButton1ActionPerformed

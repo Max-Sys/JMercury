@@ -67,6 +67,7 @@ public class Main {
             }
 
             if (args[0].equals("--remote")) {
+                Vars.isLocal = false;
                 if (args.length < 2) {
                     System.out.println("using:");
                     System.out.println("jmercury.server --remote ServerAddress [Stop]");
@@ -75,7 +76,13 @@ public class Main {
                 if (args.length == 2) {
                     Vars.SrvAddr = args[1];
                     System.out.println("Connecting to remote server: " + Vars.SrvAddr + "...");
-                    Socket socket = NetServer.GetNewSocket();
+                    Socket socket;
+                    try {
+                        socket = new Socket(Vars.SrvAddr, 4545);
+                    } catch (IOException ex) {
+                        System.out.println("Error connecting to " + Vars.SrvAddr + ".");
+                        return;
+                    }
                     NetServer.SendToSrv(socket, "getStatus");
                     String resp = NetServer.GetRespFromSrv(socket);
                     NetServer.CloseSocket(socket);
@@ -90,7 +97,13 @@ public class Main {
                 if (args.length == 3 && args[2].toLowerCase().equals("stop")) {
                     Vars.SrvAddr = args[1];
                     System.out.println("Trying to stop remote server: " + Vars.SrvAddr + "...");
-                    Socket socket = NetServer.GetNewSocket();
+                    Socket socket;
+                    try {
+                        socket = new Socket(Vars.SrvAddr, 4545);
+                    } catch (IOException ex) {
+                        System.out.println("Error connecting to " + Vars.SrvAddr + ".");
+                        return;
+                    }
                     NetServer.SendToSrv(socket, "StopServer");
                     NetServer.CloseSocket(socket);
                     System.out.println("Ok");
@@ -99,33 +112,35 @@ public class Main {
             }
         }
 
-        // Если подключаемся к удаленному серверу, то надо брать его параметры.
-        if (!Vars.LoadProperties()) {
+        if (java.awt.GraphicsEnvironment.isHeadless()) {
+            Vars.isConsole = true;
+            System.out.println("Starting console mode...");
+        }
+
+        if (Vars.isLocal && !Vars.isConsole) {
+            LocalNeLocal lnl = new LocalNeLocal(null, true);
+            lnl.setLocationRelativeTo(null);
+            lnl.setVisible(true);
+        }
+
+        if (!Vars.LoadProperties() && Vars.isLocal && Vars.isConsole) {
             System.out.println("This server is not configured properly!");
             System.out.println("Use --configure switch.");
             return;
         }
 
-        if (Vars.isConsole || java.awt.GraphicsEnvironment.isHeadless()) {
-            System.out.println("Starting console mode...");
-            if (Vars.SrvAddr.equals("localhost")) {
+        if (Vars.isConsole) {
+            if (Vars.isLocal) {
                 Thread nsrvt = new Thread(new NetServer());
                 nsrvt.start();
             } else {
                 System.out.println("Cannot connect to remote server in console mode! Closing...");
             }
         } else {
-            if (Vars.SrvAddr.equals("localhost")) {
-                LocalNeLocal lnl = new LocalNeLocal(null, true);
-                lnl.setLocationRelativeTo(null);
-                lnl.setVisible(true);
-            }
-
-            if (Vars.SrvAddr.equals("localhost")) {
+            if (Vars.isLocal) {
                 Thread nsrvt = new Thread(new NetServer());
                 nsrvt.start();
             }
-
             if (!Vars.isConsole) {
                 MainFrame frm = new MainFrame();
                 frm.setLocationRelativeTo(null);
@@ -133,5 +148,4 @@ public class Main {
             }
         }
     }
-
 }

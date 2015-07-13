@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -170,13 +171,26 @@ public class MainFrame extends javax.swing.JFrame {
         jTable1.getColumnModel().getColumn(0).setPreferredWidth(700);
         jTable1.getColumnModel().getColumn(1).setPreferredWidth(300);
 
-        jTextField1.setText(Vars.prop.getProperty("DB_URL"));
-        jTextField2.setText(Vars.prop.getProperty("Username"));
-        jPasswordField2.setText(Vars.prop.getProperty("Userpass"));
-        jTextField3.setText(Vars.prop.getProperty("Servername"));
+        if (Vars.isLocal) {
+            jTextField1.setText(Vars.prop.getProperty("DB_URL"));
+            jTextField2.setText(Vars.prop.getProperty("Username"));
+            jPasswordField2.setText(Vars.prop.getProperty("Userpass"));
+            jTextField3.setText(Vars.prop.getProperty("Servername"));
+            SaveAndRun();
+            SrvStop();
+        } else {
+            Properties props = NetServer.sendGetServerProps();
+            jTextField1.setText(props.getProperty("DB_URL"));
+            jTextField2.setText(props.getProperty("Username"));
+            jPasswordField2.setText(props.getProperty("Userpass"));
+            jTextField3.setText(props.getProperty("Servername"));
+            jButton2.setText("Run");
+            RefreshTable();
+        }
 
-        SaveAndRun();
-        SrvStop();
+        if (!TableWatcherT.isAlive()) {
+            TableWatcherT.start();
+        }
     }
 
     private Boolean SaveAndConnect() {
@@ -539,9 +553,6 @@ public class MainFrame extends javax.swing.JFrame {
 //            jButton7.setEnabled(false);
             RefreshTable();
             NetServer.sendMsvrRun();
-            if (!TableWatcherT.isAlive()) {
-                TableWatcherT.start();
-            }
         }
     }
 
