@@ -13,6 +13,7 @@ public class MeterServer implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("MeterServer is running!");
         while (isMsvrRunning) {
             try {
                 Thread.sleep(1000);
@@ -181,7 +182,7 @@ public class MeterServer implements Runnable {
                                 em.setMeterFlag("busy", "no");
                                 em.setMeterFlag("AvgARsTask_t", String.valueOf(Calendar.getInstance().getTimeInMillis()));
                                 em.setMeterFlag("statusstr", "");
-                                Vars.SaveMeterState(em);
+                                SaveMeterState(em);
                             }
                         });
                         thr.start();
@@ -207,7 +208,7 @@ public class MeterServer implements Runnable {
 
                         em.setMeterFlag("busy", "yes");
                         em.setMeterFlag("busy_timer", "10");
-                        Vars.SaveMeterState(em);
+                        SaveMeterState(em);
 
                         Thread thr = new Thread(new Runnable() {
 
@@ -226,7 +227,7 @@ public class MeterServer implements Runnable {
                                 em.setMeterFlag("busy", "no");
                                 em.setMeterFlag("DaysTask_t", String.valueOf(Calendar.getInstance().getTimeInMillis()));
                                 em.setMeterFlag("statusstr", "");
-                                Vars.SaveMeterState(em);
+                                SaveMeterState(em);
                                 System.out.println(em.getMeterName() + " - DaysTask завершен.");
                             }
                         });
@@ -254,7 +255,7 @@ public class MeterServer implements Runnable {
 
                         em.setMeterFlag("busy", "yes");
                         em.setMeterFlag("busy_timer", "10");
-                        Vars.SaveMeterState(em);
+                        SaveMeterState(em);
 
                         Thread thr = new Thread(new Runnable() {
 
@@ -271,7 +272,7 @@ public class MeterServer implements Runnable {
                                 }
                                 em.setMeterFlag("busy", "no");
                                 em.setMeterFlag("MonthTask_t", String.valueOf(Calendar.getInstance().getTimeInMillis()));
-                                Vars.SaveMeterState(em);
+                                SaveMeterState(em);
                                 System.out.println(em.getMeterName() + " - MonthTask завершен.");
                             }
                         });
@@ -292,7 +293,7 @@ public class MeterServer implements Runnable {
                 }
             }
         }
-        System.out.println("msvr closed!");
+        System.out.println("MeterServer is closed!");
     }
 
     public void setMsvrRunning(boolean isMsvrRunning) {
@@ -301,6 +302,11 @@ public class MeterServer implements Runnable {
 
     public void setMsvrPaused(boolean isMsvrPaused) {
         this.isMsvrPaused = isMsvrPaused;
+        if (this.isMsvrPaused) {
+            System.out.println("MeterServer is paused.");
+        } else {
+            System.out.println("MeterServer is unpaused.");
+        }
     }
 
     public boolean isIsMsvrRunning() {
@@ -311,4 +317,8 @@ public class MeterServer implements Runnable {
         return isMsvrPaused;
     }
 
+    private void SaveMeterState(EMeter meter) {
+        PDM pdm = new PDM();
+        pdm.executeNonQueryUpdate("em", "UPDATE meters SET flags = '" + meter.getMeterFlags() + "' WHERE k = " + meter.getIdInDB());
+    }
 }

@@ -67,16 +67,12 @@ public class NetServer implements Runnable {
         NetServer.CloseSocket(socket);
 
         String[] parameters = resp.split("\n");
-        String dburl = parameters[0];
-        String username = parameters[1];
-        String password = parameters[2];
-        String servername = parameters[3];
+        String servername = parameters[0];
+        String serverid = parameters[1];
 
         Properties props = new Properties();
-        props.setProperty("DB_URL", dburl);
-        props.setProperty("Username", username);
-        props.setProperty("Userpass", password);
         props.setProperty("Servername", servername);
+        props.setProperty("ServerID", serverid);
 
         return props;
     }
@@ -150,6 +146,23 @@ public class NetServer implements Runnable {
         }
     }
 
+    public static String sendGetMeterFlags(int idInDB) {
+        Socket socket = NetServer.GetNewSocket();
+        NetServer.SendToSrv(socket, "GetMeterFlags");
+        NetServer.SendToSrv(socket, String.valueOf(idInDB));
+        String resp = PDM.getStringFromHex(NetServer.GetRespFromSrv(socket));
+        NetServer.CloseSocket(socket);
+        return resp;
+    }
+
+    public static void sendSetMeterFlags(int idInDB, String flags) {
+        Socket socket = NetServer.GetNewSocket();
+        NetServer.SendToSrv(socket, "SetMeterFlags");
+        NetServer.SendToSrv(socket, String.valueOf(idInDB));
+        NetServer.SendToSrv(socket, PDM.getHexString(flags));
+        NetServer.CloseSocket(socket);
+    }
+
     public static void sendDeleteMeterFromDB(int idInDB) {
         Socket socket = NetServer.GetNewSocket();
         NetServer.SendToSrv(socket, "deleteMeterFromDB");
@@ -182,42 +195,58 @@ public class NetServer implements Runnable {
         return iss;
     }
 
+    public static int sendNonQuerySQL(String sql, boolean ai) {
+        Socket socket = NetServer.GetNewSocket();
+        if (ai) {
+            NetServer.SendToSrv(socket, "NonQuerySQLai");
+            NetServer.SendToSrv(socket, PDM.getHexString(sql));
+            return Integer.valueOf(NetServer.GetRespFromSrv(socket));
+        } else {
+            NetServer.SendToSrv(socket, "NonQuerySQL");
+            NetServer.SendToSrv(socket, PDM.getHexString(sql));
+            NetServer.CloseSocket(socket);
+            return 0;
+        }
+    }
+
     @Override
     public void run() {
         System.out.println("NetServer is running!");
 
-        String servername = Vars.prop.getProperty("Servername");
-        String dburl = Vars.prop.getProperty("DB_URL");
-        String username = Vars.prop.getProperty("Username");
-        String password = Vars.prop.getProperty("Userpass");
-
-        PDM pdm = new PDM("em", username, password, dburl);
-
-        Boolean isNewServer = true;
-        ResultSet rs;
-        try {
-            rs = pdm.getResultSet("em", "SELECT k, `name` FROM servers WHERE hide = 0;");
-            while (rs.next()) {
-                String srvn = PDM.getStringFromHex(rs.getString("name"));
-                if (srvn.equals(servername)) {
-                    isNewServer = false;
-                    Vars.serverID = rs.getInt("k");
+        if (Vars.serverID != -1) {
+            System.out.print("Loading meters...");
+            PDM pdm = new PDM();
+            ResultSet rs = pdm.getResultSet("em", "SELECT meters.k, meters.`name`, meters.group_id, meters.comport, meters.rsaddr, meters.serial, meters.ki, meters.flags, metergroups.groupname FROM meters LEFT JOIN metergroups ON meters.group_id = metergroups.k WHERE meters.server_id = " + Vars.serverID + " AND meters.hide = 0 ORDER BY meters.group_id, meters.`name`");
+            try {
+                while (rs.next()) {
+                    Integer k = rs.getInt("meters.k");
+                    String metername = PDM.getStringFromHex(rs.getString("meters.name"));
+                    String groupname = PDM.getStringFromHex(rs.getString("metergroups.groupname"));
+                    String comport = rs.getString("meters.comport");
+                    Integer rsaddr = rs.getInt("meters.rsaddr");
+                    String serial = rs.getString("meters.serial");
+                    Integer ki = rs.getInt("meters.ki");
+                    String flags = rs.getString("meters.flags");
+                    EMeter emeter = new EMeter(metername, groupname, ki, comport, rsaddr, k);
+                    emeter.setMeterSN(serial);
+                    emeter.setMeterFlags(flags);
+                    emeter.setMeterFlag("busy", "no");
+                    Vars.meters.put(emeter.getIdInDB(), emeter);
                 }
+            } catch (SQLException ex) {
+                Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        pdm.closeResultSet();
-
-        if (isNewServer) {
-            System.out.println("This server is not configured properly!");
-            System.out.println("Use --configure switch.");
-            System.exit(0);
-            return;
+            pdm.closeResultSet();
+            System.out.println(" " + Vars.meters.size() + " loaded.");
+        } else {
+            System.out.println("Error loading meters!");
+            System.exit(-1);
         }
 
         msrv = new MeterServer();
         msrvt = new Thread(msrv);
+        msrvt.start();
+        msrv.setMsvrPaused(false);
 
         ServerSocket ssocket = null;
 
@@ -274,10 +303,10 @@ public class NetServer implements Runnable {
                          Команды сервера:
                          getStatus - возвращает информацию о работе сервера.
                          GetServerProps - возвращает настройки сервера.
-                         SaveAndConnect - соединяется с базой данных.
-                         AddNewServerInstance - добавить новый инстанс сервера в базу данных.
                          MsvrRun - пуск сервера счетчиков.
                          MsvrPause - пауза сервера счетчиков.
+                         NonQuerySQL - выполнить sql запрос на сервере.
+                         NonQuerySQLai - выполнить sql запрос на сервере и вернуть ai.
                          GetMsvrStatus - взять статус сервера счетчиков.
                          getMetersData - взять строчку с данными всех счетчиков.
                          newMeterStatusChannel - взять статус счетчика.
@@ -293,12 +322,6 @@ public class NetServer implements Runnable {
                                 break;
                             case "getStatus":
                                 getStatus(sock);
-                                break;
-                            case "SaveAndConnect":
-                                SaveAndConnect(sock);
-                                break;
-                            case "AddNewServerInstance":
-                                AddNewServerInstance(sock);
                                 break;
                             case "MsvrRun":
                                 MsvrRun();
@@ -336,6 +359,18 @@ public class NetServer implements Runnable {
                             case "GetServerProps":
                                 GetServerProps(sock);
                                 break;
+                            case "NonQuerySQL":
+                                NonQuerySQL(sock);
+                                break;
+                            case "NonQuerySQLai":
+                                NonQuerySQLai(sock);
+                                break;
+                            case "GetMeterFlags":
+                                GetMeterFlags(sock);
+                                break;
+                            case "SetMeterFlags":
+                                SetMeterFlags(sock);
+                                break;
                         }
                     }
                     sockets.remove(mySocket);
@@ -359,73 +394,6 @@ public class NetServer implements Runnable {
                     status += "Server name: " + Vars.prop.getProperty("Servername") + "\n";
                     status += "Meters registred: " + Vars.meters.size();
                     NetServer.SendToSrv(socket, status);
-                }
-
-                private void SaveAndConnect(Socket socket) {
-                    String resp = "Ok";
-
-                    String paramstring = NetServer.GetRespFromSrv(socket);
-                    String[] parameters = paramstring.split(";");
-                    if (parameters.length != 4) {
-                        resp = "Err";
-                    }
-
-                    if (!resp.equals("Err")) {
-
-                        String servername = parameters[0];
-                        String dburl = parameters[1];
-                        String username = parameters[2];
-                        String password = parameters[3];
-
-                        PDM pdm = new PDM("em", username, password, dburl);
-
-                        Boolean isNewServer = true;
-                        ResultSet rs;
-                        try {
-                            rs = pdm.getResultSet("em", "SELECT k, `name` FROM servers WHERE hide = 0;");
-                            while (rs.next()) {
-                                String srvn = PDM.getStringFromHex(rs.getString("name"));
-                                if (srvn.equals(servername)) {
-                                    isNewServer = false;
-                                    Vars.serverID = rs.getInt("k");
-                                }
-                            }
-                        } catch (SQLException ex) {
-                            Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                        pdm.closeResultSet();
-
-                        if (isNewServer) {
-                            resp = "NewServer";
-                        } else {
-                            Vars.prop.setProperty("DB_URL", dburl);
-                            Vars.prop.setProperty("Username", username);
-                            Vars.prop.setProperty("Userpass", password);
-                            Vars.prop.setProperty("Servername", servername);
-                            Vars.SaveProperties();
-                        }
-                    }
-                    NetServer.SendToSrv(socket, resp);
-                }
-
-                private void AddNewServerInstance(Socket socket) {
-                    String paramstring = NetServer.GetRespFromSrv(socket);
-                    String[] parameters = paramstring.split(";");
-                    if (parameters.length == 4) {
-                        String servername = parameters[0];
-                        String dburl = parameters[1];
-                        String username = parameters[2];
-                        String password = parameters[3];
-
-                        PDM pdm = new PDM("em", username, password, dburl);
-                        Vars.serverID = pdm.executeNonQueryAI("em", "INSERT INTO servers (`name`, hide) VALUES ('" + PDM.getHexString(servername) + "', 0)");
-
-                        Vars.prop.setProperty("DB_URL", dburl);
-                        Vars.prop.setProperty("Username", username);
-                        Vars.prop.setProperty("Userpass", password);
-                        Vars.prop.setProperty("Servername", servername);
-                        Vars.SaveProperties();
-                    }
                 }
 
                 private void MsvrRun() {
@@ -474,7 +442,7 @@ public class NetServer implements Runnable {
                                 Vars.meters.put(emeter.getIdInDB(), emeter);
                             }
                         } catch (SQLException ex) {
-                            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
                         }
                         pdm.closeResultSet();
                         resp = "Ok";
@@ -594,11 +562,39 @@ public class NetServer implements Runnable {
                 }
 
                 private void GetServerProps(Socket sock) {
-                    String props = Vars.prop.getProperty("DB_URL") + "\n";
-                    props += Vars.prop.getProperty("Username") + "\n";
-                    props += Vars.prop.getProperty("Userpass") + "\n";
-                    props += Vars.prop.getProperty("Servername");
+                    String props = Vars.prop.getProperty("Servername") + "\n";
+                    props += Vars.serverID;
                     NetServer.SendToSrv(sock, props);
+                }
+
+                private void NonQuerySQL(Socket sock) {
+                    String sql = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+                    PDM pdm = new PDM();
+                    pdm.executeNonQuery("em", sql);
+                }
+
+                private void NonQuerySQLai(Socket sock) {
+                    String sql = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+                    PDM pdm = new PDM();
+                    int ai = pdm.executeNonQueryAI("em", sql);
+                    NetServer.SendToSrv(sock, String.valueOf(ai));
+                }
+
+                private void GetMeterFlags(Socket sock) {
+                    String ki = NetServer.GetRespFromSrv(sock);
+                    String flags = Vars.meters.get(Integer.valueOf(ki)).getMeterName() + "\n" + Vars.meters.get(Integer.valueOf(ki)).getMeterFlags();
+                    NetServer.SendToSrv(sock, PDM.getHexString(flags));
+                }
+
+                private void SetMeterFlags(Socket sock) {
+                    String kis = NetServer.GetRespFromSrv(sock);
+                    int ki = Integer.valueOf(kis);
+                    String flags = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+
+                    Vars.meters.get(ki).setMeterFlags(flags);
+
+                    PDM pdm = new PDM();
+                    pdm.executeNonQueryUpdate("em", "UPDATE meters SET flags = '" + Vars.meters.get(ki).getMeterFlags() + "' WHERE k = " + Vars.meters.get(ki).getIdInDB());
                 }
             }
             );

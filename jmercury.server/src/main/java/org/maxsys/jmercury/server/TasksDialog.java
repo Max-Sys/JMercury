@@ -1,33 +1,68 @@
 package org.maxsys.jmercury.server;
 
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TasksDialog extends javax.swing.JDialog {
 
-    EMeter meter;
+    private final HashMap<String, String> meterFlags = new HashMap<>();
+    private int ki;
+
+    private void setMeterFlags(String flagsString) {
+        meterFlags.clear();
+        String[] vks = flagsString.split(";");
+        for (String vk : vks) {
+            String[] valkey = vk.split(":");
+            if (valkey.length == 2) {
+                meterFlags.put(valkey[0], valkey[1]);
+            }
+        }
+    }
+
+    private String getMeterFlags() {
+        String flagsString = "";
+
+        for (Map.Entry<String, String> kvp : meterFlags.entrySet()) {
+            flagsString += kvp.getKey() + ":" + kvp.getValue() + ";";
+        }
+
+        return flagsString;
+    }
+
+    private String getMeterFlag(String flagName) {
+        return meterFlags.get(flagName);
+    }
+
+    private void setMeterFlag(String flagName, String flagValue) {
+        meterFlags.put(flagName, flagValue);
+    }
 
     public TasksDialog(java.awt.Frame parent, boolean modal, Integer ki) {
         super(parent, modal);
         initComponents();
+        
+        this.ki = ki;
 
-        meter = Vars.meters.get(ki);
+        String nflags = NetServer.sendGetMeterFlags(ki);
+        String[] flags = nflags.split("\n");
+        setTitle("Tasks for " + flags[0]);
+        setMeterFlags(flags[1]);
 
-        setTitle("Tasks for " + meter.getMeterName());
-
-        String osv = meter.getMeterFlag("osv") == null ? "no" : meter.getMeterFlag("osv");
+        String osv = getMeterFlag("osv") == null ? "no" : getMeterFlag("osv");
         if (osv.equals("yes")) {
             jCheckBox1.setSelected(true);
         } else {
             jCheckBox1.setSelected(false);
         }
 
-        String AvgARsTask = meter.getMeterFlag("AvgARsTask") == null ? "off" : meter.getMeterFlag("AvgARsTask");
+        String AvgARsTask = getMeterFlag("AvgARsTask") == null ? "off" : getMeterFlag("AvgARsTask");
         if (AvgARsTask.equals("on")) {
             jComboBox1.setSelectedIndex(0);
         } else {
             jComboBox1.setSelectedIndex(1);
         }
-        String s_AvgARsTask_i = meter.getMeterFlag("AvgARsTask_i") == null ? "0" : meter.getMeterFlag("AvgARsTask_i");
+        String s_AvgARsTask_i = getMeterFlag("AvgARsTask_i") == null ? "0" : getMeterFlag("AvgARsTask_i");
         long AvgARsTask_i = Long.valueOf(s_AvgARsTask_i);
         AvgARsTask_i /= 1000;
         if (AvgARsTask_i < 60) {
@@ -35,13 +70,13 @@ public class TasksDialog extends javax.swing.JDialog {
         }
         jSpinner1.setValue(AvgARsTask_i);
 
-        String DaysTask = meter.getMeterFlag("DaysTask") == null ? "off" : meter.getMeterFlag("DaysTask");
+        String DaysTask = getMeterFlag("DaysTask") == null ? "off" : getMeterFlag("DaysTask");
         if (DaysTask.equals("on")) {
             jComboBox3.setSelectedIndex(0);
         } else {
             jComboBox3.setSelectedIndex(1);
         }
-        String s_DaysTask_i = meter.getMeterFlag("DaysTask_i") == null ? "0" : meter.getMeterFlag("DaysTask_i");
+        String s_DaysTask_i = getMeterFlag("DaysTask_i") == null ? "0" : getMeterFlag("DaysTask_i");
         long DaysTaskTask_i = Long.valueOf(s_DaysTask_i);
         DaysTaskTask_i /= 1000;
         if (DaysTaskTask_i < 60) {
@@ -49,13 +84,13 @@ public class TasksDialog extends javax.swing.JDialog {
         }
         jSpinner3.setValue(DaysTaskTask_i);
 
-        String MonthTask = meter.getMeterFlag("MonthTask") == null ? "off" : meter.getMeterFlag("MonthTask");
+        String MonthTask = getMeterFlag("MonthTask") == null ? "off" : getMeterFlag("MonthTask");
         if (MonthTask.equals("on")) {
             jComboBox2.setSelectedIndex(0);
         } else {
             jComboBox2.setSelectedIndex(1);
         }
-        String s_MonthTask_i = meter.getMeterFlag("MonthTask_i") == null ? "0" : meter.getMeterFlag("MonthTask_i");
+        String s_MonthTask_i = getMeterFlag("MonthTask_i") == null ? "0" : getMeterFlag("MonthTask_i");
         long MonthTask_i = Long.valueOf(s_MonthTask_i);
         MonthTask_i /= 1000;
         if (MonthTask_i < 60) {
@@ -246,46 +281,46 @@ public class TasksDialog extends javax.swing.JDialog {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         if (jCheckBox1.isSelected()) {
-            meter.setMeterFlag("osv", "yes");
+            setMeterFlag("osv", "yes");
         } else {
-            meter.setMeterFlag("osv", "no");
+            setMeterFlag("osv", "no");
         }
 
         if (jComboBox1.getSelectedIndex() == 0) {
-            meter.setMeterFlag("AvgARsTask", "on");
+            setMeterFlag("AvgARsTask", "on");
         } else {
-            meter.setMeterFlag("AvgARsTask", "off");
+            setMeterFlag("AvgARsTask", "off");
         }
         long AvgARsTask_i = (long) jSpinner1.getValue();
         AvgARsTask_i *= 1000;
-        meter.setMeterFlag("AvgARsTask_i", String.valueOf(AvgARsTask_i));
+        setMeterFlag("AvgARsTask_i", String.valueOf(AvgARsTask_i));
         long AvgARsTask_t = Calendar.getInstance().getTimeInMillis() - AvgARsTask_i + 5000;
-        meter.setMeterFlag("AvgARsTask_t", String.valueOf(AvgARsTask_t));
+        setMeterFlag("AvgARsTask_t", String.valueOf(AvgARsTask_t));
 
         if (jComboBox3.getSelectedIndex() == 0) {
-            meter.setMeterFlag("DaysTask", "on");
+            setMeterFlag("DaysTask", "on");
         } else {
-            meter.setMeterFlag("DaysTask", "off");
+            setMeterFlag("DaysTask", "off");
         }
         long DaysTask_i = (long) jSpinner3.getValue();
         DaysTask_i *= 1000;
-        meter.setMeterFlag("DaysTask_i", String.valueOf(DaysTask_i));
+        setMeterFlag("DaysTask_i", String.valueOf(DaysTask_i));
         long DaysTask_t = Calendar.getInstance().getTimeInMillis() - DaysTask_i + 5000;
-        meter.setMeterFlag("DaysTask_t", String.valueOf(DaysTask_t));
+        setMeterFlag("DaysTask_t", String.valueOf(DaysTask_t));
 
         if (jComboBox2.getSelectedIndex() == 0) {
-            meter.setMeterFlag("MonthTask", "on");
+            setMeterFlag("MonthTask", "on");
         } else {
-            meter.setMeterFlag("MonthTask", "off");
+            setMeterFlag("MonthTask", "off");
         }
         long MonthTask_i = (long) jSpinner2.getValue();
         MonthTask_i *= 1000;
-        meter.setMeterFlag("MonthTask_i", String.valueOf(MonthTask_i));
+        setMeterFlag("MonthTask_i", String.valueOf(MonthTask_i));
         long MonthTask_t = Calendar.getInstance().getTimeInMillis() - MonthTask_i + 5000;
-        meter.setMeterFlag("MonthTask_t", String.valueOf(MonthTask_t));
+        setMeterFlag("MonthTask_t", String.valueOf(MonthTask_t));
 
-        Vars.SaveMeterState(meter);
-
+        NetServer.sendSetMeterFlags(ki, getMeterFlags());
+        
         dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
 

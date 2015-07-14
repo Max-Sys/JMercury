@@ -52,20 +52,12 @@ public class MainFrame extends javax.swing.JFrame {
                     String statusval = statusfields[1];
                     if (idInDB == -1) {
                         if (statusval.equals("MsvrRunning")) {
-                            jTextField1.setEnabled(false);
-                            jTextField2.setEnabled(false);
-                            jTextField3.setEnabled(false);
-                            jPasswordField2.setEnabled(false);
                             jButton2.setEnabled(false);
                             jButton4.setEnabled(true);
                             jButton5.setEnabled(false);
                             jButton6.setEnabled(false);
                             jButton7.setEnabled(false);
                         } else {
-                            jTextField1.setEnabled(true);
-                            jTextField2.setEnabled(true);
-                            jTextField3.setEnabled(true);
-                            jPasswordField2.setEnabled(true);
                             jButton2.setEnabled(true);
                             jButton4.setEnabled(false);
                             jButton5.setEnabled(true);
@@ -108,20 +100,14 @@ public class MainFrame extends javax.swing.JFrame {
     private TableWatcher tableWatcher = new TableWatcher();
     private Thread TableWatcherT = new Thread(tableWatcher);
 
+    private String servername = "";
+
     public MainFrame() {
         initComponents();
         setMinimumSize(getSize());
 
         Image icon = new javax.swing.ImageIcon(getClass().getResource("/org/maxsys/jmercury/server/resources/icon_1_1.png")).getImage();
         setIconImage(icon);
-
-        if (Vars.SrvAddr.equals("localhost")) {
-            setTitle(Vars.Version + " - local mode");
-        } else {
-            setTitle(Vars.Version + " - remote mode");
-            jButton1.setText("Exit / Shut down");
-            menuItem1.setLabel("Exit / Shut down JMercury Server");
-        }
 
         TrayIcon trayIcon = new TrayIcon(icon);
         trayIcon.addMouseListener(new MouseListener() {
@@ -172,62 +158,24 @@ public class MainFrame extends javax.swing.JFrame {
         jTable1.getColumnModel().getColumn(1).setPreferredWidth(300);
 
         if (Vars.isLocal) {
-            jTextField1.setText(Vars.prop.getProperty("DB_URL"));
-            jTextField2.setText(Vars.prop.getProperty("Username"));
-            jPasswordField2.setText(Vars.prop.getProperty("Userpass"));
-            jTextField3.setText(Vars.prop.getProperty("Servername"));
-            SaveAndRun();
-            SrvStop();
+            setTitle(Vars.Version + " - " + Vars.prop.getProperty("Servername") + " (local mode)");
+            this.servername = Vars.prop.getProperty("Servername");
+            NetServer.sendMsvrRun();
+            NetServer.sendMsvrPause();
         } else {
             Properties props = NetServer.sendGetServerProps();
-            jTextField1.setText(props.getProperty("DB_URL"));
-            jTextField2.setText(props.getProperty("Username"));
-            jPasswordField2.setText(props.getProperty("Userpass"));
-            jTextField3.setText(props.getProperty("Servername"));
-            jButton2.setText("Run");
-            RefreshTable();
+            this.servername = props.getProperty("Servername");
+            Vars.serverID = Integer.valueOf(props.getProperty("ServerID"));
+            setTitle(Vars.Version + " - " + props.getProperty("Servername") + " (remote mode)");
+            jButton1.setText("Exit / Shut down");
+            menuItem1.setLabel("Exit / Shut down JMercury Server");
         }
+
+        RefreshTable();
 
         if (!TableWatcherT.isAlive()) {
             TableWatcherT.start();
         }
-    }
-
-    private Boolean SaveAndConnect() {
-        String servername = jTextField3.getText().trim();
-        String dburl = jTextField1.getText();
-        String username = jTextField2.getText().trim();
-        String password = String.valueOf(jPasswordField2.getPassword());
-        String parameters = servername + ";" + dburl + ";" + username + ";" + password;
-
-        if (servername.length() == 0) {
-            return false;
-        }
-
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "SaveAndConnect");
-        NetServer.SendToSrv(socket, parameters);
-
-        String resp = NetServer.GetRespFromSrv(socket);
-
-        if (resp.equals("NewServer")) {
-            if (JOptionPane.showConfirmDialog(this, "Add new server instance? (" + servername + ")", "Server configuration", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-                NetServer.SendToSrv(socket, "AddNewServerInstance");
-                NetServer.SendToSrv(socket, parameters);
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                resp = "Ok";
-            } else {
-                return false;
-            }
-        }
-
-        NetServer.CloseSocket(socket);
-
-        return resp.equals("Ok");
     }
 
     private void RefreshTable() {
@@ -237,19 +185,22 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
         if (NetServer.sendRefreshMeters()) {
-            String[] metersData = NetServer.sendGetMetersData().split("\n");
+            String nsgmd = NetServer.sendGetMetersData();
+            if (!nsgmd.isEmpty()) {
+                String[] metersData = nsgmd.split("\n");
 
-            for (String meterdata : metersData) {
-                String[] mds = meterdata.split("\001");
-                Object[] rowdata = new Object[2];
-                String intab = "<html><b>" + mds[1] + "</b>/" + mds[2] + ", "
-                        + mds[3] + "/" + mds[4]
-                        + ", Ki:" + mds[5]
-                        + "</html>";
-                rowdata[0] = new IntString(Integer.valueOf(mds[0]), intab);
-                rowdata[1] = "---";
+                for (String meterdata : metersData) {
+                    String[] mds = meterdata.split("\001");
+                    Object[] rowdata = new Object[2];
+                    String intab = "<html><b>" + mds[1] + "</b>/" + mds[2] + ", "
+                            + mds[3] + "/" + mds[4]
+                            + ", Ki:" + mds[5]
+                            + "</html>";
+                    rowdata[0] = new IntString(Integer.valueOf(mds[0]), intab);
+                    rowdata[1] = "---";
 
-                tm.addRow(rowdata);
+                    tm.addRow(rowdata);
+                }
             }
         }
     }
@@ -261,15 +212,6 @@ public class MainFrame extends javax.swing.JFrame {
         popupMenu1 = new java.awt.PopupMenu();
         menuItem1 = new java.awt.MenuItem();
         jButton1 = new javax.swing.JButton();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jLabel4 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
-        jLabel5 = new javax.swing.JLabel();
-        jPasswordField2 = new javax.swing.JPasswordField();
-        jLabel6 = new javax.swing.JLabel();
-        jTextField3 = new javax.swing.JTextField();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -277,10 +219,10 @@ public class MainFrame extends javax.swing.JFrame {
         jButton6 = new javax.swing.JButton();
         jButton7 = new javax.swing.JButton();
         jButton9 = new javax.swing.JButton();
+        jButton10 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
-        jButton8 = new javax.swing.JButton();
 
         popupMenu1.setLabel(Vars.Version);
 
@@ -298,65 +240,6 @@ public class MainFrame extends javax.swing.JFrame {
                 jButton1ActionPerformed(evt);
             }
         });
-
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Database connection"));
-
-        jLabel1.setText("URL:");
-
-        jTextField1.setText("jdbc:mysql://server:3306/database");
-
-        jLabel4.setText("User:");
-
-        jLabel5.setText("Password:");
-
-        jLabel6.setText("Server name:");
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextField1, javax.swing.GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextField2))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPasswordField2))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel6)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextField3)))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel5)
-                    .addComponent(jPasswordField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel6)
-                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(15, Short.MAX_VALUE))
-        );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Meters"));
 
@@ -376,7 +259,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        jButton6.setText("Edit");
+        jButton6.setText("Edit это!");
         jButton6.setEnabled(false);
         jButton6.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -399,6 +282,13 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
+        jButton10.setText("Refresh");
+        jButton10.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton10ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -414,6 +304,8 @@ public class MainFrame extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton10)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
@@ -421,17 +313,18 @@ public class MainFrame extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton5)
                     .addComponent(jButton6)
                     .addComponent(jButton7)
-                    .addComponent(jButton9))
+                    .addComponent(jButton9)
+                    .addComponent(jButton10))
                 .addContainerGap())
         );
 
-        jButton2.setText("Save & Run");
+        jButton2.setText("Run");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton2ActionPerformed(evt);
@@ -453,13 +346,6 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        jButton8.setText(" test 1");
-        jButton8.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton8ActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -468,15 +354,12 @@ public class MainFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jButton2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton8)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButton1)))
                 .addContainerGap())
@@ -485,16 +368,13 @@ public class MainFrame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(jButton2)
                     .addComponent(jButton3)
-                    .addComponent(jButton4)
-                    .addComponent(jButton8))
+                    .addComponent(jButton4))
                 .addContainerGap())
         );
 
@@ -526,10 +406,6 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_menuItem1ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-//        if (Vars.serverID == -1) {
-//            JOptionPane.showMessageDialog(this, "The server name (" + jTextField3.getText().trim() + ") is not registered!", "Error", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
         NewMeterDialog dlg = new NewMeterDialog(this, true);
         dlg.setLocationRelativeTo(null);
         dlg.setVisible(true);
@@ -537,41 +413,14 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        SaveAndRun();
+        NetServer.sendMsvrRun();
+        RefreshTable();
     }//GEN-LAST:event_jButton2ActionPerformed
 
-    private void SaveAndRun() {
-        if (SaveAndConnect()) {
-//            jTextField1.setEnabled(false);
-//            jTextField2.setEnabled(false);
-//            jTextField3.setEnabled(false);
-//            jPasswordField2.setEnabled(false);
-//            jButton2.setEnabled(false);
-//            jButton4.setEnabled(true);
-//            jButton5.setEnabled(false);
-//            jButton6.setEnabled(false);
-//            jButton7.setEnabled(false);
-            RefreshTable();
-            NetServer.sendMsvrRun();
-        }
-    }
-
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        SrvStop();
-    }//GEN-LAST:event_jButton4ActionPerformed
-
-    private void SrvStop() {
-//        jTextField1.setEnabled(true);
-//        jTextField2.setEnabled(true);
-//        jTextField3.setEnabled(true);
-//        jPasswordField2.setEnabled(true);
-//        jButton2.setEnabled(true);
-//        jButton4.setEnabled(false);
-//        jButton5.setEnabled(true);
-//        jButton6.setEnabled(true);
-//        jButton7.setEnabled(true);
         NetServer.sendMsvrPause();
-    }
+        RefreshTable();
+    }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
 
@@ -585,7 +434,7 @@ public class MainFrame extends javax.swing.JFrame {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        EMeter[] objects = new EMeter[34];
+        EMeter[] objects = new EMeter[36];
 
         objects[0] = new EMeter("Котельная 1", "Котельная", 60, "COM2", 99, 0);
         objects[1] = new EMeter("Котельная 2", "Котельная", 60, "COM3", 148, 0);
@@ -621,8 +470,8 @@ public class MainFrame extends javax.swing.JFrame {
         objects[31] = new EMeter("Коттедж 18.2", "", 20, "COM35", 8, 0);
         objects[32] = new EMeter("Коттедж 19.1", "", 20, "COM40", 61, 0);
         objects[33] = new EMeter("Коттедж 19.2", "", 20, "COM39", 31, 0);
-        //objects[34] = new EMeter("Коттедж 20.1", "", 20, "COM38", 38, 0);
-        //objects[35] = new EMeter("Коттедж 20.2", "", 20, "COM37", 28, 0);
+        objects[34] = new EMeter("Коттедж 20.1", "", 20, "COM38", 38, 0);
+        objects[35] = new EMeter("Коттедж 20.2", "", 20, "COM37", 28, 0);
 
         for (EMeter o : objects) {
             if (o == null) {
@@ -708,45 +557,8 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton7ActionPerformed
 
-    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
-//        Socket socket;
-//        try {
-//            socket = new Socket("localhost", 4545);
-//
-//            socket.getOutputStream().write("getStatus\000".getBytes());
-//            try {
-//                Thread.sleep(50);
-//            } catch (InterruptedException ex) {
-//                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-//
-//            int ci;
-//            String si = "";
-//            while ((ci = socket.getInputStream().read()) >= 0 && ci != 0) {
-//                si += (char) ci;
-//            }
-//            System.out.println(si.length());
-//            String[] sss = si.split("\n");
-//            System.out.println(sss.length);
-//
-//            System.out.println(si);
-//
-//            System.out.println("===");
-//
-//            for (String s : sss) {
-//                System.out.println("-> " + s);
-//            }
-//
-//            System.out.println("===");
-//
-//            socket.close();
-//        } catch (IOException ex) {
-//            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-    }//GEN-LAST:event_jButton8ActionPerformed
-
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
-        if (evt.getButton() == 1 && evt.getClickCount() == 2 && NetServer.sendIsMsrvPaused()) {
+        if (Vars.isLocal && evt.getButton() == 1 && evt.getClickCount() == 2 && NetServer.sendIsMsrvPaused()) {
             if (jTable1.getSelectedRow() == -1) {
                 return;
             }
@@ -767,28 +579,23 @@ public class MainFrame extends javax.swing.JFrame {
         dlg.setVisible(true);
     }//GEN-LAST:event_jButton9ActionPerformed
 
+    private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
+        RefreshTable();
+    }//GEN-LAST:event_jButton10ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
-    private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPasswordField jPasswordField2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
     private java.awt.MenuItem menuItem1;
     private java.awt.PopupMenu popupMenu1;
     // End of variables declaration//GEN-END:variables

@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.maxsys.dblib.PDM;
 
 public class Vars {
 
@@ -44,11 +43,6 @@ public class Vars {
             Vars.prop.remove("DB_URL");
         }
         return true;
-    }
-
-    public static void SaveMeterState(EMeter meter) {
-        PDM pdm = new PDM();
-        pdm.executeNonQueryUpdate("em", "UPDATE meters SET flags = '" + meter.getMeterFlags() + "' WHERE k = " + meter.getIdInDB());
     }
 
     public static String[] getNixPortNames() {

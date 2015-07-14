@@ -1,5 +1,7 @@
 package org.maxsys.jmercury.server;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
@@ -226,8 +228,6 @@ public class NewMeterDialog extends javax.swing.JDialog {
             return;
         }
 
-        PDM pdm = new PDM();
-
         Integer groupid = -1;
         ComboBoxModel cm = jComboBox2.getModel();
         for (int i = 0; i < cm.getSize(); i++) {
@@ -238,7 +238,7 @@ public class NewMeterDialog extends javax.swing.JDialog {
             }
         }
         if (groupid == -1) {
-            groupid = pdm.executeNonQueryAI("em", "INSERT INTO metergroups (groupname, hide) VALUES ('" + PDM.getHexString(groupname) + "', 0)");
+            groupid = NetServer.sendNonQuerySQL("INSERT INTO metergroups (groupname, hide) VALUES ('" + PDM.getHexString(groupname) + "', 0)", true);
         }
 
         String comport = jComboBox1.getSelectedItem().toString();
@@ -248,10 +248,13 @@ public class NewMeterDialog extends javax.swing.JDialog {
         }
         String ki = jSpinner2.getValue().toString();
 
-        pdm.executeNonQuery("em",
-                "INSERT INTO meters "
-                + "(`name`, group_id, server_id, comport, rsaddr, serial, ki, flags, hide) VALUES "
-                + "('" + PDM.getHexString(jTextField1.getText().trim()) + "', " + groupid + ", " + Vars.serverID + ", '" + comport + "', " + rsAddr + ", " + jTextField2.getText().trim() + ", " + ki + ", 'osv:no;', 0)");
+        NetServer.sendNonQuerySQL("INSERT INTO meters (`name`, group_id, server_id, comport, rsaddr, serial, ki, flags, hide) VALUES ('" + PDM.getHexString(jTextField1.getText().trim()) + "', " + groupid + ", " + Vars.serverID + ", '" + comport + "', " + rsAddr + ", " + jTextField2.getText().trim() + ", " + ki + ", 'osv:no;', 0)", false);
+
+        try {
+            Thread.sleep(1500);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(NewMeterDialog.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         dispose();
     }//GEN-LAST:event_jButton4ActionPerformed
