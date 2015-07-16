@@ -188,63 +188,31 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        NetClient.SetServerAddress(jTextField1.getText());
 
-        Socket socket;
-        try {
-            socket = new Socket(jTextField1.getText(), 4545);
+        Socket socket = NetClient.GetNewSocket();
+        NetClient.SendToSrv(socket, "getStatus");
+        String si = NetClient.GetRespFromSrv(socket);
+        NetClient.CloseSocket(socket);
 
-            socket.getOutputStream().write("getStatus\000".getBytes());
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        String[] sss = si.split("\n");
+        System.out.println(sss.length);
 
-            int ci;
-            String si = "";
-            while ((ci = socket.getInputStream().read()) >= 0 && ci != 0) {
-                si += (char) ci;
-            }
-            System.out.println(si.length());
-            String[] sss = si.split("\n");
-            System.out.println(sss.length);
+        System.out.println(si);
 
-            System.out.println(si);
+        System.out.println("===");
 
-            System.out.println("===");
-
-            for (String s : sss) {
-                System.out.println("-> " + s);
-            }
-
-            System.out.println("===");
-
-            jTextArea1.setText(si);
-
-            socket.close();
-        } catch (IOException ex) {
-            jTextArea1.setText(ex.toString());
-            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+        for (String s : sss) {
+            System.out.println("-> " + s);
         }
+
+        System.out.println("===");
+
+        jTextArea1.setText(si);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        Socket socket;
-        try {
-            socket = new Socket(jTextField1.getText(), 4545);
 
-            socket.getOutputStream().write("StopServer\000".getBytes());
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            socket.close();
-        } catch (IOException ex) {
-            jTextArea1.setText(ex.toString());
-            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }//GEN-LAST:event_jButton2ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
