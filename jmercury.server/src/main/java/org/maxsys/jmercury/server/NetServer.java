@@ -5,8 +5,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jssc.SerialPortList;
@@ -19,16 +20,6 @@ public class NetServer implements Runnable {
     private int LastOpenedSocket = 0;
     private Thread msrvt;
     private MeterServer msrv;
-
-    public static Socket GetNewSocket() {
-        try {
-            Socket newsocket = new Socket(Vars.SrvAddr, 4545);
-            return newsocket;
-        } catch (IOException ex) {
-            Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
-    }
 
     public static void CloseSocket(Socket socket) {
         try {
@@ -60,161 +51,12 @@ public class NetServer implements Runnable {
         return si;
     }
 
-    public static Properties sendGetServerProps() {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "GetServerProps");
-        String resp = NetServer.GetRespFromSrv(socket);
-        NetServer.CloseSocket(socket);
-
-        String[] parameters = resp.split("\n");
-        String servername = parameters[0];
-        String serverid = parameters[1];
-
-        Properties props = new Properties();
-        props.setProperty("Servername", servername);
-        props.setProperty("ServerID", serverid);
-
-        return props;
-    }
-
-    public static boolean sendIsMsrvPaused() {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "GetMsvrStatus");
-        String resp = NetServer.GetRespFromSrv(socket);
-        NetServer.CloseSocket(socket);
-        return resp.equals("Paused");
-    }
-
-    public static void sendMsvrRun() {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "MsvrRun");
-        NetServer.CloseSocket(socket);
-    }
-
-    public static void sendMsvrPause() {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "MsvrPause");
-        NetServer.CloseSocket(socket);
-    }
-
-    public static void sendStopServer() {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "StopServer");
-        NetServer.CloseSocket(socket);
-    }
-
-    public static boolean sendRefreshMeters() {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "RefreshMeters");
-        String resp = NetServer.GetRespFromSrv(socket);
-        NetServer.CloseSocket(socket);
-        return resp.equals("Ok");
-    }
-
-    public static String sendGetMetersData() {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "getMetersData");
-        String resp = NetServer.GetRespFromSrv(socket);
-        NetServer.CloseSocket(socket);
-        String metersData = PDM.getStringFromHex(resp);
-        return metersData;
-    }
-
-    public static Byte sendGetMeterAddress(String portName) {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "GetMeterAddress");
-        NetServer.SendToSrv(socket, PDM.getHexString(portName));
-        String resp = NetServer.GetRespFromSrv(socket);
-        NetServer.CloseSocket(socket);
-        if (resp.equals("null")) {
-            return null;
-        } else {
-            return Byte.valueOf(resp);
-        }
-    }
-
-    public static String sendGetMeterSN(String portName) {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "GetMeterSN");
-        NetServer.SendToSrv(socket, PDM.getHexString(portName));
-        String resp = NetServer.GetRespFromSrv(socket);
-        NetServer.CloseSocket(socket);
-        if (resp.equals("null")) {
-            return null;
-        } else {
-            return resp;
-        }
-    }
-
-    public static String sendGetMeterFlags(int idInDB) {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "GetMeterFlags");
-        NetServer.SendToSrv(socket, String.valueOf(idInDB));
-        String resp = PDM.getStringFromHex(NetServer.GetRespFromSrv(socket));
-        NetServer.CloseSocket(socket);
-        return resp;
-    }
-
-    public static void sendSetMeterFlags(int idInDB, String flags) {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "SetMeterFlags");
-        NetServer.SendToSrv(socket, String.valueOf(idInDB));
-        NetServer.SendToSrv(socket, PDM.getHexString(flags));
-        NetServer.CloseSocket(socket);
-    }
-
-    public static void sendDeleteMeterFromDB(int idInDB) {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "deleteMeterFromDB");
-        NetServer.SendToSrv(socket, String.valueOf(idInDB));
-        NetServer.CloseSocket(socket);
-    }
-
-    public static String[] sendGetSerialPortNames() {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "GetSerialPortNames");
-        String resp = PDM.getStringFromHex(NetServer.GetRespFromSrv(socket));
-        NetServer.CloseSocket(socket);
-        return resp.split("\n");
-    }
-
-    public static IntString[] sendGetMeterGroupNames() {
-        Socket socket = NetServer.GetNewSocket();
-        NetServer.SendToSrv(socket, "GetMeterGroupNames");
-        String resp = PDM.getStringFromHex(NetServer.GetRespFromSrv(socket));
-        NetServer.CloseSocket(socket);
-
-        String[] respiss = resp.split("\n");
-        IntString[] iss = new IntString[respiss.length];
-
-        for (int i = 0; i < iss.length; i++) {
-            String[] respis = respiss[i].split("\001");
-            iss[i] = new IntString(Integer.valueOf(respis[0]), PDM.getStringFromHex(respis[1]));
-        }
-
-        return iss;
-    }
-
-    public static int sendNonQuerySQL(String sql, boolean ai) {
-        Socket socket = NetServer.GetNewSocket();
-        if (ai) {
-            NetServer.SendToSrv(socket, "NonQuerySQLai");
-            NetServer.SendToSrv(socket, PDM.getHexString(sql));
-            return Integer.valueOf(NetServer.GetRespFromSrv(socket));
-        } else {
-            NetServer.SendToSrv(socket, "NonQuerySQL");
-            NetServer.SendToSrv(socket, PDM.getHexString(sql));
-            NetServer.CloseSocket(socket);
-            return 0;
-        }
-    }
-
     @Override
     public void run() {
-        System.out.println("NetServer is running!");
+        STL.Log("NetServer: is running!");
 
         if (Vars.serverID != -1) {
-            System.out.print("Loading meters...");
+            STL.Log("NetServer: loading meters...");
             PDM pdm = new PDM();
             ResultSet rs = pdm.getResultSet("em", "SELECT meters.k, meters.`name`, meters.group_id, meters.comport, meters.rsaddr, meters.serial, meters.ki, meters.flags, metergroups.groupname FROM meters LEFT JOIN metergroups ON meters.group_id = metergroups.k WHERE meters.server_id = " + Vars.serverID + " AND meters.hide = 0 ORDER BY meters.group_id, meters.`name`");
             try {
@@ -237,9 +79,10 @@ public class NetServer implements Runnable {
                 Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
             }
             pdm.closeResultSet();
-            System.out.println(" " + Vars.meters.size() + " loaded.");
+            STL.Log("NetServer: " + Vars.meters.size() + " meters loaded.");
         } else {
-            System.out.println("Error loading meters!");
+            STL.Log("NetServer: error loading meters!");
+            STL.Close();
             System.exit(-1);
         }
 
@@ -295,7 +138,7 @@ public class NetServer implements Runnable {
                                 Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
                             }
                         } else {
-                            System.out.println("socket " + mySocket + " (From " + sock.getInetAddress().toString() + ":" + sock.getPort() + "), cmd: " + cmd);
+                            STL.Log("NetServer: socket " + mySocket + " (" + sock + "), cmd: " + cmd);
                         }
 
                         // Commands processing
@@ -315,6 +158,7 @@ public class NetServer implements Runnable {
                          deleteMeterFromDB - удалить счетчик из базы данных.
                          GetSerialPortNames - взять имена портов.
                          GetMeterGroupNames - взять группы счетчиков с сервера.
+                         GetMeterInfo - взять информацию о счетчике (имя, порт и т.д.)
                          */
                         switch (cmd) {
                             case "StopServer":
@@ -371,6 +215,9 @@ public class NetServer implements Runnable {
                             case "SetMeterFlags":
                                 SetMeterFlags(sock);
                                 break;
+                            case "GetMeterInfo":
+                                GetMeterInfo(sock);
+                                break;
                         }
                     }
                     sockets.remove(mySocket);
@@ -378,15 +225,22 @@ public class NetServer implements Runnable {
 
                 private void StopServer() {
                     msrv.setMsvrRunning(false);
+
                     try {
                         Thread.sleep(1500);
                     } catch (InterruptedException ex) {
                         Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
                     }
+
                     isCancelled = true;
-                    Socket tempsock = NetServer.GetNewSocket();
-                    NetServer.SendToSrv(tempsock, "");
-                    NetServer.CloseSocket(tempsock);
+
+                    try {
+                        Socket tempsock = new Socket(Vars.SrvAddr, 4545);
+                        NetServer.SendToSrv(tempsock, "");
+                        NetServer.CloseSocket(tempsock);
+                    } catch (IOException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
 
                 private void getStatus(Socket socket) {
@@ -424,7 +278,8 @@ public class NetServer implements Runnable {
 
                     if (Vars.serverID > -1) {
                         PDM pdm = new PDM();
-                        ResultSet rs = pdm.getResultSet("em", "SELECT meters.k, meters.`name`, meters.group_id, meters.comport, meters.rsaddr, meters.serial, meters.ki, meters.flags, metergroups.groupname FROM meters LEFT JOIN metergroups ON meters.group_id = metergroups.k WHERE meters.server_id = " + Vars.serverID + " AND meters.hide = 0 ORDER BY meters.group_id, meters.`name`");
+                        String sql = "SELECT meters.k, meters.`name`, meters.group_id, meters.comport, meters.rsaddr, meters.serial, meters.ki, meters.flags, metergroups.groupname FROM meters LEFT JOIN metergroups ON meters.group_id = metergroups.k WHERE meters.server_id = " + Vars.serverID + " AND meters.hide = 0 ORDER BY meters.group_id, meters.`name`";
+                        ResultSet rs = pdm.getResultSet("em", sql);
                         try {
                             while (rs.next()) {
                                 Integer k = rs.getInt("meters.k");
@@ -454,7 +309,22 @@ public class NetServer implements Runnable {
 
                 private void getMetersData(Socket sock) {
                     String mdstr = "";
-                    for (EMeter em : Vars.meters.values()) {
+
+                    Object[] meters = Vars.meters.values().toArray();
+                    Arrays.sort(meters, new Comparator<Object>() {
+
+                        @Override
+                        public int compare(Object o1, Object o2) {
+                            EMeter em1 = (EMeter) o1;
+                            EMeter em2 = (EMeter) o2;
+                            String cs1 = em1.getGroupName() + em1.getMeterName();
+                            String cs2 = em2.getGroupName() + em2.getMeterName();
+                            return cs1.compareTo(cs2);
+                        }
+                    });
+
+                    for (Object emo : meters) {
+                        EMeter em = (EMeter) emo;
                         mdstr += em.getIdInDB();
                         mdstr += "\001";
                         mdstr += em.getMeterName();
@@ -596,6 +466,18 @@ public class NetServer implements Runnable {
                     PDM pdm = new PDM();
                     pdm.executeNonQueryUpdate("em", "UPDATE meters SET flags = '" + Vars.meters.get(ki).getMeterFlags() + "' WHERE k = " + Vars.meters.get(ki).getIdInDB());
                 }
+
+                private void GetMeterInfo(Socket sock) {
+                    int ki = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    EMeter em = Vars.meters.get(ki);
+                    String info = em.getMeterName() + "\n";
+                    info += em.getGroupName() + "\n";
+                    info += em.getMeterComPort() + "\n";
+                    info += String.valueOf(em.getMeterAddress() & 0xFF) + "\n";
+                    info += em.getMeterSN() + "\n";
+                    info += String.valueOf(em.getMeterKi());
+                    NetServer.SendToSrv(sock, PDM.getHexString(info));
+                }
             }
             );
             ssrv.start();
@@ -603,7 +485,8 @@ public class NetServer implements Runnable {
             LastOpenedSocket++;
         }
 
-        System.out.println("NetServer is closed!");
+        STL.Log("NetServer: is closed!");
+        STL.Close();
         System.exit(0);
     }
 }

@@ -1,9 +1,5 @@
 package org.maxsys.jmercury.server;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
@@ -17,39 +13,27 @@ public class EditMeterDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        EMeter em = Vars.meters.get(ki);
-        
-        jTextField1.setText(em.getMeterName());
+        this.IdInDB = ki;
 
-        PDM pdm = new PDM();
-        DefaultComboBoxModel cm1 = new DefaultComboBoxModel();
-        ResultSet rs = pdm.getResultSet("em", "SELECT k, groupname FROM metergroups WHERE hide = 0");
+        String[] info = NetClient.sendGetMeterInfo(this.IdInDB).split("\n");
+
+        jTextField1.setText(info[0]);
         IntString selectedGroup = null;
-        try {
-            while (rs.next()) {
-                IntString is = new IntString(rs.getInt("k"), PDM.getStringFromHex(rs.getString("groupname")));
-                cm1.addElement(is);
-                if (em.getGroupName().equals(is.getString())) {
-                    selectedGroup = is;
-                }
+        DefaultComboBoxModel cm1 = new DefaultComboBoxModel();
+        IntString[] iss = NetClient.sendGetMeterGroupNames();
+        for (IntString is : iss) {
+            cm1.addElement(is);
+            if (info[1].equals(is.getString())) {
+                selectedGroup = is;
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(NewMeterDialog.class.getName()).log(Level.SEVERE, null, ex);
         }
-        pdm.closeResultSet();
-
         jComboBox2.setModel(cm1);
         jComboBox2.setSelectedItem(selectedGroup);
 
-        jTextField3.setText(em.getMeterComPort());
-
-        jSpinner1.setValue(em.getMeterAddress() & 0xFF);
-
-        jTextField2.setText(em.getMeterSN());
-
-        jSpinner2.setValue(em.getMeterKi());
-
-        IdInDB = em.getIdInDB();
+        jTextField3.setText(info[2]);
+        jSpinner1.setValue(Integer.valueOf(info[3]));
+        jTextField2.setText(info[4]);
+        jSpinner2.setValue(Integer.valueOf(info[5]));
     }
 
     @SuppressWarnings("unchecked")
@@ -118,6 +102,8 @@ public class EditMeterDialog extends javax.swing.JDialog {
                 jButton1ActionPerformed(evt);
             }
         });
+
+        jTextField2.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
 
         jComboBox2.setEditable(true);
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -207,8 +193,7 @@ public class EditMeterDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        EMeter meter = new EMeter("", "", 1, jTextField3.getText().trim(), 0, 0);
-        String s = meter.getMeterSN();
+        String s = NetClient.sendGetMeterSN(jTextField3.getText().trim());
         if (s == null) {
             jTextField2.setText("");
         } else {
@@ -242,8 +227,6 @@ public class EditMeterDialog extends javax.swing.JDialog {
             return;
         }
 
-        PDM pdm = new PDM();
-
         Integer groupid = -1;
         ComboBoxModel cm = jComboBox2.getModel();
         for (int i = 0; i < cm.getSize(); i++) {
@@ -254,7 +237,7 @@ public class EditMeterDialog extends javax.swing.JDialog {
             }
         }
         if (groupid == -1) {
-            groupid = pdm.executeNonQueryAI("em", "INSERT INTO metergroups (groupname, hide) VALUES ('" + PDM.getHexString(groupname) + "', 0)");
+            groupid = NetClient.sendNonQuerySQL("INSERT INTO metergroups (groupname, hide) VALUES ('" + PDM.getHexString(groupname) + "', 0)", true);
         }
 
         String comport = jTextField3.getText().trim();
@@ -264,24 +247,23 @@ public class EditMeterDialog extends javax.swing.JDialog {
         }
         String ki = jSpinner2.getValue().toString();
 
-        pdm.executeNonQueryUpdate("em", "UPDATE meters SET "
+        NetClient.sendNonQuerySQL("UPDATE meters SET "
                 + "`name` = '" + PDM.getHexString(jTextField1.getText().trim()) + "', "
                 + "group_id = " + groupid + ", "
                 + "comport = '" + comport + "', "
                 + "rsaddr = " + rsAddr + ", "
                 + "serial = '" + jTextField2.getText().trim() + "', "
-                + "ki = " + ki + " WHERE k = " + IdInDB);
+                + "ki = " + ki + " WHERE k = " + IdInDB, false);
 
         dispose();
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        EMeter meter = new EMeter("", "", 1, jTextField3.getText().trim(), 0, 0);
-        byte b = 0;
-        try {
-            b = meter.getMeterAddress();
-        } catch (Exception e) {
+        Byte b = NetClient.sendGetMeterAddress(jTextField3.getText().trim());
+        if (b == null) {
             JOptionPane.showMessageDialog(null, "К порту \"" + jTextField3.getText().trim() + "\" не подключен ни один счетчик.", "Ошибка", JOptionPane.ERROR_MESSAGE);
+            jSpinner1.setValue(0);
+            return;
         }
         jSpinner1.setValue(b & 0xFF);
     }//GEN-LAST:event_jButton1ActionPerformed

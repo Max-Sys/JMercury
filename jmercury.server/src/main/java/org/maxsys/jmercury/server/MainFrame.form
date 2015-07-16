@@ -164,7 +164,7 @@
         </Component>
         <Component class="javax.swing.JButton" name="jButton6">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Edit &#x44d;&#x442;&#x43e;!"/>
+            <Property name="text" type="java.lang.String" value="Edit"/>
             <Property name="enabled" type="boolean" value="false"/>
           </Properties>
           <Events>

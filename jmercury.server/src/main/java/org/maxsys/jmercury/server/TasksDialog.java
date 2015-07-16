@@ -41,10 +41,10 @@ public class TasksDialog extends javax.swing.JDialog {
     public TasksDialog(java.awt.Frame parent, boolean modal, Integer ki) {
         super(parent, modal);
         initComponents();
-        
+
         this.ki = ki;
 
-        String nflags = NetServer.sendGetMeterFlags(ki);
+        String nflags = NetClient.sendGetMeterFlags(ki);
         String[] flags = nflags.split("\n");
         setTitle("Tasks for " + flags[0]);
         setMeterFlags(flags[1]);
@@ -319,8 +319,8 @@ public class TasksDialog extends javax.swing.JDialog {
         long MonthTask_t = Calendar.getInstance().getTimeInMillis() - MonthTask_i + 5000;
         setMeterFlag("MonthTask_t", String.valueOf(MonthTask_t));
 
-        NetServer.sendSetMeterFlags(ki, getMeterFlags());
-        
+        NetClient.sendSetMeterFlags(ki, getMeterFlags());
+
         dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
 

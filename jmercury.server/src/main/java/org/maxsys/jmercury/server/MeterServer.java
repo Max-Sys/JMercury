@@ -13,7 +13,7 @@ public class MeterServer implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("MeterServer is running!");
+        STL.Log("MeterServer: is running!");
         while (isMsvrRunning) {
             try {
                 Thread.sleep(1000);
@@ -32,7 +32,7 @@ public class MeterServer implements Runnable {
                 // Out of service?
                 String osv = em.getMeterFlag("osv") == null ? "no" : em.getMeterFlag("osv");
                 if (osv.equals("yes")) {
-                    //System.out.println(em.getMeterName() + " is out of service!");
+                    //STL.Log(em.getMeterName() + " is out of service!");
                     em.setStatus("Out of service!");
                     continue;
                 }
@@ -55,7 +55,7 @@ public class MeterServer implements Runnable {
                         continue;
                     } else {
                         // Надо вставить проверки - не повисла ли задача.
-                        System.out.println(em.getMeterName() + " - osv!");
+                        STL.Log("MeterServer: " + em.getMeterName() + " - osv!");
                         em.setMeterFlag("busy", "no");
                         em.setMeterFlag("osv", "yes"); // Out of service
                         continue;
@@ -74,12 +74,12 @@ public class MeterServer implements Runnable {
                 String s_AvgARsTask_i = em.getMeterFlag("AvgARsTask_i") == null ? "0" : em.getMeterFlag("AvgARsTask_i");
                 long AvgARsTask_i = Long.valueOf(s_AvgARsTask_i);
                 if (AvgARsTask.equals("on") && AvgARsTask_t != 0 && AvgARsTask_i != 0) {
-                    //System.out.println(em.getMeterName() + " AvgARsTask is ON - " + (AvgARsTask_t + AvgARsTask_i) + " ? " + Calendar.getInstance().getTimeInMillis() + " ? " + ((AvgARsTask_t + AvgARsTask_i) - Calendar.getInstance().getTimeInMillis()));
+                    //STL.Log(em.getMeterName() + " AvgARsTask is ON - " + (AvgARsTask_t + AvgARsTask_i) + " ? " + Calendar.getInstance().getTimeInMillis() + " ? " + ((AvgARsTask_t + AvgARsTask_i) - Calendar.getInstance().getTimeInMillis()));
                     AvgARsTask_secs = ((AvgARsTask_t + AvgARsTask_i) - Calendar.getInstance().getTimeInMillis()) / 1000;
                     if ((AvgARsTask_t + AvgARsTask_i) < Calendar.getInstance().getTimeInMillis()) {
-                        System.out.println(em.getMeterName() + " - запуск AvgARsTask...");
-                        System.out.println("Время последнего старта - " + AvgARsTask_t);
-                        System.out.println("Интервал - " + AvgARsTask_i);
+                        STL.Log("MeterServer: " + em.getMeterName() + " - запуск AvgARsTask...");
+                        //STL.Log("Время последнего старта - " + AvgARsTask_t);
+                        //STL.Log("Интервал - " + AvgARsTask_i);
 
                         em.setMeterFlag("busy", "yes");
                         em.setMeterFlag("busy_timer", "60");
@@ -116,10 +116,13 @@ public class MeterServer implements Runnable {
 
                                             if (avgar == null) {
                                                 errs++;
-                                                System.out.println(em.getMeterName() + " errs++");
+                                                STL.Log("MeterServer: " + em.getMeterName() + " ошибка чтения (getAvgARPrev(), errs++)");
                                                 continue;
                                             }
 
+                                            if (errs != 0) {
+                                                STL.Log("MeterServer: " + em.getMeterName() + " прочитано, errs = 0");
+                                            }
                                             errs = 0;
                                             break;
                                         } catch (Exception ex) {
@@ -127,7 +130,7 @@ public class MeterServer implements Runnable {
                                         }
                                     }
                                     if (errs != 0) {
-                                        System.out.println(em.getMeterName() + ": ERR!!!ERR!!!ERR!!!");
+                                        STL.Log("MeterServer: " + em.getMeterName() + ": ошибка соединения со счетчиком!");
                                         return;
                                     }
 
@@ -174,9 +177,9 @@ public class MeterServer implements Runnable {
 
                                 if (FirstK != 0) {
                                     pdm.executeNonQuery("em", "UPDATE avgars SET hide = 0 WHERE meter_id = " + em.getIdInDB() + " AND k >= " + FirstK);
-                                    System.out.println(em.getMeterName() + " - AvgARsTask завершен с записью данных");
+                                    STL.Log("MeterServer: " + em.getMeterName() + " - AvgARsTask завершен с записью данных");
                                 } else {
-                                    System.out.println(em.getMeterName() + " - AvgARsTask завершен.");
+                                    STL.Log("MeterServer: " + em.getMeterName() + " - AvgARsTask завершен.");
                                 }
 
                                 em.setMeterFlag("busy", "no");
@@ -187,7 +190,7 @@ public class MeterServer implements Runnable {
                         });
                         thr.start();
 
-                        //System.out.println(em.getMeterName() + " - AvgARsTask запущен.");
+                        //STL.Log(em.getMeterName() + " - AvgARsTask запущен.");
                         continue;
                     }
                 }
@@ -199,12 +202,12 @@ public class MeterServer implements Runnable {
                 String s_DaysTask_i = em.getMeterFlag("DaysTask_i") == null ? "0" : em.getMeterFlag("DaysTask_i");
                 long DaysTask_i = Long.valueOf(s_DaysTask_i);
                 if (DaysTask.equals("on") && DaysTask_t != 0 && DaysTask_i != 0) {
-                    //System.out.println(em.getMeterName() + " DaysTask is ON - " + (DaysTask_t + DaysTask_i) + " ? " + Calendar.getInstance().getTimeInMillis() + " ? " + ((DaysTask_t + DaysTask_i) - Calendar.getInstance().getTimeInMillis()) / 1000);
+                    //STL.Log(em.getMeterName() + " DaysTask is ON - " + (DaysTask_t + DaysTask_i) + " ? " + Calendar.getInstance().getTimeInMillis() + " ? " + ((DaysTask_t + DaysTask_i) - Calendar.getInstance().getTimeInMillis()) / 1000);
                     DaysTask_secs = ((DaysTask_t + DaysTask_i) - Calendar.getInstance().getTimeInMillis()) / 1000;
                     if ((DaysTask_t + DaysTask_i) < Calendar.getInstance().getTimeInMillis()) {
-                        System.out.println(em.getMeterName() + " - запуск DaysTask...");
-                        System.out.println("Время последнего старта - " + DaysTask_t);
-                        System.out.println("Интервал - " + DaysTask_i);
+                        STL.Log("MeterServer: " + em.getMeterName() + " - запуск DaysTask...");
+                        //STL.Log("Время последнего старта - " + DaysTask_t);
+                        //STL.Log("Интервал - " + DaysTask_i);
 
                         em.setMeterFlag("busy", "yes");
                         em.setMeterFlag("busy_timer", "10");
@@ -215,7 +218,7 @@ public class MeterServer implements Runnable {
                             @Override
                             public void run() {
                                 for (int i = 0; i < 100; i++) {
-                                    System.out.println(em.getMeterName() + " - DaysTask работает... " + i);
+                                    STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask работает... " + i);
                                     em.setMeterFlag("statusstr", "d " + i + "%");
                                     try {
                                         Thread.sleep(250);
@@ -228,12 +231,12 @@ public class MeterServer implements Runnable {
                                 em.setMeterFlag("DaysTask_t", String.valueOf(Calendar.getInstance().getTimeInMillis()));
                                 em.setMeterFlag("statusstr", "");
                                 SaveMeterState(em);
-                                System.out.println(em.getMeterName() + " - DaysTask завершен.");
+                                STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask завершен.");
                             }
                         });
                         thr.start();
 
-                        System.out.println(em.getMeterName() + " - DaysTask запущен.");
+                        STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask запущен.");
 
                         continue;
                     }
@@ -246,12 +249,12 @@ public class MeterServer implements Runnable {
                 String s_MonthTask_i = em.getMeterFlag("MonthTask_i") == null ? "0" : em.getMeterFlag("MonthTask_i");
                 long MonthTask_i = Long.valueOf(s_MonthTask_i);
                 if (MonthTask.equals("on") && MonthTask_t != 0 && MonthTask_i != 0) {
-                    //System.out.println(em.getMeterName() + " MonthTask is ON - " + (MonthTask_t + MonthTask_i) + " ? " + Calendar.getInstance().getTimeInMillis() + " ? " + ((MonthTask_t + MonthTask_i) - Calendar.getInstance().getTimeInMillis()));
+                    //STL.Log(em.getMeterName() + " MonthTask is ON - " + (MonthTask_t + MonthTask_i) + " ? " + Calendar.getInstance().getTimeInMillis() + " ? " + ((MonthTask_t + MonthTask_i) - Calendar.getInstance().getTimeInMillis()));
                     MonthTask_secs = ((MonthTask_t + MonthTask_i) - Calendar.getInstance().getTimeInMillis()) / 1000;
                     if ((MonthTask_t + MonthTask_i) < Calendar.getInstance().getTimeInMillis()) {
-                        System.out.println(em.getMeterName() + " - запуск MonthTask...");
-                        System.out.println("Время последнего старта - " + MonthTask_t);
-                        System.out.println("Интервал - " + MonthTask_i);
+                        STL.Log("MeterServer: " + em.getMeterName() + " - запуск MonthTask...");
+                        //STL.Log("Время последнего старта - " + MonthTask_t);
+                        //STL.Log("Интервал - " + MonthTask_i);
 
                         em.setMeterFlag("busy", "yes");
                         em.setMeterFlag("busy_timer", "10");
@@ -262,7 +265,7 @@ public class MeterServer implements Runnable {
                             @Override
                             public void run() {
                                 for (int i = 0; i < 15; i++) {
-                                    System.out.println(em.getMeterName() + " - MonthTask работает... " + i);
+                                    STL.Log("MeterServer: " + em.getMeterName() + " - MonthTask работает... " + i);
                                     try {
                                         Thread.sleep(500);
                                     } catch (InterruptedException ex) {
@@ -273,12 +276,12 @@ public class MeterServer implements Runnable {
                                 em.setMeterFlag("busy", "no");
                                 em.setMeterFlag("MonthTask_t", String.valueOf(Calendar.getInstance().getTimeInMillis()));
                                 SaveMeterState(em);
-                                System.out.println(em.getMeterName() + " - MonthTask завершен.");
+                                STL.Log("MeterServer: " + em.getMeterName() + " - MonthTask завершен.");
                             }
                         });
                         thr.start();
 
-                        System.out.println(em.getMeterName() + " - MonthTask запущен.");
+                        STL.Log("MeterServer: " + em.getMeterName() + " - MonthTask запущен.");
 
                         continue;
                     }
@@ -293,7 +296,7 @@ public class MeterServer implements Runnable {
                 }
             }
         }
-        System.out.println("MeterServer is closed!");
+        STL.Log("MeterServer: is closed!");
     }
 
     public void setMsvrRunning(boolean isMsvrRunning) {
@@ -303,9 +306,9 @@ public class MeterServer implements Runnable {
     public void setMsvrPaused(boolean isMsvrPaused) {
         this.isMsvrPaused = isMsvrPaused;
         if (this.isMsvrPaused) {
-            System.out.println("MeterServer is paused.");
+            STL.Log("MeterServer: is paused.");
         } else {
-            System.out.println("MeterServer is unpaused.");
+            STL.Log("MeterServer: is unpaused.");
         }
     }
 

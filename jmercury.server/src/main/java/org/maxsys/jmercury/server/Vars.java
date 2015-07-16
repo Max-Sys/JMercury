@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 
 public class Vars {
 
-    public static String Version = "JMercury Server 0.10-00";
+    public static String Version = "JMercury Server 0.7-03";
     public static Integer serverID = -1;
     public static Properties prop = new Properties();
     public static String PropFileName = "";

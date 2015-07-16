@@ -13,13 +13,13 @@ public class NewMeterDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        String[] strs = NetServer.sendGetSerialPortNames();
+        String[] strs = NetClient.sendGetSerialPortNames();
         DefaultComboBoxModel cm = new DefaultComboBoxModel(strs);
         cm.addElement("null");
         jComboBox1.setModel(cm);
 
         DefaultComboBoxModel cm1 = new DefaultComboBoxModel();
-        IntString[] iss = NetServer.sendGetMeterGroupNames();
+        IntString[] iss = NetClient.sendGetMeterGroupNames();
         for (IntString is : iss) {
             cm1.addElement(is);
         }
@@ -70,6 +70,8 @@ public class NewMeterDialog extends javax.swing.JDialog {
         });
 
         jLabel4.setText("Meter s/n:");
+
+        jTextField2.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
 
         jButton2.setText("?");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
@@ -184,7 +186,7 @@ public class NewMeterDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        Byte b = NetServer.sendGetMeterAddress(jComboBox1.getSelectedItem().toString());
+        Byte b = NetClient.sendGetMeterAddress(jComboBox1.getSelectedItem().toString());
         if (b == null) {
             JOptionPane.showMessageDialog(null, "К порту \"" + jComboBox1.getSelectedItem().toString() + "\" не подключен ни один счетчик.", "Ошибка", JOptionPane.ERROR_MESSAGE);
             jSpinner1.setValue(0);
@@ -198,7 +200,7 @@ public class NewMeterDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        String s = NetServer.sendGetMeterSN(jComboBox1.getSelectedItem().toString());
+        String s = NetClient.sendGetMeterSN(jComboBox1.getSelectedItem().toString());
         if (s == null) {
             jTextField2.setText("");
         } else {
@@ -238,7 +240,7 @@ public class NewMeterDialog extends javax.swing.JDialog {
             }
         }
         if (groupid == -1) {
-            groupid = NetServer.sendNonQuerySQL("INSERT INTO metergroups (groupname, hide) VALUES ('" + PDM.getHexString(groupname) + "', 0)", true);
+            groupid = NetClient.sendNonQuerySQL("INSERT INTO metergroups (groupname, hide) VALUES ('" + PDM.getHexString(groupname) + "', 0)", true);
         }
 
         String comport = jComboBox1.getSelectedItem().toString();
@@ -248,7 +250,7 @@ public class NewMeterDialog extends javax.swing.JDialog {
         }
         String ki = jSpinner2.getValue().toString();
 
-        NetServer.sendNonQuerySQL("INSERT INTO meters (`name`, group_id, server_id, comport, rsaddr, serial, ki, flags, hide) VALUES ('" + PDM.getHexString(jTextField1.getText().trim()) + "', " + groupid + ", " + Vars.serverID + ", '" + comport + "', " + rsAddr + ", " + jTextField2.getText().trim() + ", " + ki + ", 'osv:no;', 0)", false);
+        NetClient.sendNonQuerySQL("INSERT INTO meters (`name`, group_id, server_id, comport, rsaddr, serial, ki, flags, hide) VALUES ('" + PDM.getHexString(jTextField1.getText().trim()) + "', " + groupid + ", " + Vars.serverID + ", '" + comport + "', " + rsAddr + ", " + jTextField2.getText().trim() + ", " + ki + ", 'osv:no;', 0)", false);
 
         try {
             Thread.sleep(1500);

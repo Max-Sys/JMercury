@@ -30,7 +30,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         @Override
         public void run() {
-            Socket sock = NetServer.GetNewSocket();
+            Socket sock = NetClient.GetNewSocket();
             NetServer.SendToSrv(sock, "newMeterStatusChannel");
             while (this.Running) {
                 try {
@@ -160,10 +160,10 @@ public class MainFrame extends javax.swing.JFrame {
         if (Vars.isLocal) {
             setTitle(Vars.Version + " - " + Vars.prop.getProperty("Servername") + " (local mode)");
             this.servername = Vars.prop.getProperty("Servername");
-            NetServer.sendMsvrRun();
-            NetServer.sendMsvrPause();
+            NetClient.sendMsvrRun();
+            NetClient.sendMsvrPause();
         } else {
-            Properties props = NetServer.sendGetServerProps();
+            Properties props = NetClient.sendGetServerProps();
             this.servername = props.getProperty("Servername");
             Vars.serverID = Integer.valueOf(props.getProperty("ServerID"));
             setTitle(Vars.Version + " - " + props.getProperty("Servername") + " (remote mode)");
@@ -184,8 +184,8 @@ public class MainFrame extends javax.swing.JFrame {
             tm.removeRow(0);
         }
 
-        if (NetServer.sendRefreshMeters()) {
-            String nsgmd = NetServer.sendGetMetersData();
+        if (NetClient.sendRefreshMeters()) {
+            String nsgmd = NetClient.sendGetMetersData();
             if (!nsgmd.isEmpty()) {
                 String[] metersData = nsgmd.split("\n");
 
@@ -259,7 +259,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        jButton6.setText("Edit это!");
+        jButton6.setText("Edit");
         jButton6.setEnabled(false);
         jButton6.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -384,11 +384,12 @@ public class MainFrame extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         dispose();
         if (Vars.SrvAddr.equals("localhost")) {
-            NetServer.sendStopServer();
+            NetClient.sendStopServer();
         } else {
             if (JOptionPane.showConfirmDialog(this, "Do you want to shut down remote server?", "Confirm shuting down server", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-                NetServer.sendStopServer();
+                NetClient.sendStopServer();
             }
+            STL.Close();
             System.exit(0);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
@@ -396,11 +397,12 @@ public class MainFrame extends javax.swing.JFrame {
     private void menuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItem1ActionPerformed
         dispose();
         if (Vars.SrvAddr.equals("localhost")) {
-            NetServer.sendStopServer();
+            NetClient.sendStopServer();
         } else {
             if (JOptionPane.showConfirmDialog(this, "Do you want to shut down remote server?", "Confirm shuting down server", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-                NetServer.sendStopServer();
+                NetClient.sendStopServer();
             }
+            STL.Close();
             System.exit(0);
         }
     }//GEN-LAST:event_menuItem1ActionPerformed
@@ -413,12 +415,12 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        NetServer.sendMsvrRun();
+        NetClient.sendMsvrRun();
         RefreshTable();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        NetServer.sendMsvrPause();
+        NetClient.sendMsvrPause();
         RefreshTable();
     }//GEN-LAST:event_jButton4ActionPerformed
 
@@ -552,13 +554,13 @@ public class MainFrame extends javax.swing.JFrame {
         int ki = ((IntString) jTable1.getValueAt(jTable1.getSelectedRow(), 0)).getInt();
 
         if (JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this item?", "Confirm item remove", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-            NetServer.sendDeleteMeterFromDB(ki);
+            NetClient.sendDeleteMeterFromDB(ki);
             RefreshTable();
         }
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
-        if (Vars.isLocal && evt.getButton() == 1 && evt.getClickCount() == 2 && NetServer.sendIsMsrvPaused()) {
+        if (Vars.isLocal && evt.getButton() == 1 && evt.getClickCount() == 2 && NetClient.sendIsMsrvPaused()) {
             if (jTable1.getSelectedRow() == -1) {
                 return;
             }

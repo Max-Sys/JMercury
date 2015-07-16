@@ -22,6 +22,10 @@ public class Main {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+        STL stl = new STL();
+        STL.Log(Vars.Version + " started.");
+        System.out.println(Vars.Version + " started.");
+
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -46,7 +50,7 @@ public class Main {
             if (args[0].equals("--help")) {
                 System.out.println("using:");
                 System.out.println("jmercury.server --clearconfig");
-                System.out.println("jmercury.server --configure Servername jdbc:mysql://address:port/dbname Username Userpass");
+                System.out.println("jmercury.server --configure servername jdbc:mysql://address:port/dbname username password");
                 System.out.println("jmercury.server --remote ServerAddress [Stop]");
                 return;
             }
@@ -59,9 +63,9 @@ public class Main {
             }
 
             if (args[0].equals("--configure")) {
-                if (args.length != 5) {
+                if (args.length < 5) {
                     System.out.println("using:");
-                    System.out.println("jmercury.server --configure Servername jdbc:mysql://address:port/dbname Username Userpass");
+                    System.out.println("jmercury.server --configure servername jdbc:mysql://address:port/dbname username password");
                     return;
                 }
 
@@ -97,17 +101,18 @@ public class Main {
                         Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     if (ans.toLowerCase().equals("y")) {
-                        System.out.println("NEW!!!");
+                        Vars.serverID = pdm.executeNonQueryAI("em", "INSERT INTO servers (`name`, hide) VALUES ('" + PDM.getHexString(servername) + "', 0)");
                     } else {
-                        System.out.println("n");
+                        STL.Close();
+                        System.exit(-1);
                     }
-                } else {
-                    Vars.prop.setProperty("DB_URL", dburl);
-                    Vars.prop.setProperty("Username", username);
-                    Vars.prop.setProperty("Userpass", password);
-                    Vars.prop.setProperty("Servername", servername);
-                    Vars.SaveProperties();
                 }
+
+                Vars.prop.setProperty("DB_URL", dburl);
+                Vars.prop.setProperty("Username", username);
+                Vars.prop.setProperty("Userpass", password);
+                Vars.prop.setProperty("Servername", servername);
+                Vars.SaveProperties();
             }
 
             if (args[0].equals("--remote")) {
@@ -198,6 +203,7 @@ public class Main {
                 if (isNewServer || Vars.serverID == -1) {
                     System.out.println("This server is not configured properly!");
                     System.out.println("Use --configure switch.");
+                    STL.Close();
                     System.exit(-1);
                     return;
                 }
