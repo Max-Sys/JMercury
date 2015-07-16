@@ -1,10 +1,7 @@
 package org.maxsys.jmercury.client;
 
 import java.awt.Image;
-import java.io.IOException;
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class MainFrame extends javax.swing.JFrame {
 
