@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 
 public class Vars {
 
-    public static String Version = "JMercury Server 0.7-03";
+    public static String Version = "JMercury Server 0.75-00";
     public static Integer serverID = -1;
     public static Properties prop = new Properties();
     public static String PropFileName = "";
@@ -51,7 +51,7 @@ public class Vars {
 
             @Override
             public boolean accept(File dir, String name) {
-                return name.matches("tty[a-zA-Z]+[0-9]+");
+                return name.matches("tty[a-zA-Z]+[0-9]+[a-zA-Z]*");
             }
         });
 

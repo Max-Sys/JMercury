@@ -106,7 +106,7 @@
     </Component>
     <Component class="javax.swing.JTextField" name="jTextField1">
       <Properties>
-        <Property name="text" type="java.lang.String" value="194.135.104.5"/>
+        <Property name="text" type="java.lang.String" value="194.135.104.244"/>
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>
     </Component>

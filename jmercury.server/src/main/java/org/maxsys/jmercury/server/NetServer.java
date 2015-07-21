@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -73,6 +74,7 @@ public class NetServer implements Runnable {
                     emeter.setMeterSN(serial);
                     emeter.setMeterFlags(flags);
                     emeter.setMeterFlag("busy", "no");
+                    emeter.setMeterFlag("preosv", "no");
                     Vars.meters.put(emeter.getIdInDB(), emeter);
                 }
             } catch (SQLException ex) {
@@ -156,6 +158,7 @@ public class NetServer implements Runnable {
                          GetMeterAddress - взять адрес счетчика.
                          GetMeterSN - взять серийный номер счетчика.
                          deleteMeterFromDB - удалить счетчик из базы данных.
+                         UpdateMeterInDB - обновить информацию о счетчике в БД.
                          GetSerialPortNames - взять имена портов.
                          GetMeterGroupNames - взять группы счетчиков с сервера.
                          GetMeterInfo - взять информацию о счетчике (имя, порт и т.д.)
@@ -218,6 +221,9 @@ public class NetServer implements Runnable {
                             case "GetMeterInfo":
                                 GetMeterInfo(sock);
                                 break;
+                            case "UpdateMeterInDB":
+                                UpdateMeterInDB(sock);
+                                break;
                         }
                     }
                     sockets.remove(mySocket);
@@ -272,8 +278,6 @@ public class NetServer implements Runnable {
                 }
 
                 private void RefreshMeters(Socket sock) {
-                    Vars.meters.clear();
-
                     String resp;
 
                     if (Vars.serverID > -1) {
@@ -283,18 +287,21 @@ public class NetServer implements Runnable {
                         try {
                             while (rs.next()) {
                                 Integer k = rs.getInt("meters.k");
-                                String metername = PDM.getStringFromHex(rs.getString("meters.name"));
-                                String groupname = PDM.getStringFromHex(rs.getString("metergroups.groupname"));
-                                String comport = rs.getString("meters.comport");
-                                Integer rsaddr = rs.getInt("meters.rsaddr");
-                                String serial = rs.getString("meters.serial");
-                                Integer ki = rs.getInt("meters.ki");
-                                String flags = rs.getString("meters.flags");
-                                EMeter emeter = new EMeter(metername, groupname, ki, comport, rsaddr, k);
-                                emeter.setMeterSN(serial);
-                                emeter.setMeterFlags(flags);
-                                emeter.setMeterFlag("busy", "no");
-                                Vars.meters.put(emeter.getIdInDB(), emeter);
+                                if (!Vars.meters.containsKey(k)) {
+                                    String metername = PDM.getStringFromHex(rs.getString("meters.name"));
+                                    String groupname = PDM.getStringFromHex(rs.getString("metergroups.groupname"));
+                                    String comport = rs.getString("meters.comport");
+                                    Integer rsaddr = rs.getInt("meters.rsaddr");
+                                    String serial = rs.getString("meters.serial");
+                                    Integer ki = rs.getInt("meters.ki");
+                                    String flags = rs.getString("meters.flags");
+                                    EMeter emeter = new EMeter(metername, groupname, ki, comport, rsaddr, k);
+                                    emeter.setMeterSN(serial);
+                                    emeter.setMeterFlags(flags);
+                                    emeter.setMeterFlag("busy", "no");
+                                    Vars.meters.put(emeter.getIdInDB(), emeter);
+                                    System.out.println("Adding " + metername);
+                                }
                             }
                         } catch (SQLException ex) {
                             Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
@@ -304,6 +311,7 @@ public class NetServer implements Runnable {
                     } else {
                         resp = "Err";
                     }
+
                     NetServer.SendToSrv(sock, resp);
                 }
 
@@ -343,6 +351,7 @@ public class NetServer implements Runnable {
                 }
 
                 private void newMeterStatusChannel(Socket sock) {
+                    STL.Log("NetServer: StatusChannel created (" + sock + ")");
                     String statcmd = "";
                     while (!statcmd.equals("close")) {
                         statcmd = GetRespFromSrv(sock);
@@ -367,12 +376,14 @@ public class NetServer implements Runnable {
                             break;
                         }
                     }
+                    STL.Log("NetServer: StatusChannel closed (" + sock + ")");
                 }
 
                 private void deleteMeterFromDB(Socket sock) {
                     String ki = NetServer.GetRespFromSrv(sock);
                     PDM pdm = new PDM();
                     pdm.executeNonQueryUpdate("em", "UPDATE meters SET hide = 1 WHERE k = " + ki);
+                    Vars.meters.remove(Integer.valueOf(ki));
                 }
 
                 private void GetSerialPortNames(Socket sock) {
@@ -477,6 +488,14 @@ public class NetServer implements Runnable {
                     info += em.getMeterSN() + "\n";
                     info += String.valueOf(em.getMeterKi());
                     NetServer.SendToSrv(sock, PDM.getHexString(info));
+                }
+
+                private void UpdateMeterInDB(Socket sock) {
+                    int idInDB = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    String sql = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+                    PDM pdm = new PDM();
+                    pdm.executeNonQuery("em", sql);
+                    Vars.meters.remove(idInDB);
                 }
             }
             );

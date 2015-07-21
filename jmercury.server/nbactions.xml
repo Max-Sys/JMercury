@@ -33,7 +33,7 @@
             </goals>
             <properties>
                 <exec.args>-classpath %classpath org.maxsys.jmercury.server.Main</exec.args>
-                <exec.executable>${profiler.java}</exec.executable>
+                <exec.executable>java</exec.executable>
                 <exec.workingdir></exec.workingdir>
             </properties>
         </action>

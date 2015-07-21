@@ -247,13 +247,13 @@ public class EditMeterDialog extends javax.swing.JDialog {
         }
         String ki = jSpinner2.getValue().toString();
 
-        NetClient.sendNonQuerySQL("UPDATE meters SET "
+        NetClient.sendUpdateMeterInDB(IdInDB, "UPDATE meters SET "
                 + "`name` = '" + PDM.getHexString(jTextField1.getText().trim()) + "', "
                 + "group_id = " + groupid + ", "
                 + "comport = '" + comport + "', "
                 + "rsaddr = " + rsAddr + ", "
                 + "serial = '" + jTextField2.getText().trim() + "', "
-                + "ki = " + ki + " WHERE k = " + IdInDB, false);
+                + "ki = " + ki + " WHERE k = " + IdInDB);
 
         dispose();
     }//GEN-LAST:event_jButton4ActionPerformed

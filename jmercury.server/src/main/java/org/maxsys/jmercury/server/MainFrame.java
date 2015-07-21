@@ -57,12 +57,14 @@ public class MainFrame extends javax.swing.JFrame {
                             jButton5.setEnabled(false);
                             jButton6.setEnabled(false);
                             jButton7.setEnabled(false);
+                            jButton9.setEnabled(false);
                         } else {
                             jButton2.setEnabled(true);
                             jButton4.setEnabled(false);
                             jButton5.setEnabled(true);
                             jButton6.setEnabled(true);
                             jButton7.setEnabled(true);
+                            jButton9.setEnabled(true);
                         }
                     } else {
                         for (int r = 0; r < jTable1.getRowCount(); r++) {
@@ -85,13 +87,12 @@ public class MainFrame extends javax.swing.JFrame {
             return Paused;
         }
 
-        public void Pause() {
-            this.Paused = true;
-            for (int r = 0; r < jTable1.getRowCount(); r++) {
-                jTable1.setValueAt("---", r, 1);
-            }
-        }
-
+//        public void Pause() {
+//            this.Paused = true;
+//            for (int r = 0; r < jTable1.getRowCount(); r++) {
+//                jTable1.setValueAt("---", r, 1);
+//            }
+//        }
         public void Go() {
             this.Paused = false;
         }
@@ -99,8 +100,6 @@ public class MainFrame extends javax.swing.JFrame {
     }
     private TableWatcher tableWatcher = new TableWatcher();
     private Thread TableWatcherT = new Thread(tableWatcher);
-
-    private String servername = "";
 
     public MainFrame() {
         initComponents();
@@ -154,17 +153,15 @@ public class MainFrame extends javax.swing.JFrame {
                     }
                 });
 
-        jTable1.getColumnModel().getColumn(0).setPreferredWidth(700);
-        jTable1.getColumnModel().getColumn(1).setPreferredWidth(300);
+        jTable1.getColumnModel().getColumn(0).setPreferredWidth(750);
+        jTable1.getColumnModel().getColumn(1).setPreferredWidth(250);
 
         if (Vars.isLocal) {
             setTitle(Vars.Version + " - " + Vars.prop.getProperty("Servername") + " (local mode)");
-            this.servername = Vars.prop.getProperty("Servername");
             NetClient.sendMsvrRun();
             NetClient.sendMsvrPause();
         } else {
             Properties props = NetClient.sendGetServerProps();
-            this.servername = props.getProperty("Servername");
             Vars.serverID = Integer.valueOf(props.getProperty("ServerID"));
             setTitle(Vars.Version + " - " + props.getProperty("Servername") + " (remote mode)");
             jButton1.setText("Exit / Shut down");
@@ -296,7 +293,7 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 442, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 542, Short.MAX_VALUE)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jButton5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -313,7 +310,7 @@ public class MainFrame extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 565, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton5)
@@ -539,11 +536,20 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
-        EditMeterDialog dlg = new EditMeterDialog(this, true, ((IntString) jTable1.getValueAt(jTable1.getSelectedRow(), 0)).getInt());
-        dlg.setLocationRelativeTo(null);
-        dlg.setVisible(true);
+        String status = (String) jTable1.getValueAt(jTable1.getSelectedRow(), 1);
+        if (status.equals("---")) {
+            EditMeterDialog dlg = new EditMeterDialog(this, true, ((IntString) jTable1.getValueAt(jTable1.getSelectedRow(), 0)).getInt());
+            dlg.setLocationRelativeTo(null);
+            dlg.setVisible(true);
 
-        RefreshTable();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            RefreshTable();
+        }
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
@@ -551,11 +557,13 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
-        int ki = ((IntString) jTable1.getValueAt(jTable1.getSelectedRow(), 0)).getInt();
-
-        if (JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this item?", "Confirm item remove", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-            NetClient.sendDeleteMeterFromDB(ki);
-            RefreshTable();
+        String status = (String) jTable1.getValueAt(jTable1.getSelectedRow(), 1);
+        if (status.equals("---")) {
+            int ki = ((IntString) jTable1.getValueAt(jTable1.getSelectedRow(), 0)).getInt();
+            if (JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this item?", "Confirm item remove", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                NetClient.sendDeleteMeterFromDB(ki);
+                RefreshTable();
+            }
         }
     }//GEN-LAST:event_jButton7ActionPerformed
 
@@ -576,9 +584,12 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
-        TasksDialog dlg = new TasksDialog(this, true, ((IntString) jTable1.getValueAt(jTable1.getSelectedRow(), 0)).getInt());
-        dlg.setLocationRelativeTo(null);
-        dlg.setVisible(true);
+        String status = (String) jTable1.getValueAt(jTable1.getSelectedRow(), 1);
+        if (status.equals("---")) {
+            TasksDialog dlg = new TasksDialog(this, true, ((IntString) jTable1.getValueAt(jTable1.getSelectedRow(), 0)).getInt());
+            dlg.setLocationRelativeTo(null);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_jButton9ActionPerformed
 
     private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed

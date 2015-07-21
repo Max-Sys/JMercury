@@ -168,6 +168,13 @@ public class NetClient {
         CloseSocket(socket);
     }
 
+    public static void sendUpdateMeterInDB(int idInDB, String sql) {
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "UpdateMeterInDB");
+        SendToSrv(socket, String.valueOf(idInDB));
+        SendToSrv(socket, PDM.getHexString(sql));
+    }
+
     public static String[] sendGetSerialPortNames() {
         Socket socket = GetNewSocket();
         SendToSrv(socket, "GetSerialPortNames");

@@ -45,7 +45,7 @@ public class LocalNeLocal extends javax.swing.JDialog {
         buttonGroup1.add(jRadioButton3);
         jRadioButton3.setText("Local console mode");
 
-        jTextField1.setText("194.135.104.5");
+        jTextField1.setText("194.135.104.244");
         jTextField1.setEnabled(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());

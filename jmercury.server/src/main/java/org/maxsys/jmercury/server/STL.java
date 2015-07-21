@@ -24,7 +24,7 @@ public class STL {
         }
     }
 
-    public static void Log(String logText) {
+    public synchronized static void Log(String logText) {
         if (bw != null) {
             String nowTimeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime());
             try {
