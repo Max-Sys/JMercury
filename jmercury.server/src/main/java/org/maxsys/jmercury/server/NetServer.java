@@ -1,12 +1,15 @@
 package org.maxsys.jmercury.server;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -38,18 +41,33 @@ public class NetServer implements Runnable {
         }
     }
 
+    public static void SendToSrvBig(Socket socket, String data) {
+        try {
+            OutputStream os = socket.getOutputStream();
+            BufferedOutputStream bos = new BufferedOutputStream(os, 4096);
+            OutputStreamWriter isw = new OutputStreamWriter(bos);
+            BufferedWriter bw = new BufferedWriter(isw);
+            data += "\000";
+            bw.write(data, 0, data.length());
+            bw.close();
+            isw.close();
+            bos.close();
+        } catch (IOException ex) {
+            Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     public static String GetRespFromSrv(Socket socket) {
         int ci;
-        String si = "";
+        StringBuilder si = new StringBuilder();
         try {
             while ((ci = socket.getInputStream().read()) >= 0 && ci != 0) {
-                si += (char) ci;
+                si.append((char) ci);
             }
         } catch (IOException ex) {
-            //Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
             return "";
         }
-        return si;
+        return si.toString();
     }
 
     @Override
@@ -84,7 +102,6 @@ public class NetServer implements Runnable {
             STL.Log("NetServer: " + Vars.meters.size() + " meters loaded.");
         } else {
             STL.Log("NetServer: error loading meters!");
-            STL.Close();
             System.exit(-1);
         }
 
@@ -162,6 +179,7 @@ public class NetServer implements Runnable {
                          GetSerialPortNames - взять имена портов.
                          GetMeterGroupNames - взять группы счетчиков с сервера.
                          GetMeterInfo - взять информацию о счетчике (имя, порт и т.д.)
+                         GetLog - взять лог.
                          */
                         switch (cmd) {
                             case "StopServer":
@@ -223,6 +241,9 @@ public class NetServer implements Runnable {
                                 break;
                             case "UpdateMeterInDB":
                                 UpdateMeterInDB(sock);
+                                break;
+                            case "GetLog":
+                                GetLog(sock);
                                 break;
                         }
                     }
@@ -316,7 +337,7 @@ public class NetServer implements Runnable {
                 }
 
                 private void getMetersData(Socket sock) {
-                    String mdstr = "";
+                    StringBuilder mdstr = new StringBuilder();
 
                     Object[] meters = Vars.meters.values().toArray();
                     Arrays.sort(meters, new Comparator<Object>() {
@@ -333,21 +354,21 @@ public class NetServer implements Runnable {
 
                     for (Object emo : meters) {
                         EMeter em = (EMeter) emo;
-                        mdstr += em.getIdInDB();
-                        mdstr += "\001";
-                        mdstr += em.getMeterName();
-                        mdstr += "\001";
-                        mdstr += em.getGroupName();
-                        mdstr += "\001";
-                        mdstr += em.getMeterComPort();
-                        mdstr += "\001";
-                        mdstr += (em.getMeterAddress() & 0xFF);
-                        mdstr += "\001";
-                        mdstr += em.getMeterKi();
-                        mdstr += "\001";
-                        mdstr += "\n";
+                        mdstr.append(em.getIdInDB());
+                        mdstr.append("\001");
+                        mdstr.append(em.getMeterName());
+                        mdstr.append("\001");
+                        mdstr.append(em.getGroupName());
+                        mdstr.append("\001");
+                        mdstr.append(em.getMeterComPort());
+                        mdstr.append("\001");
+                        mdstr.append(em.getMeterAddress() & 0xFF);
+                        mdstr.append("\001");
+                        mdstr.append(em.getMeterKi());
+                        mdstr.append("\001");
+                        mdstr.append("\n");
                     }
-                    NetServer.SendToSrv(sock, PDM.getHexString(mdstr));
+                    NetServer.SendToSrv(sock, PDM.getHexString(mdstr.toString()));
                 }
 
                 private void newMeterStatusChannel(Socket sock) {
@@ -394,28 +415,28 @@ public class NetServer implements Runnable {
                         strs = Vars.getNixPortNames();
                     }
 
-                    String resp = "";
+                    StringBuilder resp = new StringBuilder();
                     for (String pn : strs) {
-                        resp += pn + "\n";
+                        resp.append(pn).append("\n");
                     }
 
-                    NetServer.SendToSrv(sock, PDM.getHexString(resp));
+                    NetServer.SendToSrv(sock, PDM.getHexString(resp.toString()));
                 }
 
                 private void GetMeterGroupNames(Socket sock) {
-                    String groups = "";
+                    StringBuilder groups = new StringBuilder();
                     PDM pdm = new PDM();
                     ResultSet rs = pdm.getResultSet("em", "SELECT k, groupname FROM metergroups WHERE hide = 0");
                     try {
                         while (rs.next()) {
-                            groups += rs.getInt("k") + "\001";
-                            groups += rs.getString("groupname") + "\n";
+                            groups.append(rs.getInt("k")).append("\001");
+                            groups.append(rs.getString("groupname")).append("\n");
                         }
                     } catch (SQLException ex) {
                         Logger.getLogger(NewMeterDialog.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     pdm.closeResultSet();
-                    NetServer.SendToSrv(sock, PDM.getHexString(groups));
+                    NetServer.SendToSrv(sock, PDM.getHexString(groups.toString()));
                 }
 
                 private void GetMeterAddress(Socket sock) {
@@ -497,6 +518,12 @@ public class NetServer implements Runnable {
                     pdm.executeNonQuery("em", sql);
                     Vars.meters.remove(idInDB);
                 }
+
+                private void GetLog(Socket sock) {
+                    String filter = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+                    String log = STL.getLog(filter);
+                    NetServer.SendToSrvBig(sock, PDM.getHexString(log));
+                }
             }
             );
             ssrv.start();
@@ -505,7 +532,6 @@ public class NetServer implements Runnable {
         }
 
         STL.Log("NetServer: is closed!");
-        STL.Close();
         System.exit(0);
     }
 }

@@ -1,6 +1,10 @@
 package org.maxsys.jmercury.server;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -37,16 +41,46 @@ public class NetClient {
 
     public static String GetRespFromSrv(Socket socket) {
         int ci;
-        String si = "";
+        StringBuilder si = new StringBuilder();
         try {
             while ((ci = socket.getInputStream().read()) >= 0 && ci != 0) {
-                si += (char) ci;
+                si.append((char) ci);
             }
         } catch (IOException ex) {
-            //Logger.getLogger(NetClient.class.getName()).log(Level.SEVERE, null, ex);
             return "";
         }
-        return si;
+        return si.toString();
+    }
+
+    public static String GetRespFromSrvBig(Socket socket) {
+        StringBuilder strbld = new StringBuilder();
+
+        try {
+            try (InputStream is = socket.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 4096); InputStreamReader isr = new InputStreamReader(bis); BufferedReader br = new BufferedReader(isr)) {
+
+                char[] cbuf = new char[4096];
+
+                while (true) {
+                    int r = br.read(cbuf);
+
+                    if (r == -1) {
+                        break;
+                    }
+
+                    for (char c : cbuf) {
+                        if (c == 0) {
+                            break;
+                        }
+                        strbld.append(c);
+                    }
+                }
+
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(NetClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return strbld.toString();
     }
 
     public static Properties sendGetServerProps() {
@@ -212,5 +246,13 @@ public class NetClient {
             CloseSocket(socket);
             return 0;
         }
+    }
+
+    public static String sendGetLog(String filter) {
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetLog");
+        SendToSrv(socket, PDM.getHexString(filter));
+        String resp = PDM.getStringFromHex(GetRespFromSrvBig(socket));
+        return resp;
     }
 }

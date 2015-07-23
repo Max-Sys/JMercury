@@ -157,13 +157,11 @@ public class EMeter {
     }
 
     public String getMeterFlags() {
-        String flagsString = "";
-
+        StringBuilder flagsString = new StringBuilder();
         for (Map.Entry<String, String> kvp : meterFlags.entrySet()) {
-            flagsString += kvp.getKey() + ":" + kvp.getValue() + ";";
+            flagsString.append(kvp.getKey()).append(":").append(kvp.getValue()).append(";");
         }
-
-        return flagsString;
+        return flagsString.toString();
     }
 
     public String getMeterFlag(String flagName) {

@@ -22,7 +22,7 @@ public class Main {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        STL stl = new STL();
+        //STL stl = new STL();
         STL.Log(Vars.Version + " started.");
         System.out.println(Vars.Version + " started.");
 
@@ -103,7 +103,6 @@ public class Main {
                     if (ans.toLowerCase().equals("y")) {
                         Vars.serverID = pdm.executeNonQueryAI("em", "INSERT INTO servers (`name`, hide) VALUES ('" + PDM.getHexString(servername) + "', 0)");
                     } else {
-                        STL.Close();
                         System.exit(-1);
                     }
                 }
@@ -203,7 +202,6 @@ public class Main {
                 if (isNewServer || Vars.serverID == -1) {
                     System.out.println("This server is not configured properly!");
                     System.out.println("Use --configure switch.");
-                    STL.Close();
                     System.exit(-1);
                     return;
                 }
