@@ -1,7 +1,18 @@
 package org.maxsys.jmercury.client;
 
 import java.awt.Image;
-import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFrame;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.data.JRMapArrayDataSource;
+import net.sf.jasperreports.view.JRViewer;
+import org.maxsys.calendarlib.CalendarDialog;
 
 public class MainFrame extends javax.swing.JFrame {
 
@@ -185,31 +196,76 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        NetClient.SetServerAddress(jTextField1.getText());
-
-        Socket socket = NetClient.GetNewSocket();
-        NetClient.SendToSrv(socket, "getStatus");
-        String si = NetClient.GetRespFromSrv(socket);
-        NetClient.CloseSocket(socket);
-
-        String[] sss = si.split("\n");
-        System.out.println(sss.length);
-
-        System.out.println(si);
-
-        System.out.println("===");
-
-        for (String s : sss) {
-            System.out.println("-> " + s);
-        }
-
-        System.out.println("===");
-
-        jTextArea1.setText(si);
+       CalendarDialog dlg = new CalendarDialog(this);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
 
+        ArrayList<Map> lrr = new ArrayList<>();
+
+        Map hm1 = new HashMap();
+        hm1.put("GroupName", "Коттедж №1");
+        hm1.put("MeterName", "Коттедж №1 - 1");
+        hm1.put("MeterSN", "7078099");
+        hm1.put("Aplus1", "6803,28");
+        hm1.put("Aplus2", "7040,05");
+        hm1.put("Aplus21", "123,55");
+        hm1.put("MeterKi", "20");
+        hm1.put("Aplus21Ki", "23746,77");
+        hm1.put("AplusGroupSum", "1111111");
+        lrr.add(hm1);
+        Map hm2 = new HashMap();
+        hm2.put("GroupName", "Коттедж №1");
+        hm2.put("MeterName", "Коттедж №1 - 2");
+        hm2.put("MeterSN", "70780123");
+        hm2.put("Aplus1", "10451,10");
+        hm2.put("Aplus2", "10871,07");
+        hm2.put("AplusGroupSum", "1111111");
+        lrr.add(hm2);
+        Map hm3 = new HashMap();
+        hm3.put("GroupName", "Коттедж №2");
+        hm3.put("MeterName", "Коттедж №2 - 1");
+        hm3.put("MeterSN", "7078567");
+        hm3.put("Aplus1", "12451,10");
+        hm3.put("Aplus2", "12361,07");
+        hm3.put("AplusGroupSum", "2222222");
+        lrr.add(hm3);
+        Map hm4 = new HashMap();
+        hm4.put("GroupName", "Коттедж №2");
+        hm4.put("MeterName", "Коттедж №2 - 2");
+        hm4.put("MeterSN", "70786785");
+        hm4.put("Aplus1", "4451,1");
+        hm4.put("Aplus2", "5361,0");
+        hm4.put("AplusGroupSum", "2222222");
+        lrr.add(hm4);
+
+        Map pm = new HashMap<>();
+        pm.put("Title_1_date", "май 2015");
+        pm.put("AplusSumAll", "1234567890");
+
+        Map[] reportRows = new Map[lrr.size()];
+        reportRows = lrr.toArray(reportRows);
+
+        JRMapArrayDataSource dataSource = new JRMapArrayDataSource(reportRows);
+
+        JasperPrint jp = null;
+        try {
+            jp = JasperFillManager.fillReport(App.class.getResourceAsStream("/org/maxsys/jmercury/client/resources/potreb.jasper"), pm, dataSource);
+        } catch (JRException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        JRViewer jrv = new JRViewer(jp);
+
+        JFrame frame = new JFrame("Report test");
+        frame.getContentPane().add(jrv);
+        int w = java.awt.Toolkit.getDefaultToolkit().getScreenSize().width - 100;
+        int h = java.awt.Toolkit.getDefaultToolkit().getScreenSize().height - 100;
+        frame.setSize(w, h);
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        frame.setVisible(true);
+        jrv.setFitPageZoomRatio();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -50,40 +50,5 @@ public class App {
         MainFrame frm = new MainFrame();
         frm.setLocationRelativeTo(null);
         frm.setVisible(true);
-
-//        Socket socket;
-//        try {
-//            socket = new Socket(args[0], 4545);
-//
-//            socket.getOutputStream().write("getStatus\000".getBytes());
-//            try {
-//                Thread.sleep(50);
-//            } catch (InterruptedException ex) {
-//                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-//
-//            int ci;
-//            String si = "";
-//            while ((ci = socket.getInputStream().read()) >= 0 && ci != 0) {
-//                si += (char) ci;
-//            }
-//            System.out.println(si.length());
-//            String[] sss = si.split("\n");
-//            System.out.println(sss.length);
-//
-//            System.out.println(si);
-//
-//            System.out.println("===");
-//
-//            for (String s : sss) {
-//                System.out.println("-> " + s);
-//            }
-//
-//            System.out.println("===");
-//
-//            socket.close();
-//        } catch (IOException ex) {
-//            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-//        }
     }
 }
