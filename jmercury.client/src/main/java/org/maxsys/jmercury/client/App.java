@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 public class App {
 
@@ -47,8 +48,24 @@ public class App {
 
         Vars.LoadProperties();
 
-        MainFrame frm = new MainFrame();
-        frm.setLocationRelativeTo(null);
-        frm.setVisible(true);
+        if (Vars.prop.getProperty("ServerAddr") == null || Vars.prop.getProperty("ServerPort") == null) {
+            OptionsDialog dlg = new OptionsDialog(null, true);
+            dlg.setLocationRelativeTo(null);
+            dlg.setVisible(true);
+        }
+
+        String status = NetClient.sendGetServerStatus();
+        if (status.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Невозможно подключиться к серверу!");
+            Vars.prop.remove("ServerAddr");
+            Vars.prop.remove("ServerPort");
+            Vars.SaveProperties();
+        } else {
+            System.out.println("Подключаемся:");
+            System.out.println(status);
+            MainFrame frm = new MainFrame();
+            frm.setLocationRelativeTo(null);
+            frm.setVisible(true);
+        }
     }
 }

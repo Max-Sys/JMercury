@@ -14,8 +14,13 @@ import org.maxsys.dblib.PDM;
 public class NetClient {
 
     public static Socket GetNewSocket() {
+        String srv = Vars.prop.getProperty("ServerAddr");
+        if (srv == null) {
+            return null;
+        }
+        int port = Integer.valueOf(Vars.prop.getProperty("ServerPort"));
         try {
-            Socket newsocket = new Socket("localhost", 4545);
+            Socket newsocket = new Socket(srv, port);
             return newsocket;
         } catch (IOException ex) {
             Logger.getLogger(NetClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -34,7 +39,7 @@ public class NetClient {
     public static void SendToSrv(Socket socket, String data) {
         try {
             socket.getOutputStream().write((data + "\000").getBytes());
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             Logger.getLogger(NetClient.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -46,7 +51,7 @@ public class NetClient {
             while ((ci = socket.getInputStream().read()) >= 0 && ci != 0) {
                 si.append((char) ci);
             }
-        } catch (IOException ex) {
+        } catch (IOException | NullPointerException ex) {
             return "";
         }
         return si.toString();
@@ -81,6 +86,14 @@ public class NetClient {
         }
 
         return strbld.toString();
+    }
+
+    public static String sendGetServerStatus() {
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "getStatus");
+        String resp = GetRespFromSrv(socket);
+        CloseSocket(socket);
+        return resp;
     }
 
     public static Properties sendGetServerProps() {
