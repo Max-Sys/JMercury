@@ -838,6 +838,11 @@ public class EMeter {
         return new AplusRplus(aplus, rplus);
     }
 
+    /**
+     * Moves the address forward.
+     * @param month 1 = January / 12 = December
+     * @return AplusRplus
+     */
     public AplusRplus getAplusRplusMonthBegining(int month) {
         double aplus = 0d;
         double rplus = 0d;

@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.smartcardio.ATR;
 import org.maxsys.dblib.PDM;
 
 public class NetClient {
@@ -54,32 +55,13 @@ public class NetClient {
 
     public static String GetRespFromSrvBig(Socket socket) {
         StringBuilder strbld = new StringBuilder();
-
         try {
             try (InputStream is = socket.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 4096); InputStreamReader isr = new InputStreamReader(bis); BufferedReader br = new BufferedReader(isr)) {
-
-                char[] cbuf = new char[4096];
-
-                while (true) {
-                    int r = br.read(cbuf);
-
-                    if (r == -1) {
-                        break;
-                    }
-
-                    for (char c : cbuf) {
-                        if (c == 0) {
-                            break;
-                        }
-                        strbld.append(c);
-                    }
-                }
-
+                strbld.append(br.readLine());
             }
         } catch (IOException ex) {
             Logger.getLogger(NetClient.class.getName()).log(Level.SEVERE, null, ex);
         }
-
         return strbld.toString();
     }
 
@@ -252,7 +234,11 @@ public class NetClient {
         Socket socket = GetNewSocket();
         SendToSrv(socket, "GetLog");
         SendToSrv(socket, PDM.getHexString(filter));
-        String resp = PDM.getStringFromHex(GetRespFromSrvBig(socket));
+        String resphs = GetRespFromSrvBig(socket);
+        String resp = PDM.getStringFromHex(resphs);
+        if (resp.contains("HEX parsing error")) {
+            System.out.println("HEX parsing error!!!");
+        }
         return resp;
     }
 }
