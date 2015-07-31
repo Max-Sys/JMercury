@@ -2,6 +2,7 @@ package org.maxsys.jmercury.client;
 
 import java.awt.Image;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -196,7 +197,13 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-       CalendarDialog dlg = new CalendarDialog(this);
+        CalendarDialog dlg = new CalendarDialog(this, "ru");
+        Calendar ca = dlg.getCalendar();
+        if (ca != null) {
+            System.out.println("ca = " + ca.getTime());
+        } else {
+            System.out.println("null!");
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
