@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.smartcardio.ATR;
 import org.maxsys.dblib.PDM;
 
 public class NetClient {

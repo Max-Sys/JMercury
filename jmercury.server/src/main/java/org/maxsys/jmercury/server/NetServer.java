@@ -108,7 +108,11 @@ public class NetServer implements Runnable {
         msrv = new MeterServer();
         msrvt = new Thread(msrv);
         msrvt.start();
-        msrv.setMsvrPaused(false);
+        if (Vars.isConsole) {
+            msrv.setMsvrPaused(false);
+        } else {
+            msrv.setMsvrPaused(true);
+        }
 
         ServerSocket ssocket = null;
 

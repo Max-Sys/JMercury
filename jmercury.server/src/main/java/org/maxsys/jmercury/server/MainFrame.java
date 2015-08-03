@@ -158,8 +158,6 @@ public class MainFrame extends javax.swing.JFrame {
 
         if (Vars.isLocal) {
             setTitle(Vars.Version + " - " + Vars.prop.getProperty("Servername") + " (local mode)");
-            NetClient.sendMsvrRun();
-            NetClient.sendMsvrPause();
         } else {
             Properties props = NetClient.sendGetServerProps();
             Vars.serverID = Integer.valueOf(props.getProperty("ServerID"));
@@ -495,9 +493,9 @@ public class MainFrame extends javax.swing.JFrame {
             int errs = 0;
             while (errs < 10) {
                 try {
-                    aprpb = meter.getAplusRplusMonthBegining(6);
-                    //aprpe = meter.getAplusRplusMonthBegining(5);
-                    aprpe = meter.getAplusRplusFromReset();
+                    aprpb = meter.getAplusRplusMonthBegining(7);
+                    aprpe = meter.getAplusRplusMonthBegining(8);
+                    //aprpe = meter.getAplusRplusFromReset();
                     metersn = meter.getMeterSN();
 
                     if (aprpb == null || aprpe == null) {
