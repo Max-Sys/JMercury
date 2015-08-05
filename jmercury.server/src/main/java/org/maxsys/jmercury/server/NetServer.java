@@ -10,7 +10,9 @@ import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,14 +46,10 @@ public class NetServer implements Runnable {
     public static void SendToSrvBig(Socket socket, String data) {
         try {
             OutputStream os = socket.getOutputStream();
-            BufferedOutputStream bos = new BufferedOutputStream(os, 4096);
-            OutputStreamWriter isw = new OutputStreamWriter(bos);
-            BufferedWriter bw = new BufferedWriter(isw);
-            data += "\000";
-            bw.write(data, 0, data.length());
-            bw.close();
-            isw.close();
-            bos.close();
+            try (BufferedOutputStream bos = new BufferedOutputStream(os, 4096); OutputStreamWriter isw = new OutputStreamWriter(bos); BufferedWriter bw = new BufferedWriter(isw)) {
+                data += "\000";
+                bw.write(data, 0, data.length());
+            }
         } catch (IOException ex) {
             Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -183,6 +181,7 @@ public class NetServer implements Runnable {
                          GetSerialPortNames - взять имена портов.
                          GetMeterGroupNames - взять группы счетчиков с сервера.
                          GetMeterInfo - взять информацию о счетчике (имя, порт и т.д.)
+                         GetAvgArs - взять AvgARs с ... по
                          GetLog - взять лог.
                          */
                         switch (cmd) {
@@ -248,6 +247,9 @@ public class NetServer implements Runnable {
                                 break;
                             case "GetLog":
                                 GetLog(sock);
+                                break;
+                            case "GetAvgArs":
+                                GetAvgArs(sock);
                                 break;
                         }
                     }
@@ -369,6 +371,8 @@ public class NetServer implements Runnable {
                         mdstr.append(em.getMeterAddress() & 0xFF);
                         mdstr.append("\001");
                         mdstr.append(em.getMeterKi());
+                        mdstr.append("\001");
+                        mdstr.append(em.getMeterSN());
                         mdstr.append("\001");
                         mdstr.append("\n");
                     }
@@ -527,6 +531,49 @@ public class NetServer implements Runnable {
                     String filter = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
                     String log = STL.getLog(filter);
                     NetServer.SendToSrvBig(sock, PDM.getHexString(log));
+                }
+
+                private void GetAvgArs(Socket sock) {
+                    String paramstr = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+
+                    String[] params = paramstr.split("\n");
+                    int IdInDB = Integer.valueOf(params[0]);
+                    long longFrom = Long.valueOf(params[1]);
+                    long longTo = Long.valueOf(params[2]);
+
+                    Calendar caFrom = new GregorianCalendar();
+                    caFrom.setTimeInMillis(longFrom);
+                    Calendar caTo = new GregorianCalendar();
+                    caTo.setTimeInMillis(longTo);
+
+                    StringBuilder resp = new StringBuilder();
+
+                    PDM pdm = new PDM();
+                    String sql = "SELECT Aplus, Aminus, Rplus, Rminus, arPeriod, arDT FROM avgars WHERE hide = 0 AND meter_id = " + IdInDB + " AND arDT BETWEEN '" + PDM.getDTString(caFrom) + "' AND '" + PDM.getDTString(caTo) + "' ORDER BY arDT";
+                    ResultSet rs = pdm.getResultSet("em", sql);
+                    try {
+                        while (rs.next()) {
+                            //AvgAR aar = new AvgAR(ap, am, rp, rm, dt, period);
+                            resp.append(rs.getDouble("Aplus"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("Aminus"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("Rplus"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("Rminus"));
+                            resp.append("\001");
+                            resp.append(PDM.getCalendarFromTime(rs.getTimestamp("arDT")).getTimeInMillis());
+                            resp.append("\001");
+                            resp.append(rs.getInt("arPeriod"));
+                            resp.append("\001");
+                            resp.append("\n");
+                        }
+                    } catch (SQLException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    pdm.closeResultSet();
+
+                    NetServer.SendToSrvBig(sock, PDM.getHexString(resp.toString()));
                 }
             }
             );
