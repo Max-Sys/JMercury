@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,7 +34,7 @@ public class NetClient {
     public static void CloseSocket(Socket socket) {
         try {
             socket.close();
-        } catch (IOException ex) {
+        } catch (NullPointerException | IOException ex) {
             Logger.getLogger(NetClient.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -62,24 +65,10 @@ public class NetClient {
 
         try {
             try (InputStream is = socket.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 4096); InputStreamReader isr = new InputStreamReader(bis); BufferedReader br = new BufferedReader(isr)) {
-
-                char[] cbuf = new char[4096];
-
-                while (true) {
-                    int r = br.read(cbuf);
-
-                    if (r == -1) {
-                        break;
-                    }
-
-                    for (char c : cbuf) {
-                        if (c == 0) {
-                            break;
-                        }
-                        strbld.append(c);
-                    }
+                int r;
+                while ((r = br.read()) > 0) {
+                    strbld.append((char) r);
                 }
-
             }
         } catch (IOException ex) {
             Logger.getLogger(NetClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -113,38 +102,40 @@ public class NetClient {
         return props;
     }
 
-    public static boolean sendIsMsrvPaused() {
-        Socket socket = GetNewSocket();
-        SendToSrv(socket, "GetMsvrStatus");
-        String resp = GetRespFromSrv(socket);
-        CloseSocket(socket);
-        return resp.equals("Paused");
-    }
+    public static ArrayList<AvgAR> sendGetAvgArs(int IdInDB, Calendar caFrom, Calendar caTo) {
+        StringBuilder params = new StringBuilder();
+        params.append(IdInDB);
+        params.append("\n");
+        params.append(caFrom.getTimeInMillis());
+        params.append("\n");
+        params.append(caTo.getTimeInMillis());
+        params.append("\n");
 
-    public static void sendMsvrRun() {
         Socket socket = GetNewSocket();
-        SendToSrv(socket, "MsvrRun");
+        SendToSrv(socket, "GetAvgArs");
+        SendToSrv(socket, PDM.getHexString(params.toString()));
+        String resp = PDM.getStringFromHex(GetRespFromSrvBig(socket));
         CloseSocket(socket);
-    }
 
-    public static void sendMsvrPause() {
-        Socket socket = GetNewSocket();
-        SendToSrv(socket, "MsvrPause");
-        CloseSocket(socket);
-    }
+        ArrayList<AvgAR> avgars = new ArrayList<>();
+        if (!resp.isEmpty()) {
+            String[] aarss = resp.split("\n");
+            for (String aarstr : aarss) {
+                String[] aarparams = aarstr.split("\001");
+                double Aplus = Double.valueOf(aarparams[0]);
+                double Aminus = Double.valueOf(aarparams[1]);
+                double Rplus = Double.valueOf(aarparams[2]);
+                double Rminus = Double.valueOf(aarparams[3]);
+                Calendar arDT = new GregorianCalendar();
+                long arDTlong = Long.valueOf(aarparams[4]);
+                arDT.setTimeInMillis(arDTlong);
+                int arP = Integer.valueOf(aarparams[5]);
+                AvgAR avgar = new AvgAR(Aplus, Aminus, Rplus, Rminus, arDT, arP);
+                avgars.add(avgar);
+            }
+        }
 
-    public static void sendStopServer() {
-        Socket socket = GetNewSocket();
-        SendToSrv(socket, "StopServer");
-        CloseSocket(socket);
-    }
-
-    public static boolean sendRefreshMeters() {
-        Socket socket = GetNewSocket();
-        SendToSrv(socket, "RefreshMeters");
-        String resp = GetRespFromSrv(socket);
-        CloseSocket(socket);
-        return resp.equals("Ok");
+        return avgars;
     }
 
     public static String sendGetMetersData() {
@@ -200,36 +191,6 @@ public class NetClient {
         return resp;
     }
 
-    public static void sendSetMeterFlags(int idInDB, String flags) {
-        Socket socket = GetNewSocket();
-        SendToSrv(socket, "SetMeterFlags");
-        SendToSrv(socket, String.valueOf(idInDB));
-        SendToSrv(socket, PDM.getHexString(flags));
-        CloseSocket(socket);
-    }
-
-    public static void sendDeleteMeterFromDB(int idInDB) {
-        Socket socket = GetNewSocket();
-        SendToSrv(socket, "deleteMeterFromDB");
-        SendToSrv(socket, String.valueOf(idInDB));
-        CloseSocket(socket);
-    }
-
-    public static void sendUpdateMeterInDB(int idInDB, String sql) {
-        Socket socket = GetNewSocket();
-        SendToSrv(socket, "UpdateMeterInDB");
-        SendToSrv(socket, String.valueOf(idInDB));
-        SendToSrv(socket, PDM.getHexString(sql));
-    }
-
-    public static String[] sendGetSerialPortNames() {
-        Socket socket = GetNewSocket();
-        SendToSrv(socket, "GetSerialPortNames");
-        String resp = PDM.getStringFromHex(GetRespFromSrv(socket));
-        CloseSocket(socket);
-        return resp.split("\n");
-    }
-
     public static IntString[] sendGetMeterGroupNames() {
         Socket socket = GetNewSocket();
         SendToSrv(socket, "GetMeterGroupNames");
@@ -247,20 +208,6 @@ public class NetClient {
         return iss;
     }
 
-    public static int sendNonQuerySQL(String sql, boolean ai) {
-        Socket socket = GetNewSocket();
-        if (ai) {
-            SendToSrv(socket, "NonQuerySQLai");
-            SendToSrv(socket, PDM.getHexString(sql));
-            return Integer.valueOf(GetRespFromSrv(socket));
-        } else {
-            SendToSrv(socket, "NonQuerySQL");
-            SendToSrv(socket, PDM.getHexString(sql));
-            CloseSocket(socket);
-            return 0;
-        }
-    }
-
     public static String sendGetLog(String filter) {
         Socket socket = GetNewSocket();
         SendToSrv(socket, "GetLog");
@@ -268,4 +215,5 @@ public class NetClient {
         String resp = PDM.getStringFromHex(GetRespFromSrvBig(socket));
         return resp;
     }
+
 }
