@@ -1,10 +1,6 @@
 package org.maxsys.jmercury.client;
 
 import java.awt.Image;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -15,6 +11,8 @@ import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
@@ -38,7 +36,8 @@ public class MainFrame extends javax.swing.JFrame {
 
         jSplitPane1.setDividerLocation(0.4);
 
-        setTitle(Vars.Version);
+        Properties srvProps = NetClient.sendGetServerProps();
+        setTitle(Vars.Version + " - подключено к " + srvProps.getProperty("Servername"));
         Image icon = new javax.swing.ImageIcon(getClass().getResource("/org/maxsys/jmercury/client/resources/icon_1_1.png")).getImage();
         setIconImage(icon);
 
@@ -63,6 +62,10 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel4.setText(sdf.format(ca.getTime()));
 
         RefreshTree();
+
+        if (Vars.prop.getProperty("AutoT3") != null && Vars.prop.getProperty("AutoT3").toLowerCase().equals("true")) {
+            jCheckBoxMenuItem1.setSelected(true);
+        }
     }
 
     private void RefreshTree() {
@@ -174,7 +177,6 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
-        jCheckBox1 = new javax.swing.JCheckBox();
         jButton2 = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
@@ -187,6 +189,7 @@ public class MainFrame extends javax.swing.JFrame {
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
+        jCheckBoxMenuItem1 = new javax.swing.JCheckBoxMenuItem();
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenu3 = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
@@ -213,7 +216,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 553, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 557, Short.MAX_VALUE)
         );
 
         jSplitPane1.setLeftComponent(jPanel1);
@@ -238,6 +241,7 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel2.setText("с");
 
         jLabel4.setText("---");
+        jLabel4.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         jLabel4.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jLabel4MouseClicked(evt);
@@ -247,6 +251,7 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel5.setText("по");
 
         jLabel6.setText("---");
+        jLabel6.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         jLabel6.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jLabel6MouseClicked(evt);
@@ -261,14 +266,8 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        jCheckBox1.setText("Автообновление");
-        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox1ActionPerformed(evt);
-            }
-        });
-
         jButton2.setText("График");
+        jButton2.setEnabled(false);
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton2ActionPerformed(evt);
@@ -295,8 +294,6 @@ public class MainFrame extends javax.swing.JFrame {
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jCheckBox1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButton2)))
                 .addContainerGap())
@@ -315,10 +312,9 @@ public class MainFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
-                    .addComponent(jCheckBox1)
                     .addComponent(jButton2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 425, Short.MAX_VALUE)
+                .addComponent(jScrollPane4)
                 .addContainerGap())
         );
 
@@ -384,7 +380,7 @@ public class MainFrame extends javax.swing.JFrame {
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 218, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -426,6 +422,14 @@ public class MainFrame extends javax.swing.JFrame {
         jMenuBar1.add(jMenu1);
 
         jMenu2.setText("Сервис");
+
+        jCheckBoxMenuItem1.setText("Автообновление");
+        jCheckBoxMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBoxMenuItem1ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jCheckBoxMenuItem1);
 
         jMenuItem2.setText("Настройки...");
         jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
@@ -492,7 +496,7 @@ public class MainFrame extends javax.swing.JFrame {
         if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
             MeterInfo mi = (MeterInfo) tn.getUserObject();
             jLabel1.setText("Счетчик: " + mi.getGroup() + " / " + mi.getName() + ", серийный номер: " + mi.getSN() + ", Ki = " + mi.getKi());
-            if (jCheckBox1.isSelected()) {
+            if (jCheckBoxMenuItem1.isSelected()) {
                 if (jTabbedPane1.getSelectedIndex() == 0) {
                     RefreshTable3(mi.getIdInDB());
                 }
@@ -590,7 +594,7 @@ public class MainFrame extends javax.swing.JFrame {
         if (ca != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
             jLabel4.setText(sdf.format(ca.getTime()));
-            if (!jLabel1.getText().equals("---") && jCheckBox1.isSelected()) {
+            if (!jLabel1.getText().equals("---") && jCheckBoxMenuItem1.isSelected()) {
                 TreePath tp = jTree1.getSelectionPath();
                 if (tp != null) {
                     DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
@@ -609,7 +613,7 @@ public class MainFrame extends javax.swing.JFrame {
         if (ca != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
             jLabel6.setText(sdf.format(ca.getTime()));
-            if (!jLabel1.getText().equals("---") && jCheckBox1.isSelected()) {
+            if (!jLabel1.getText().equals("---") && jCheckBoxMenuItem1.isSelected()) {
                 TreePath tp = jTree1.getSelectionPath();
                 if (tp != null) {
                     DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
@@ -622,8 +626,60 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jLabel6MouseClicked
 
-    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
-        if (jCheckBox1.isSelected()) {
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        TreePath tp = jTree1.getSelectionPath();
+        if (tp != null) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
+            if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
+                MeterInfo mi = (MeterInfo) tn.getUserObject();
+                RefreshTable3(mi.getIdInDB());
+            }
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        if (jTable3.getRowCount() == 0) {
+            return;
+        }
+
+        TrendPlotter.setAvg(1);
+        TrendPlotter.removeTrends();
+
+        TreeMap<Calendar, Double> tAp = new TreeMap<>();
+        TreeMap<Calendar, Double> tRp = new TreeMap<>();
+
+        for (int rc = 0; rc < jTable3.getRowCount(); rc++) {
+            Object vr0 = jTable3.getValueAt(rc, 0);
+
+            String[] dt = vr0.toString().split(" ");
+            String[] dp = dt[0].split("\\.");
+            String[] tp = dt[1].split(":");
+
+            int y = Integer.valueOf(dp[2]);
+            int m = Integer.valueOf(dp[1]) - 1;
+            int d = Integer.valueOf(dp[0]);
+            int hh = Integer.valueOf(tp[0]);
+            int mm = Integer.valueOf(tp[1]);
+
+            Calendar ca = new GregorianCalendar(y, m, d, hh, mm);
+
+            Object vr1 = jTable3.getValueAt(rc, 1);
+            double Ap = Double.valueOf(vr1.toString().replace(',', '.'));
+
+            Object vr2 = jTable3.getValueAt(rc, 2);
+            double Rp = Double.valueOf(vr2.toString().replace(',', '.'));
+
+            tAp.put(ca, Ap);
+            tRp.put(ca, Rp);
+        }
+
+        AvgArsChartDialog dlg = new AvgArsChartDialog(this, true, tAp, tRp, jLabel1.getText());
+        dlg.setLocationRelativeTo(null);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jCheckBoxMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxMenuItem1ActionPerformed
+        if (jCheckBoxMenuItem1.isSelected()) {
             jButton1.setEnabled(false);
             if (!jLabel1.getText().equals("---")) {
                 TreePath tp = jTree1.getSelectionPath();
@@ -640,28 +696,14 @@ public class MainFrame extends javax.swing.JFrame {
                 jButton1.setEnabled(true);
             }
         }
-    }//GEN-LAST:event_jCheckBox1ActionPerformed
-
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        TreePath tp = jTree1.getSelectionPath();
-        if (tp != null) {
-            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
-            if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
-                MeterInfo mi = (MeterInfo) tn.getUserObject();
-                RefreshTable3(mi.getIdInDB());
-            }
-        }
-    }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        Calendar ca = Calendar.getInstance();
-        System.out.println("ca = " + ca.getTime());
-    }//GEN-LAST:event_jButton2ActionPerformed
+        Vars.prop.setProperty("AutoT3", String.valueOf(jCheckBoxMenuItem1.isSelected()));
+        Vars.SaveProperties();
+    }//GEN-LAST:event_jCheckBoxMenuItem1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
