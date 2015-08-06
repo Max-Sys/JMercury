@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -58,6 +60,7 @@ public class MainFrame extends javax.swing.JFrame {
                             jButton6.setEnabled(false);
                             jButton7.setEnabled(false);
                             jButton9.setEnabled(false);
+                            jButton11.setEnabled(false);
                         } else {
                             jButton2.setEnabled(true);
                             jButton4.setEnabled(false);
@@ -65,6 +68,7 @@ public class MainFrame extends javax.swing.JFrame {
                             jButton6.setEnabled(true);
                             jButton7.setEnabled(true);
                             jButton9.setEnabled(true);
+                            jButton11.setEnabled(true);
                         }
                     } else {
                         for (int r = 0; r < jTable1.getRowCount(); r++) {
@@ -216,6 +220,7 @@ public class MainFrame extends javax.swing.JFrame {
         jButton9 = new javax.swing.JButton();
         jButton10 = new javax.swing.JButton();
         jButton8 = new javax.swing.JButton();
+        jButton11 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
@@ -292,6 +297,13 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
+        jButton11.setText("Reset timers");
+        jButton11.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton11ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -299,7 +311,7 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 542, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 572, Short.MAX_VALUE)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jButton5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -310,6 +322,8 @@ public class MainFrame extends javax.swing.JFrame {
                         .addComponent(jButton8)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton10)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton11)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
@@ -326,7 +340,8 @@ public class MainFrame extends javax.swing.JFrame {
                     .addComponent(jButton7)
                     .addComponent(jButton9)
                     .addComponent(jButton10)
-                    .addComponent(jButton8))
+                    .addComponent(jButton8)
+                    .addComponent(jButton11))
                 .addContainerGap())
         );
 
@@ -609,9 +624,40 @@ public class MainFrame extends javax.swing.JFrame {
         dlg.setVisible(true);
     }//GEN-LAST:event_jButton8ActionPerformed
 
+    private void jButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton11ActionPerformed
+        for (int rc = 0; rc < jTable1.getRowCount(); rc++) {
+            int k = ((IntString) jTable1.getValueAt(rc, 0)).getInt();
+            String nflags = NetClient.sendGetMeterFlags(k);
+            String[] flags = nflags.split("\n");
+
+            HashMap<String, String> meterFlags = new HashMap<>();
+
+            String[] vks = flags[1].split(";");
+            for (String vk : vks) {
+                String[] valkey = vk.split(":");
+                if (valkey.length == 2) {
+                    meterFlags.put(valkey[0], valkey[1]);
+                }
+            }
+
+            long l1 = Long.valueOf(meterFlags.get("AvgARsTask_t"));
+            long l2 = Long.valueOf(meterFlags.get("AvgARsTask_i"));
+            l1 -= l2;
+            meterFlags.put("AvgARsTask_t", String.valueOf(l1));
+
+            StringBuilder flagsString = new StringBuilder();
+            for (Map.Entry<String, String> kvp : meterFlags.entrySet()) {
+                flagsString.append(kvp.getKey()).append(":").append(kvp.getValue()).append(";");
+            }
+
+            NetClient.sendSetMeterFlags(k, flagsString.toString());
+        }
+    }//GEN-LAST:event_jButton11ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton10;
+    private javax.swing.JButton jButton11;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
