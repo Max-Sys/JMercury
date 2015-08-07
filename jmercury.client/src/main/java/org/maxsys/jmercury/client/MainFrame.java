@@ -1,6 +1,7 @@
 package org.maxsys.jmercury.client;
 
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -34,12 +35,42 @@ public class MainFrame extends javax.swing.JFrame {
 
         setMinimumSize(getSize());
 
-        jSplitPane1.setDividerLocation(0.4);
+        jSplitPane1.setDividerLocation(0.33);
 
         Properties srvProps = NetClient.sendGetServerProps();
         setTitle(Vars.Version + " - подключено к " + srvProps.getProperty("Servername"));
         Image icon = new javax.swing.ImageIcon(getClass().getResource("/org/maxsys/jmercury/client/resources/icon_1_1.png")).getImage();
         setIconImage(icon);
+
+        DefaultTableModel tm1 = new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"Дата", "A+, кВт*ч", "R+, кВар*ч"}) {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        return false;
+                    }
+                };
+        jTable1.setModel(tm1);
+        jTable1.getColumnModel().getColumn(0).setPreferredWidth(400);
+        jTable1.getColumnModel().getColumn(1).setPreferredWidth(300);
+        jTable1.getColumnModel().getColumn(2).setPreferredWidth(300);
+
+        DefaultTableModel tm2 = new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"Дата", "A+ начало", "R+ начало", "A+ конец", "R+ конец", "A+", "R+"}) {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        return false;
+                    }
+                };
+        jTable2.setModel(tm2);
+        jTable2.getColumnModel().getColumn(0).setPreferredWidth(160);
+        jTable2.getColumnModel().getColumn(1).setPreferredWidth(140);
+        jTable2.getColumnModel().getColumn(2).setPreferredWidth(140);
+        jTable2.getColumnModel().getColumn(3).setPreferredWidth(140);
+        jTable2.getColumnModel().getColumn(4).setPreferredWidth(140);
+        jTable2.getColumnModel().getColumn(5).setPreferredWidth(140);
+        jTable2.getColumnModel().getColumn(6).setPreferredWidth(140);
 
         DefaultTableModel tm3 = new DefaultTableModel(
                 new Object[][]{},
@@ -153,9 +184,63 @@ public class MainFrame extends javax.swing.JFrame {
             tm.addRow(rowData);
         }
 
-        if (aars.size() > 0) {
+        jTable3.scrollRectToVisible(new Rectangle(jTable3.getCellRect(jTable3.getRowCount() - 1, 0, true)));
+
+        if (aars.size() > 0 && jTabbedPane1.getSelectedIndex() == 0) {
             jButton2.setEnabled(true);
         }
+    }
+
+    private void RefreshTable1(int IdInDB) {
+        DefaultTableModel tm = (DefaultTableModel) jTable1.getModel();
+        while (tm.getRowCount() > 0) {
+            tm.removeRow(0);
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy");
+        DecimalFormat df = new DecimalFormat("#.##");
+
+        ArrayList<AplusRplusD> aprpds = NetClient.sendGetApRpDays(IdInDB);
+
+        for (AplusRplusD aprpd : aprpds) {
+            Object[] rowData = new Object[3];
+            rowData[0] = sdf.format(aprpd.getAprpDate().getTime());
+            rowData[1] = df.format(aprpd.getAplus());
+            rowData[2] = df.format(aprpd.getRplus());
+            tm.addRow(rowData);
+        }
+
+        jTable1.scrollRectToVisible(new Rectangle(jTable1.getCellRect(jTable1.getRowCount() - 1, 0, true)));
+
+        if (aprpds.size() > 0 && jTabbedPane1.getSelectedIndex() == 1) {
+            jButton2.setEnabled(true);
+        }
+    }
+
+    private void RefreshTable2(int IdInDB) {
+        DefaultTableModel tm = (DefaultTableModel) jTable2.getModel();
+        while (tm.getRowCount() > 0) {
+            tm.removeRow(0);
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("LLLL yyyy");
+        DecimalFormat df = new DecimalFormat("#.##");
+
+        ArrayList<AplusRplusM> aprpms = NetClient.sendGetApRpMonths(IdInDB);
+
+        for (AplusRplusM aprpm : aprpms) {
+            Object[] rowData = new Object[7];
+            rowData[0] = sdf.format(aprpm.getAprpDate().getTime());
+            rowData[1] = df.format(aprpm.getAplusOnBeg());
+            rowData[2] = df.format(aprpm.getRplusOnBeg());
+            rowData[3] = df.format(aprpm.getAplusOnEnd());
+            rowData[4] = df.format(aprpm.getRplusOnEnd());
+            rowData[5] = df.format(aprpm.getAplus());
+            rowData[6] = df.format(aprpm.getRplus());
+            tm.addRow(rowData);
+        }
+
+        jTable2.scrollRectToVisible(new Rectangle(jTable2.getCellRect(jTable2.getRowCount() - 1, 0, true)));
     }
 
     @SuppressWarnings("unchecked")
@@ -167,17 +252,15 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTree1 = new javax.swing.JTree();
+        jPanel7 = new javax.swing.JPanel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         jTable3 = new javax.swing.JTable();
-        jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -185,6 +268,10 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel5 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         jTable2 = new javax.swing.JTable();
+        jPanel6 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -212,14 +299,20 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 557, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 627, Short.MAX_VALUE)
         );
 
         jSplitPane1.setLeftComponent(jPanel1);
+
+        jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                jTabbedPane1StateChanged(evt);
+            }
+        });
 
         jTable3.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -235,8 +328,6 @@ public class MainFrame extends javax.swing.JFrame {
         jTable3.setFocusable(false);
         jTable3.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane4.setViewportView(jTable3);
-
-        jLabel1.setText("---");
 
         jLabel2.setText("с");
 
@@ -258,22 +349,6 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        jButton1.setText("Обновить");
-        jButton1.setEnabled(false);
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-
-        jButton2.setText("График");
-        jButton2.setEnabled(false);
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -281,8 +356,7 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 711, Short.MAX_VALUE)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -291,30 +365,20 @@ public class MainFrame extends javax.swing.JFrame {
                         .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel6)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton2)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(jLabel4)
                     .addComponent(jLabel5)
                     .addComponent(jLabel6))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1)
-                    .addComponent(jButton2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 483, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -333,6 +397,8 @@ public class MainFrame extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        jTable1.setFocusable(false);
+        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(jTable1);
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
@@ -341,14 +407,14 @@ public class MainFrame extends javax.swing.JFrame {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 527, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 677, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 183, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 211, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -365,6 +431,8 @@ public class MainFrame extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        jTable2.setFocusable(false);
+        jTable2.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane3.setViewportView(jTable2);
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
@@ -373,14 +441,14 @@ public class MainFrame extends javax.swing.JFrame {
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 677, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 198, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -391,15 +459,15 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
@@ -407,7 +475,67 @@ public class MainFrame extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Накопленная энергия", jPanel3);
 
-        jSplitPane1.setRightComponent(jTabbedPane1);
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 735, Short.MAX_VALUE)
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 533, Short.MAX_VALUE)
+        );
+
+        jTabbedPane1.addTab("Отсечки", jPanel6);
+
+        jLabel1.setText("---");
+
+        jButton1.setText("Обновить");
+        jButton1.setEnabled(false);
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        jButton2.setText("График");
+        jButton2.setEnabled(false);
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
+        jPanel7.setLayout(jPanel7Layout);
+        jPanel7Layout.setHorizontalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel7Layout.createSequentialGroup()
+                        .addComponent(jButton1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton2)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.Alignment.TRAILING)
+        );
+        jPanel7Layout.setVerticalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1)
+                    .addComponent(jButton2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTabbedPane1))
+        );
+
+        jSplitPane1.setRightComponent(jPanel7);
 
         jMenu1.setText("Файл");
 
@@ -463,10 +591,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jSplitPane1)
-                .addContainerGap())
+            .addComponent(jSplitPane1)
         );
 
         pack();
@@ -497,10 +622,18 @@ public class MainFrame extends javax.swing.JFrame {
             MeterInfo mi = (MeterInfo) tn.getUserObject();
             jLabel1.setText("Счетчик: " + mi.getGroup() + " / " + mi.getName() + ", серийный номер: " + mi.getSN() + ", Ki = " + mi.getKi());
             if (jCheckBoxMenuItem1.isSelected()) {
-                if (jTabbedPane1.getSelectedIndex() == 0) {
-                    RefreshTable3(mi.getIdInDB());
-                }
+                RefreshTable1(mi.getIdInDB());
+                RefreshTable2(mi.getIdInDB());
+                RefreshTable3(mi.getIdInDB());
             } else {
+                DefaultTableModel tm1 = (DefaultTableModel) jTable1.getModel();
+                while (tm1.getRowCount() > 0) {
+                    tm1.removeRow(0);
+                }
+                DefaultTableModel tm2 = (DefaultTableModel) jTable2.getModel();
+                while (tm2.getRowCount() > 0) {
+                    tm2.removeRow(0);
+                }
                 DefaultTableModel tm3 = (DefaultTableModel) jTable3.getModel();
                 while (tm3.getRowCount() > 0) {
                     tm3.removeRow(0);
@@ -512,6 +645,14 @@ public class MainFrame extends javax.swing.JFrame {
         if (tn == null || tn.getUserObject().getClass() == String.class) {
             jLabel1.setText("---");
             jButton1.setEnabled(false);
+            DefaultTableModel tm1 = (DefaultTableModel) jTable1.getModel();
+            while (tm1.getRowCount() > 0) {
+                tm1.removeRow(0);
+            }
+            DefaultTableModel tm2 = (DefaultTableModel) jTable2.getModel();
+            while (tm2.getRowCount() > 0) {
+                tm2.removeRow(0);
+            }
             DefaultTableModel tm3 = (DefaultTableModel) jTable3.getModel();
             while (tm3.getRowCount() > 0) {
                 tm3.removeRow(0);
@@ -632,6 +773,8 @@ public class MainFrame extends javax.swing.JFrame {
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
             if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
                 MeterInfo mi = (MeterInfo) tn.getUserObject();
+                RefreshTable1(mi.getIdInDB());
+                RefreshTable2(mi.getIdInDB());
                 RefreshTable3(mi.getIdInDB());
             }
         }
@@ -642,40 +785,42 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
-        TrendPlotter.setAvg(1);
-        TrendPlotter.removeTrends();
+        if (jTabbedPane1.getSelectedIndex() == 0) {
+            TrendPlotter.setAvg(1);
+            TrendPlotter.removeTrends();
 
-        TreeMap<Calendar, Double> tAp = new TreeMap<>();
-        TreeMap<Calendar, Double> tRp = new TreeMap<>();
+            TreeMap<Calendar, Double> tAp = new TreeMap<>();
+            TreeMap<Calendar, Double> tRp = new TreeMap<>();
 
-        for (int rc = 0; rc < jTable3.getRowCount(); rc++) {
-            Object vr0 = jTable3.getValueAt(rc, 0);
+            for (int rc = 0; rc < jTable3.getRowCount(); rc++) {
+                Object vr0 = jTable3.getValueAt(rc, 0);
 
-            String[] dt = vr0.toString().split(" ");
-            String[] dp = dt[0].split("\\.");
-            String[] tp = dt[1].split(":");
+                String[] dt = vr0.toString().split(" ");
+                String[] dp = dt[0].split("\\.");
+                String[] tp = dt[1].split(":");
 
-            int y = Integer.valueOf(dp[2]);
-            int m = Integer.valueOf(dp[1]) - 1;
-            int d = Integer.valueOf(dp[0]);
-            int hh = Integer.valueOf(tp[0]);
-            int mm = Integer.valueOf(tp[1]);
+                int y = Integer.valueOf(dp[2]);
+                int m = Integer.valueOf(dp[1]) - 1;
+                int d = Integer.valueOf(dp[0]);
+                int hh = Integer.valueOf(tp[0]);
+                int mm = Integer.valueOf(tp[1]);
 
-            Calendar ca = new GregorianCalendar(y, m, d, hh, mm);
+                Calendar ca = new GregorianCalendar(y, m, d, hh, mm);
 
-            Object vr1 = jTable3.getValueAt(rc, 1);
-            double Ap = Double.valueOf(vr1.toString().replace(',', '.'));
+                Object vr1 = jTable3.getValueAt(rc, 1);
+                double Ap = Double.valueOf(vr1.toString().replace(',', '.'));
 
-            Object vr2 = jTable3.getValueAt(rc, 2);
-            double Rp = Double.valueOf(vr2.toString().replace(',', '.'));
+                Object vr2 = jTable3.getValueAt(rc, 2);
+                double Rp = Double.valueOf(vr2.toString().replace(',', '.'));
 
-            tAp.put(ca, Ap);
-            tRp.put(ca, Rp);
+                tAp.put(ca, Ap);
+                tRp.put(ca, Rp);
+            }
+
+            AvgArsChartDialog dlg = new AvgArsChartDialog(this, true, tAp, tRp, jLabel1.getText());
+            dlg.setLocationRelativeTo(null);
+            dlg.setVisible(true);
         }
-
-        AvgArsChartDialog dlg = new AvgArsChartDialog(this, true, tAp, tRp, jLabel1.getText());
-        dlg.setLocationRelativeTo(null);
-        dlg.setVisible(true);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jCheckBoxMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxMenuItem1ActionPerformed
@@ -687,6 +832,8 @@ public class MainFrame extends javax.swing.JFrame {
                     DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
                     if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
                         MeterInfo mi = (MeterInfo) tn.getUserObject();
+                        RefreshTable1(mi.getIdInDB());
+                        RefreshTable2(mi.getIdInDB());
                         RefreshTable3(mi.getIdInDB());
                     }
                 }
@@ -699,6 +846,16 @@ public class MainFrame extends javax.swing.JFrame {
         Vars.prop.setProperty("AutoT3", String.valueOf(jCheckBoxMenuItem1.isSelected()));
         Vars.SaveProperties();
     }//GEN-LAST:event_jCheckBoxMenuItem1ActionPerformed
+
+    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
+        jButton2.setEnabled(false);
+        if (jTabbedPane1.getSelectedIndex() == 0 && jTable3.getRowCount() > 0) {
+            jButton2.setEnabled(true);
+        }
+        if (jTabbedPane1.getSelectedIndex() == 1 && jTable1.getRowCount() > 0) {
+            jButton2.setEnabled(true);
+        }
+    }//GEN-LAST:event_jTabbedPane1StateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
@@ -722,6 +879,8 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jPanel7;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;

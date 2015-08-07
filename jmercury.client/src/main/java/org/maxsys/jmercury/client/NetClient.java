@@ -138,6 +138,56 @@ public class NetClient {
         return avgars;
     }
 
+    public static ArrayList<AplusRplusD> sendGetApRpDays(int IdInDB) {
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetApRpDays");
+        SendToSrv(socket, PDM.getHexString(String.valueOf(IdInDB)));
+        String resp = PDM.getStringFromHex(GetRespFromSrvBig(socket));
+        CloseSocket(socket);
+
+        ArrayList<AplusRplusD> aprpds = new ArrayList<>();
+        if (!resp.isEmpty()) {
+            for (String aprpdstr : resp.split("\n")) {
+                double Aplus = Double.valueOf(aprpdstr.split("\001")[0]);
+                double Rplus = Double.valueOf(aprpdstr.split("\001")[1]);
+                Calendar dayDT = new GregorianCalendar();
+                long dayDTlong = Long.valueOf(aprpdstr.split("\001")[2]);
+                dayDT.setTimeInMillis(dayDTlong);
+                AplusRplusD aprpd = new AplusRplusD(dayDT, Aplus, Rplus);
+                aprpds.add(aprpd);
+            }
+        }
+
+        return aprpds;
+    }
+
+    public static ArrayList<AplusRplusM> sendGetApRpMonths(int IdInDB) {
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetApRpMonths");
+        SendToSrv(socket, PDM.getHexString(String.valueOf(IdInDB)));
+        String resp = PDM.getStringFromHex(GetRespFromSrvBig(socket));
+        CloseSocket(socket);
+
+        ArrayList<AplusRplusM> aprpds = new ArrayList<>();
+        if (!resp.isEmpty()) {
+            for (String aprpdstr : resp.split("\n")) {
+                double Aplus = Double.valueOf(aprpdstr.split("\001")[0]);
+                double Rplus = Double.valueOf(aprpdstr.split("\001")[1]);
+                double AplusOnBeg = Double.valueOf(aprpdstr.split("\001")[2]);
+                double RplusOnBeg = Double.valueOf(aprpdstr.split("\001")[3]);
+                double AplusOnEnd = Double.valueOf(aprpdstr.split("\001")[4]);
+                double RplusOnEnd = Double.valueOf(aprpdstr.split("\001")[5]);
+                Calendar dayDT = new GregorianCalendar();
+                long dayDTlong = Long.valueOf(aprpdstr.split("\001")[6]);
+                dayDT.setTimeInMillis(dayDTlong);
+                AplusRplusM aprpm = new AplusRplusM(dayDT, Aplus, Rplus, AplusOnBeg, RplusOnBeg, AplusOnEnd, RplusOnEnd);
+                aprpds.add(aprpm);
+            }
+        }
+
+        return aprpds;
+    }
+
     public static String sendGetMetersData() {
         Socket socket = GetNewSocket();
         SendToSrv(socket, "getMetersData");
