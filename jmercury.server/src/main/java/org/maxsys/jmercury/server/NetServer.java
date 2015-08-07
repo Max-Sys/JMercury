@@ -182,6 +182,8 @@ public class NetServer implements Runnable {
                          GetMeterGroupNames - взять группы счетчиков с сервера.
                          GetMeterInfo - взять информацию о счетчике (имя, порт и т.д.)
                          GetAvgArs - взять AvgARs с ... по
+                         GetApRpDays - взять ApRp за дни
+                         GetApRpMonths - взять ApRp за месяцы
                          GetLog - взять лог.
                          */
                         switch (cmd) {
@@ -250,6 +252,12 @@ public class NetServer implements Runnable {
                                 break;
                             case "GetAvgArs":
                                 GetAvgArs(sock);
+                                break;
+                            case "GetApRpDays":
+                                GetApRpDays(sock);
+                                break;
+                            case "GetApRpMonths":
+                                GetApRpMonths(sock);
                                 break;
                         }
                     }
@@ -565,6 +573,68 @@ public class NetServer implements Runnable {
                             resp.append(PDM.getCalendarFromTime(rs.getTimestamp("arDT")).getTimeInMillis());
                             resp.append("\001");
                             resp.append(rs.getInt("arPeriod"));
+                            resp.append("\001");
+                            resp.append("\n");
+                        }
+                    } catch (SQLException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    pdm.closeResultSet();
+
+                    NetServer.SendToSrvBig(sock, PDM.getHexString(resp.toString()));
+                }
+
+                private void GetApRpDays(Socket sock) {
+                    String paramstr = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+                    int IdInDB = Integer.valueOf(paramstr);
+
+                    StringBuilder resp = new StringBuilder();
+
+                    PDM pdm = new PDM();
+                    String sql = "SELECT Aplus, Rplus, dayDT FROM daydata WHERE hide = 0 AND meter_id = " + IdInDB + " ORDER BY dayDT";
+                    ResultSet rs = pdm.getResultSet("em", sql);
+                    try {
+                        while (rs.next()) {
+                            resp.append(rs.getDouble("Aplus"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("Rplus"));
+                            resp.append("\001");
+                            resp.append(PDM.getCalendarFromTime(rs.getTimestamp("dayDT")).getTimeInMillis());
+                            resp.append("\001");
+                            resp.append("\n");
+                        }
+                    } catch (SQLException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    pdm.closeResultSet();
+
+                    NetServer.SendToSrvBig(sock, PDM.getHexString(resp.toString()));
+                }
+
+                private void GetApRpMonths(Socket sock) {
+                    String paramstr = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+                    int IdInDB = Integer.valueOf(paramstr);
+
+                    StringBuilder resp = new StringBuilder();
+
+                    PDM pdm = new PDM();
+                    String sql = "SELECT Aplus, Rplus, AplusOnBeg, RplusOnBeg, AplusOnEnd, RplusOnEnd, monthDT FROM monthdata WHERE hide = 0 AND meter_id = " + IdInDB + " ORDER BY monthDT";
+                    ResultSet rs = pdm.getResultSet("em", sql);
+                    try {
+                        while (rs.next()) {
+                            resp.append(rs.getDouble("Aplus"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("Rplus"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("AplusOnBeg"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("RplusOnBeg"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("AplusOnEnd"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("RplusOnEnd"));
+                            resp.append("\001");
+                            resp.append(PDM.getCalendarFromTime(rs.getTimestamp("monthDT")).getTimeInMillis());
                             resp.append("\001");
                             resp.append("\n");
                         }
