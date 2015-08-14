@@ -445,6 +445,23 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
 
+        EMeter g1 = new EMeter("Гостиница 1", "", 200, "COM23", 20, 0);
+        EMeter g2 = new EMeter("Гостиница 2", "", 200, "COM22", 21, 0);
+        
+        System.out.println("sn " + g2.getMeterSN());
+        System.out.println("июль beg " + g2.getAplusRplusMonthBegining(7));
+        System.out.println("июль end " + g2.getAplusRplusMonthBegining(8));
+        System.out.println("июль " + g2.getAplusRplusMonth(7));
+        
+        System.out.println("август beg " + g2.getAplusRplusMonthBegining(8));
+        System.out.println("август end " + g2.getAplusRplusFromReset());
+        System.out.println("август (?) " + g2.getAplusRplusMonth(8));
+        
+        
+        if (true) {
+            return;
+        }
+        
         BufferedWriter bw = null;
         try {
             try {

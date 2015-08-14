@@ -9,6 +9,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
@@ -184,6 +186,9 @@ public class NetServer implements Runnable {
                          GetAvgArs - взять AvgARs с ... по
                          GetApRpDays - взять ApRp за дни
                          GetApRpMonths - взять ApRp за месяцы
+                         GetMeterDiagram - взять данные для диаграммы
+                         GetMinMaxMonth - взять минимальный и максимальный Calendar в таблице месяцев
+                         GetForReport - взять ForReport
                          GetLog - взять лог.
                          */
                         switch (cmd) {
@@ -258,6 +263,15 @@ public class NetServer implements Runnable {
                                 break;
                             case "GetApRpMonths":
                                 GetApRpMonths(sock);
+                                break;
+                            case "GetMeterDiagram":
+                                GetMeterDiagram(sock);
+                                break;
+                            case "GetMinMaxMonth":
+                                GetMinMaxMonth(sock);
+                                break;
+                            case "GetForReport":
+                                GetForReport(sock);
                                 break;
                         }
                     }
@@ -381,6 +395,8 @@ public class NetServer implements Runnable {
                         mdstr.append(em.getMeterKi());
                         mdstr.append("\001");
                         mdstr.append(em.getMeterSN());
+                        mdstr.append("\001");
+                        mdstr.append(em.getMeterFlag("osv") == null ? "no" : em.getMeterFlag("osv"));
                         mdstr.append("\001");
                         mdstr.append("\n");
                     }
@@ -635,6 +651,150 @@ public class NetServer implements Runnable {
                             resp.append(rs.getDouble("RplusOnEnd"));
                             resp.append("\001");
                             resp.append(PDM.getCalendarFromTime(rs.getTimestamp("monthDT")).getTimeInMillis());
+                            resp.append("\001");
+                            resp.append("\n");
+                        }
+                    } catch (SQLException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    pdm.closeResultSet();
+
+                    NetServer.SendToSrvBig(sock, PDM.getHexString(resp.toString()));
+                }
+
+                private void GetMeterDiagram(Socket sock) {
+                    int ki = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    EMeter em = Vars.meters.get(ki);
+                    String busy = em.getMeterFlag("busy") == null ? "no" : em.getMeterFlag("busy");
+                    if (busy.equals("yes")) {
+                        NetServer.SendToSrv(sock, "busy");
+                        return;
+                    }
+
+                    em.setMeterFlag("busy", "yes");
+                    em.setMeterFlag("busy_timer", "60");
+
+                    String resp = ">>>";
+                    NetServer.SendToSrv(sock, resp);
+
+                    Calendar camt = em.getMeterTime();
+                    if (camt == null) {
+                        resp = "err";
+                    } else {
+                        resp = String.valueOf(camt.getTimeInMillis());
+                    }
+
+                    NetServer.SendToSrv(sock, resp);
+
+                    resp = String.valueOf(em.getU1());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getU2());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getU3());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getFreq());
+                    NetServer.SendToSrv(sock, resp);
+
+                    resp = String.valueOf(em.getI1());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getI2());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getI3());
+                    NetServer.SendToSrv(sock, resp);
+
+                    resp = String.valueOf(em.getP1());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getP2());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getP3());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getPsum());
+                    NetServer.SendToSrv(sock, resp);
+
+                    resp = String.valueOf(em.getQ1());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getQ2());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getQ3());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getQsum());
+                    NetServer.SendToSrv(sock, resp);
+
+                    resp = String.valueOf(em.getS1());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getS2());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getS3());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getSsum());
+                    NetServer.SendToSrv(sock, resp);
+
+                    resp = String.valueOf(em.getA12());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getA13());
+                    NetServer.SendToSrv(sock, resp);
+                    resp = String.valueOf(em.getA23());
+                    NetServer.SendToSrv(sock, resp);
+
+                    em.setMeterFlag("busy", "no");
+                    em.setMeterFlag("preosv", "no");
+                    em.setMeterFlag("osv", "no");
+                    em.setMeterFlag("statusstr", "");
+                }
+
+                private void GetMinMaxMonth(Socket sock) {
+                    PDM pdm = new PDM();
+                    Object[] row = pdm.getSingleRow("em", "SELECT MIN(monthDT), MAX(monthDT) FROM monthdata WHERE meter_id IN (SELECT meter_id FROM meters WHERE server_id = " + Vars.serverID + ")");
+                    if (row.length != 2) {
+                        NetServer.SendToSrv(sock, "");
+                        return;
+                    }
+                    Calendar c0 = PDM.getCalendarFromTime((Timestamp) row[0]);
+                    Calendar c1 = PDM.getCalendarFromTime((Timestamp) row[1]);
+                    String resp = String.valueOf(c0.getTimeInMillis()) + "\n" + String.valueOf(c1.getTimeInMillis());
+                    NetServer.SendToSrv(sock, PDM.getHexString(resp));
+                }
+
+                private void GetForReport(Socket sock) {
+                    int Year = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    int Month = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+
+                    PDM pdm = new PDM();
+                    String sql = "SELECT"
+                            + " metergroups.groupname AS GroupName"
+                            + ", meters.name AS MeterName"
+                            + ", meters.serial AS MeterSN"
+                            + ", monthdata.AplusOnBeg / meters.ki AS Aplus1"
+                            + ", monthdata.AplusOnEnd / meters.ki AS Aplus2"
+                            + ", (monthdata.AplusOnEnd / meters.ki) - (monthdata.AplusOnBeg / meters.ki) AS Aplus21"
+                            + ", meters.ki AS MeterKi"
+                            + ", monthdata.Aplus AS Aplus21Ki"
+                            + " FROM monthdata LEFT JOIN meters ON monthdata.meter_id = meters.k LEFT JOIN metergroups ON meters.group_id = metergroups.k"
+                            + " WHERE meters.hide = 0 AND monthdata.hide = 0 AND metergroups.hide = 0"
+                            + " AND YEAR(monthdata.monthDT) = " + Year
+                            + " AND MONTH(monthdata.monthDT) = " + Month
+                            + " AND meters.server_id = " + Vars.serverID
+                            + " ORDER BY metergroups.groupname, meters.name";
+                    ResultSet rs = pdm.getResultSet("em", sql);
+                    StringBuilder resp = new StringBuilder();
+                    DecimalFormat df = new DecimalFormat("#.##");
+                    try {
+                        while (rs.next()) {
+                            resp.append(PDM.getStringFromHex(rs.getString("GroupName")));
+                            resp.append("\001");
+                            resp.append(PDM.getStringFromHex(rs.getString("MeterName")));
+                            resp.append("\001");
+                            resp.append(rs.getString("MeterSN"));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus1")));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus2")));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus21")));
+                            resp.append("\001");
+                            resp.append(rs.getInt("MeterKi"));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus21Ki")));
                             resp.append("\001");
                             resp.append("\n");
                         }

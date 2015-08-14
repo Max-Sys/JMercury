@@ -188,6 +188,7 @@ public class NetClient {
         SendToSrv(socket, "UpdateMeterInDB");
         SendToSrv(socket, String.valueOf(idInDB));
         SendToSrv(socket, PDM.getHexString(sql));
+        CloseSocket(socket);
     }
 
     public static String[] sendGetSerialPortNames() {
@@ -235,6 +236,7 @@ public class NetClient {
         SendToSrv(socket, PDM.getHexString(filter));
         String resphs = GetRespFromSrvBig(socket);
         String resp = PDM.getStringFromHex(resphs);
+        CloseSocket(socket);
         if (resp.contains("HEX parsing error")) {
             System.out.println("HEX parsing error!!!");
         }
