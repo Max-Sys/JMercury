@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -263,7 +264,80 @@ public class NetClient {
         SendToSrv(socket, "GetLog");
         SendToSrv(socket, PDM.getHexString(filter));
         String resp = PDM.getStringFromHex(GetRespFromSrvBig(socket));
+        CloseSocket(socket);
         return resp;
     }
 
+    public static Calendar[] sendGetMinMaxMonth() {
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetMinMaxMonth");
+        String resp = PDM.getStringFromHex(GetRespFromSrv(socket));
+        CloseSocket(socket);
+        if (resp.isEmpty()) {
+            return null;
+        }
+        String[] longs = resp.split("\n");
+        if (longs.length != 2) {
+            return null;
+        }
+
+        Calendar ca0 = new GregorianCalendar();
+        ca0.setTimeInMillis(Long.valueOf(longs[0]));
+        Calendar ca1 = new GregorianCalendar();
+        ca1.setTimeInMillis(Long.valueOf(longs[1]));
+
+        Calendar[] cas = new Calendar[2];
+        cas[0] = ca0;
+        cas[1] = ca1;
+
+        return cas;
+    }
+
+    public static ForReport[] sendGetForReport(int Year, int Month) {
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetForReport");
+        SendToSrv(socket, String.valueOf(Year));
+        SendToSrv(socket, String.valueOf(Month));
+        String resp = PDM.getStringFromHex(GetRespFromSrv(socket));
+        CloseSocket(socket);
+
+        if (resp == null || resp.isEmpty()) {
+            return null;
+        }
+
+        String[] resps = resp.split("\n");
+        if (resps.length == 0) {
+            return null;
+        }
+
+        ForReport[] frs = new ForReport[resps.length];
+        int frsk = 0;
+        for (String frss : resps) {
+            String[] frssf = frss.split("\001");
+            String GroupName = frssf[0];
+            String MeterName = frssf[1];
+            String MeterSN = frssf[2];
+            String Aplus1 = frssf[3];
+            String Aplus2 = frssf[4];
+            String Aplus21 = frssf[5];
+            String MeterKi = frssf[6];
+            String Aplus21Ki = frssf[7];
+            frs[frsk] = new ForReport(GroupName, MeterName, MeterSN, Aplus1, Aplus2, Aplus21, MeterKi, Aplus21Ki, "0");
+            frsk++;
+        }
+
+        DecimalFormat df = new DecimalFormat("#.##");
+        for (ForReport fr : frs) {
+            double AplusGroupSum = 0;
+            for (ForReport subfr : frs) {
+                if (fr.getGroupName().equals(subfr.getGroupName())) {
+                    double Aplus21Ki = Double.valueOf(subfr.getAplus21Ki().replace(',', '.'));
+                    AplusGroupSum += Aplus21Ki;
+                }
+            }
+            fr.setAplusGroupSum(df.format(AplusGroupSum));
+        }
+
+        return frs;
+    }
 }

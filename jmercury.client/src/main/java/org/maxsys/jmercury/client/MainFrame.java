@@ -5,37 +5,22 @@ import java.awt.Rectangle;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.data.JRMapArrayDataSource;
-import net.sf.jasperreports.view.JRViewer;
 import org.maxsys.calendarlib.CalendarDialog;
 
 public class MainFrame extends javax.swing.JFrame {
 
     public MainFrame() {
         initComponents();
-
-        setMinimumSize(getSize());
-
-        jSplitPane1.setDividerLocation(0.33);
 
         Properties srvProps = NetClient.sendGetServerProps();
         setTitle(Vars.Version + " - подключено к " + srvProps.getProperty("Servername"));
@@ -44,7 +29,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         DefaultTableModel tm1 = new DefaultTableModel(
                 new Object[][]{},
-                new String[]{"Дата", "A+, кВт*ч", "R+, кВар*ч"}) {
+                new String[]{"Дата (дни)", "A+, кВт*ч", "R+, кВар*ч"}) {
                     @Override
                     public boolean isCellEditable(int row, int column) {
                         return false;
@@ -57,7 +42,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         DefaultTableModel tm2 = new DefaultTableModel(
                 new Object[][]{},
-                new String[]{"Дата", "A+ начало", "R+ начало", "A+ конец", "R+ конец", "A+", "R+"}) {
+                new String[]{"Дата (мес)", "A+ начало", "A+ конец", "A+", "R+ начало", "R+ конец", "R+"}) {
                     @Override
                     public boolean isCellEditable(int row, int column) {
                         return false;
@@ -97,9 +82,32 @@ public class MainFrame extends javax.swing.JFrame {
         if (Vars.prop.getProperty("AutoT3") != null && Vars.prop.getProperty("AutoT3").toLowerCase().equals("true")) {
             jCheckBoxMenuItem1.setSelected(true);
         }
+
+        jSplitPane1.setDividerLocation(0.33);
+        pack();
+        setMinimumSize(getSize());
     }
 
     private void RefreshTree() {
+        jLabel1.setText("---");
+
+        DefaultTableModel tm1 = (DefaultTableModel) jTable1.getModel();
+        while (tm1.getRowCount() > 0) {
+            tm1.removeRow(0);
+        }
+        DefaultTableModel tm2 = (DefaultTableModel) jTable2.getModel();
+        while (tm2.getRowCount() > 0) {
+            tm2.removeRow(0);
+        }
+        DefaultTableModel tm3 = (DefaultTableModel) jTable3.getModel();
+        while (tm3.getRowCount() > 0) {
+            tm3.removeRow(0);
+        }
+
+        jButton1.setEnabled(false);
+        jButton2.setEnabled(false);
+        jButton3.setEnabled(false);
+
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Группы");
 
         String metersData = NetClient.sendGetMetersData();
@@ -108,28 +116,28 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
         String[] metersDatas = metersData.split("\n");
-        Arrays.sort(metersDatas, new Comparator<Object>() {
-
-            @Override
-            public int compare(Object o1, Object o2) {
-//                int i1 = Integer.valueOf(o1.toString().split("\001")[0]);
-//                int i2 = Integer.valueOf(o2.toString().split("\001")[0]);
-//                if (i1 == i2) {
-//                    return 0;
-//                }
-//                if (i1 > i2) {
-//                    return 1;
-//                } else {
-//                    return -1;
-//                }
-                return o1.toString().split("\001")[2].compareToIgnoreCase(o2.toString().split("\001")[2]);
-            }
-        });
+//        Arrays.sort(metersDatas, new Comparator<Object>() {
+//
+//            @Override
+//            public int compare(Object o1, Object o2) {
+////                int i1 = Integer.valueOf(o1.toString().split("\001")[0]);
+////                int i2 = Integer.valueOf(o2.toString().split("\001")[0]);
+////                if (i1 == i2) {
+////                    return 0;
+////                }
+////                if (i1 > i2) {
+////                    return 1;
+////                } else {
+////                    return -1;
+////                }
+//                return o1.toString().split("\001")[2].compareToIgnoreCase(o2.toString().split("\001")[2]);
+//            }
+//        });
 
         metersDatas:
         for (String mData : metersDatas) {
             String[] mparams = mData.split("\001");
-            MeterInfo meterInfo = new MeterInfo(Integer.valueOf(mparams[0]), mparams[1], mparams[2], Integer.valueOf(mparams[5]), mparams[6]);
+            MeterInfo meterInfo = new MeterInfo(Integer.valueOf(mparams[0]), mparams[1], mparams[2], Integer.valueOf(mparams[5]), mparams[6], mparams[7]);
             for (Enumeration e = rootNode.children(); e.hasMoreElements();) {
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.nextElement();
                 if (((String) node.getUserObject()).equals(meterInfo.getGroup())) {
@@ -232,10 +240,10 @@ public class MainFrame extends javax.swing.JFrame {
             Object[] rowData = new Object[7];
             rowData[0] = sdf.format(aprpm.getAprpDate().getTime());
             rowData[1] = df.format(aprpm.getAplusOnBeg());
-            rowData[2] = df.format(aprpm.getRplusOnBeg());
-            rowData[3] = df.format(aprpm.getAplusOnEnd());
-            rowData[4] = df.format(aprpm.getRplusOnEnd());
-            rowData[5] = df.format(aprpm.getAplus());
+            rowData[2] = df.format(aprpm.getAplusOnEnd());
+            rowData[3] = df.format(aprpm.getAplus());
+            rowData[4] = df.format(aprpm.getRplusOnBeg());
+            rowData[5] = df.format(aprpm.getRplusOnEnd());
             rowData[6] = df.format(aprpm.getRplus());
             tm.addRow(rowData);
         }
@@ -262,20 +270,21 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
-        jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
-        jPanel5 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         jTable2 = new javax.swing.JTable();
         jPanel6 = new javax.swing.JPanel();
+        jLabel7 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
+        jMenuItem4 = new javax.swing.JMenuItem();
         jCheckBoxMenuItem1 = new javax.swing.JCheckBoxMenuItem();
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenu3 = new javax.swing.JMenu();
@@ -356,7 +365,7 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 711, Short.MAX_VALUE)
+                    .addComponent(jScrollPane4)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -365,7 +374,7 @@ public class MainFrame extends javax.swing.JFrame {
                         .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel6)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 640, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -384,8 +393,6 @@ public class MainFrame extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Данные по часам", jPanel2);
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Энергия по суткам"));
-
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -400,25 +407,6 @@ public class MainFrame extends javax.swing.JFrame {
         jTable1.setFocusable(false);
         jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(jTable1);
-
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 677, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 211, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder("Энергия по месяцам"));
 
         jTable2.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -435,23 +423,6 @@ public class MainFrame extends javax.swing.JFrame {
         jTable2.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane3.setViewportView(jTable2);
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 677, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 198, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -459,31 +430,39 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 711, Short.MAX_VALUE)
+                    .addComponent(jScrollPane3))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
         jTabbedPane1.addTab("Накопленная энергия", jPanel3);
 
+        jLabel7.setText("Тут будут отсечки...");
+
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 735, Short.MAX_VALUE)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel7)
+                .addContainerGap(612, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 533, Short.MAX_VALUE)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel7)
+                .addContainerGap(505, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Отсечки", jPanel6);
@@ -506,6 +485,14 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
+        jButton3.setText("Диаграмма");
+        jButton3.setEnabled(false);
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -518,6 +505,8 @@ public class MainFrame extends javax.swing.JFrame {
                         .addComponent(jButton1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton3)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
             .addComponent(jTabbedPane1, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -530,7 +519,8 @@ public class MainFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
-                    .addComponent(jButton2))
+                    .addComponent(jButton2)
+                    .addComponent(jButton3))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jTabbedPane1))
         );
@@ -551,7 +541,15 @@ public class MainFrame extends javax.swing.JFrame {
 
         jMenu2.setText("Сервис");
 
-        jCheckBoxMenuItem1.setText("Автообновление");
+        jMenuItem4.setText("Перечитать список счетчиков");
+        jMenuItem4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem4ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem4);
+
+        jCheckBoxMenuItem1.setText("Автоматически обновлять таблицы");
         jCheckBoxMenuItem1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jCheckBoxMenuItem1ActionPerformed(evt);
@@ -571,7 +569,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         jMenu3.setText("Отчеты");
 
-        jMenuItem3.setText("Стандартный отчет за месяц...");
+        jMenuItem3.setText("Отчет об электропотреблении за месяц...");
         jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItem3ActionPerformed(evt);
@@ -620,7 +618,11 @@ public class MainFrame extends javax.swing.JFrame {
 
         if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
             MeterInfo mi = (MeterInfo) tn.getUserObject();
-            jLabel1.setText("Счетчик: " + mi.getGroup() + " / " + mi.getName() + ", серийный номер: " + mi.getSN() + ", Ki = " + mi.getKi());
+            if (mi.getOsv().equals("yes")) {
+                jLabel1.setText("<html><font color='red'>Счетчик не опрашивается сервером! (" + mi.getGroup() + " / " + mi.getName() + ", серийный номер: " + mi.getSN() + ", Ki = " + mi.getKi() + ")</font></html>");
+            } else {
+                jLabel1.setText("Счетчик: " + mi.getGroup() + " / " + mi.getName() + ", серийный номер: " + mi.getSN() + ", Ki = " + mi.getKi());
+            }
             if (jCheckBoxMenuItem1.isSelected()) {
                 RefreshTable1(mi.getIdInDB());
                 RefreshTable2(mi.getIdInDB());
@@ -640,11 +642,13 @@ public class MainFrame extends javax.swing.JFrame {
                 }
                 jButton1.setEnabled(true);
             }
+            jButton3.setEnabled(true);
         }
 
         if (tn == null || tn.getUserObject().getClass() == String.class) {
             jLabel1.setText("---");
             jButton1.setEnabled(false);
+            jButton3.setEnabled(false);
             DefaultTableModel tm1 = (DefaultTableModel) jTable1.getModel();
             while (tm1.getRowCount() > 0) {
                 tm1.removeRow(0);
@@ -661,72 +665,9 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jTree1ValueChanged
 
     private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
-
-        ArrayList<Map> lrr = new ArrayList<>();
-
-        Map hm1 = new HashMap();
-        hm1.put("GroupName", "Коттедж №1");
-        hm1.put("MeterName", "Коттедж №1 - 1");
-        hm1.put("MeterSN", "7078099");
-        hm1.put("Aplus1", "6803,28");
-        hm1.put("Aplus2", "7040,05");
-        hm1.put("Aplus21", "123,55");
-        hm1.put("MeterKi", "20");
-        hm1.put("Aplus21Ki", "23746,77");
-        hm1.put("AplusGroupSum", "1111111");
-        lrr.add(hm1);
-        Map hm2 = new HashMap();
-        hm2.put("GroupName", "Коттедж №1");
-        hm2.put("MeterName", "Коттедж №1 - 2");
-        hm2.put("MeterSN", "70780123");
-        hm2.put("Aplus1", "10451,10");
-        hm2.put("Aplus2", "10871,07");
-        hm2.put("AplusGroupSum", "1111111");
-        lrr.add(hm2);
-        Map hm3 = new HashMap();
-        hm3.put("GroupName", "Коттедж №2");
-        hm3.put("MeterName", "Коттедж №2 - 1");
-        hm3.put("MeterSN", "7078567");
-        hm3.put("Aplus1", "12451,10");
-        hm3.put("Aplus2", "12361,07");
-        hm3.put("AplusGroupSum", "2222222");
-        lrr.add(hm3);
-        Map hm4 = new HashMap();
-        hm4.put("GroupName", "Коттедж №2");
-        hm4.put("MeterName", "Коттедж №2 - 2");
-        hm4.put("MeterSN", "70786785");
-        hm4.put("Aplus1", "4451,1");
-        hm4.put("Aplus2", "5361,0");
-        hm4.put("AplusGroupSum", "2222222");
-        lrr.add(hm4);
-
-        Map pm = new HashMap<>();
-        pm.put("Title_1_date", "май 2015");
-        pm.put("AplusSumAll", "1234567890");
-
-        Map[] reportRows = new Map[lrr.size()];
-        reportRows = lrr.toArray(reportRows);
-
-        JRMapArrayDataSource dataSource = new JRMapArrayDataSource(reportRows);
-
-        JasperPrint jp = null;
-        try {
-            jp = JasperFillManager.fillReport(App.class.getResourceAsStream("/org/maxsys/jmercury/client/resources/potreb.jasper"), pm, dataSource);
-        } catch (JRException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        JRViewer jrv = new JRViewer(jp);
-
-        JFrame frame = new JFrame("Report test");
-        frame.getContentPane().add(jrv);
-        int w = java.awt.Toolkit.getDefaultToolkit().getScreenSize().width - 100;
-        int h = java.awt.Toolkit.getDefaultToolkit().getScreenSize().height - 100;
-        frame.setSize(w, h);
-        frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        frame.setVisible(true);
-        jrv.setFitPageZoomRatio();
+        MonthReportDialog dlg = new MonthReportDialog(this, true);
+        dlg.setLocationRelativeTo(null);
+        dlg.setVisible(true);
     }//GEN-LAST:event_jMenuItem3ActionPerformed
 
     private void jLabel4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseClicked
@@ -773,9 +714,14 @@ public class MainFrame extends javax.swing.JFrame {
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
             if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
                 MeterInfo mi = (MeterInfo) tn.getUserObject();
-                RefreshTable1(mi.getIdInDB());
-                RefreshTable2(mi.getIdInDB());
-                RefreshTable3(mi.getIdInDB());
+                if (jTabbedPane1.getSelectedIndex() < 2) {
+                    RefreshTable1(mi.getIdInDB());
+                    RefreshTable2(mi.getIdInDB());
+                    RefreshTable3(mi.getIdInDB());
+                }
+                if (jTabbedPane1.getSelectedIndex() == 2) {
+                    JOptionPane.showMessageDialog(this, "Тут будет обновление отсечек.");
+                }
             }
         }
     }//GEN-LAST:event_jButton1ActionPerformed
@@ -821,6 +767,10 @@ public class MainFrame extends javax.swing.JFrame {
             dlg.setLocationRelativeTo(null);
             dlg.setVisible(true);
         }
+
+        if (jTabbedPane1.getSelectedIndex() == 1) {
+            JOptionPane.showMessageDialog(this, "Тут будет суточный график.");
+        }
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jCheckBoxMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxMenuItem1ActionPerformed
@@ -855,11 +805,44 @@ public class MainFrame extends javax.swing.JFrame {
         if (jTabbedPane1.getSelectedIndex() == 1 && jTable1.getRowCount() > 0) {
             jButton2.setEnabled(true);
         }
+
+        TreePath tp = jTree1.getSelectionPath();
+        if (tp != null) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
+            if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
+                if (!jCheckBoxMenuItem1.isSelected()) {
+                    jButton1.setEnabled(true);
+                }
+            }
+            if (tn == null || tn.getUserObject().getClass() == String.class) {
+                jButton1.setEnabled(false);
+            }
+        } else {
+            jButton1.setEnabled(false);
+        }
     }//GEN-LAST:event_jTabbedPane1StateChanged
+
+    private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
+        RefreshTree();
+    }//GEN-LAST:event_jMenuItem4ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        TreePath tp = jTree1.getSelectionPath();
+        if (tp != null) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
+            if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
+                MeterInfo mi = (MeterInfo) tn.getUserObject();
+                DiagramDialog dlg = new DiagramDialog(this, true, mi);
+                dlg.setLocationRelativeTo(null);
+                dlg.setVisible(true);
+            }
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -867,6 +850,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenu jMenu3;
@@ -874,11 +858,10 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
+    private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JScrollPane jScrollPane1;

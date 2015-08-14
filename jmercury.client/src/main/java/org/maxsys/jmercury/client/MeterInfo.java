@@ -7,13 +7,15 @@ public class MeterInfo {
     private int Ki;
     private int idInDB;
     private String SN;
+    private String osv;
 
-    public MeterInfo(int idInDB, String Name, String Group, int Ki, String SN) {
+    public MeterInfo(int idInDB, String Name, String Group, int Ki, String SN, String osv) {
         this.idInDB = idInDB;
         this.Name = Name;
         this.Group = Group;
         this.Ki = Ki;
         this.SN = SN;
+        this.osv = osv;
     }
 
     public int getIdInDB() {
@@ -34,6 +36,10 @@ public class MeterInfo {
 
     public String getSN() {
         return SN;
+    }
+
+    public String getOsv() {
+        return osv;
     }
 
     @Override

@@ -56,10 +56,11 @@ public class App {
 
         String status = NetClient.sendGetServerStatus();
         if (status.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Невозможно подключиться к серверу!");
-            Vars.prop.remove("ServerAddr");
-            Vars.prop.remove("ServerPort");
-            Vars.SaveProperties();
+            if (JOptionPane.showConfirmDialog(null, "Невозможно подключиться к серверу! Удалить сервер из настроек?", "Ошибка", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE) == JOptionPane.YES_OPTION) {
+                Vars.prop.remove("ServerAddr");
+                Vars.prop.remove("ServerPort");
+                Vars.SaveProperties();
+            }
         } else {
             System.out.println("Подключаемся:");
             System.out.println(status);
