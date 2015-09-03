@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.1.0.final using JasperReports Library version 6.1.0  -->
-<!-- 2015-08-13T13:32:58 -->
+<!-- 2015-09-03T16:41:36 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="potreb" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="3dda483a-a123-4683-be04-cf306b2fe79f">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
@@ -93,6 +93,18 @@
 	<field name="Aplus21Ki" class="java.lang.String"/>
 	<group name="Group1">
 		<groupExpression><![CDATA[$F{GroupName}]]></groupExpression>
+		<groupFooter>
+			<band>
+				<frame>
+					<reportElement x="0" y="0" width="800" height="0" uuid="427231f2-c167-48c2-ab9f-5d9aac91c1f2">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<box>
+						<topPen lineWidth="0.1"/>
+					</box>
+				</frame>
+			</band>
+		</groupFooter>
 	</group>
 	<background>
 		<band splitType="Stretch"/>
@@ -127,8 +139,9 @@
 	</pageHeader>
 	<columnHeader>
 		<band height="65" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
-				<reportElement x="0" y="0" width="120" height="65" uuid="57e32d40-acab-4058-a088-7eb3d838264a">
+				<reportElement x="110" y="0" width="100" height="65" uuid="57e32d40-acab-4058-a088-7eb3d838264a">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<box>
@@ -143,7 +156,7 @@
 				<textFieldExpression><![CDATA["№ точки учета по договору"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="120" y="0" width="100" height="65" uuid="ced4a3f2-209a-4d5d-aa35-72ad778d838a"/>
+				<reportElement x="210" y="0" width="90" height="65" uuid="ced4a3f2-209a-4d5d-aa35-72ad778d838a"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -156,7 +169,7 @@
 				<textFieldExpression><![CDATA["№ счетчика, сумматора"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="220" y="0" width="180" height="20" uuid="18b4f60d-3ad2-4e4d-8dcc-0c7d5fcea218"/>
+				<reportElement x="300" y="0" width="180" height="20" uuid="18b4f60d-3ad2-4e4d-8dcc-0c7d5fcea218"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -169,7 +182,7 @@
 				<textFieldExpression><![CDATA["Показания счетчиков на"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="220" y="20" width="90" height="45" uuid="ec64cb54-955f-4d42-b714-ba42902becb4"/>
+				<reportElement x="300" y="20" width="90" height="45" uuid="ec64cb54-955f-4d42-b714-ba42902becb4"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -182,7 +195,7 @@
 				<textFieldExpression><![CDATA["0 час. первого\nчисла месяца"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="310" y="20" width="90" height="45" uuid="7af51c6c-9105-4e03-b73d-2c5035f40c41"/>
+				<reportElement x="390" y="20" width="90" height="45" uuid="7af51c6c-9105-4e03-b73d-2c5035f40c41"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -195,7 +208,7 @@
 				<textFieldExpression><![CDATA["24 час.\nпоследнего\nчисла месяца"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="400" y="0" width="100" height="65" uuid="8d622513-236e-42ae-8348-9836bc19e8d7"/>
+				<reportElement x="480" y="0" width="80" height="65" uuid="8d622513-236e-42ae-8348-9836bc19e8d7"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -208,7 +221,7 @@
 				<textFieldExpression><![CDATA["Разность показаний"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="500" y="0" width="100" height="65" uuid="b36181c4-2f59-45c7-85f4-94ed768b7c7b"/>
+				<reportElement x="560" y="0" width="80" height="65" uuid="b36181c4-2f59-45c7-85f4-94ed768b7c7b"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -221,7 +234,7 @@
 				<textFieldExpression><![CDATA["Расч. К."]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="600" y="0" width="100" height="65" uuid="202937f3-6615-4601-9579-14014393e011"/>
+				<reportElement x="640" y="0" width="80" height="65" uuid="202937f3-6615-4601-9579-14014393e011"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -234,7 +247,7 @@
 				<textFieldExpression><![CDATA["Расход, кВт ч"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="700" y="0" width="102" height="65" uuid="277e5d96-f961-4172-9b1b-64d39d0d012e"/>
+				<reportElement x="720" y="0" width="80" height="65" uuid="277e5d96-f961-4172-9b1b-64d39d0d012e"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -246,56 +259,70 @@
 				</textElement>
 				<textFieldExpression><![CDATA["Суммарный\nрасход, кВт ч"]]></textFieldExpression>
 			</textField>
+			<textField>
+				<reportElement x="0" y="0" width="110" height="65" uuid="5182afd8-a6dc-42e7-bb90-9aa3d99c03b1">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Serif"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Объект"]]></textFieldExpression>
+			</textField>
 		</band>
 	</columnHeader>
 	<detail>
 		<band height="20" splitType="Stretch">
 			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
-			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField isStretchWithOverflow="true">
-				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="120" height="20" uuid="b070e1cd-2910-4578-8881-586826295521"/>
+				<reportElement stretchType="RelativeToBandHeight" x="110" y="0" width="100" height="20" uuid="b070e1cd-2910-4578-8881-586826295521"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
-					<bottomPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{MeterName}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement stretchType="RelativeToBandHeight" x="220" y="0" width="90" height="20" uuid="fb921da6-c1d4-40ce-9844-91f5fff0d4b8"/>
+				<reportElement stretchType="RelativeToBandHeight" x="300" y="0" width="90" height="20" uuid="fb921da6-c1d4-40ce-9844-91f5fff0d4b8"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
-					<bottomPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{Aplus1}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement stretchType="RelativeToBandHeight" x="310" y="0" width="90" height="20" uuid="13a5ab51-9484-46aa-9a2f-82eab9370b50"/>
+				<reportElement stretchType="RelativeToBandHeight" x="390" y="0" width="90" height="20" uuid="13a5ab51-9484-46aa-9a2f-82eab9370b50"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
-					<bottomPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{Aplus2}]]></textFieldExpression>
 			</textField>
 			<frame>
-				<reportElement stretchType="RelativeToBandHeight" mode="Transparent" x="700" y="0" width="102" height="20" uuid="7fd6a8b5-e998-4170-8e3b-7e286e229eac">
+				<reportElement stretchType="RelativeToBandHeight" mode="Transparent" x="720" y="0" width="80" height="20" uuid="7fd6a8b5-e998-4170-8e3b-7e286e229eac">
 					<printWhenExpression><![CDATA[$V{Group1_COUNT} > 1]]></printWhenExpression>
 				</reportElement>
 				<box>
@@ -306,63 +333,65 @@
 				</box>
 			</frame>
 			<textField>
-				<reportElement stretchType="RelativeToBandHeight" x="120" y="0" width="100" height="20" uuid="c680a427-97d9-4b53-b44b-698b180a27dc"/>
+				<reportElement stretchType="RelativeToBandHeight" x="210" y="0" width="90" height="20" uuid="c680a427-97d9-4b53-b44b-698b180a27dc"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
-					<bottomPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{MeterSN}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement stretchType="RelativeToBandHeight" x="400" y="0" width="100" height="20" uuid="9d7f114d-0225-4e31-813b-f4dc295daee3"/>
+				<reportElement stretchType="RelativeToBandHeight" x="480" y="0" width="80" height="20" uuid="9d7f114d-0225-4e31-813b-f4dc295daee3"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
-					<bottomPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{Aplus21}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement stretchType="RelativeToBandHeight" x="500" y="0" width="100" height="20" uuid="4153f53c-cf1e-4c41-8546-f54dd198a50c"/>
+				<reportElement stretchType="RelativeToBandHeight" x="560" y="0" width="80" height="20" uuid="4153f53c-cf1e-4c41-8546-f54dd198a50c"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
-					<bottomPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{MeterKi}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement stretchType="RelativeToBandHeight" x="600" y="0" width="100" height="20" uuid="286a8bcf-6522-4058-9627-95cff5b97f02"/>
+				<reportElement stretchType="RelativeToBandHeight" x="640" y="0" width="80" height="20" uuid="286a8bcf-6522-4058-9627-95cff5b97f02"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
-					<bottomPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{Aplus21Ki}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement stretchType="RelativeToBandHeight" x="700" y="0" width="102" height="20" uuid="7a64728c-7be2-438d-a066-744a4298c946">
+				<reportElement stretchType="RelativeToBandHeight" x="720" y="0" width="80" height="20" uuid="7a64728c-7be2-438d-a066-744a4298c946">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<printWhenExpression><![CDATA[$V{Group1_COUNT} == 1]]></printWhenExpression>
 				</reportElement>
 				<box>
@@ -372,17 +401,44 @@
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{AplusGroupSum}]]></textFieldExpression>
 			</textField>
+			<frame>
+				<reportElement stretchType="RelativeToBandHeight" mode="Transparent" x="0" y="0" width="110" height="20" uuid="0a9b1f0e-f02f-4a8b-b7f7-6874044d1a97">
+					<printWhenExpression><![CDATA[$V{Group1_COUNT} > 1]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</frame>
+			<textField isStretchWithOverflow="true">
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="110" height="20" uuid="a6453923-70c1-47c8-ab5d-42dbbec5aa2a">
+					<printWhenExpression><![CDATA[$V{Group1_COUNT} == 1]]></printWhenExpression>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Serif" size="10"/>
+					<paragraph leftIndent="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{GroupName}]]></textFieldExpression>
+			</textField>
 		</band>
 	</detail>
 	<summary>
-		<band height="150" splitType="Stretch">
+		<band height="121" splitType="Stretch">
 			<textField>
-				<reportElement key="" x="0" y="0" width="600" height="20" uuid="6c1c43a0-0c8a-40cd-a072-7032d9de6dbe"/>
+				<reportElement key="" x="0" y="0" width="640" height="20" uuid="6c1c43a0-0c8a-40cd-a072-7032d9de6dbe"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -390,13 +446,13 @@
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Всего"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="600" y="0" width="100" height="20" uuid="d3e4453f-9eaa-4dd2-a347-f5e145ecd161"/>
+				<reportElement x="640" y="0" width="80" height="20" uuid="d3e4453f-9eaa-4dd2-a347-f5e145ecd161"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -404,13 +460,13 @@
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{AplusSumAll}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="700" y="0" width="102" height="20" uuid="679611fa-aedb-43de-a17e-1fc9b3041d0b"/>
+				<reportElement x="720" y="0" width="80" height="20" uuid="679611fa-aedb-43de-a17e-1fc9b3041d0b"/>
 				<box>
 					<topPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
@@ -418,13 +474,13 @@
 					<rightPen lineWidth="0.1" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Serif" size="12"/>
+					<font fontName="DejaVu Serif" size="10"/>
 					<paragraph leftIndent="3"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{AplusSumAll}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement key="" x="0" y="50" width="155" height="30" uuid="082dd6d7-eaf8-49e4-bf3d-7ffb3a4ad7ff">
+				<reportElement key="" x="0" y="30" width="155" height="30" uuid="082dd6d7-eaf8-49e4-bf3d-7ffb3a4ad7ff">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Bottom">
@@ -434,7 +490,7 @@
 				<textFieldExpression><![CDATA["Ответственный за\nэлектрохозяйство"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement key="" x="155" y="80" width="155" height="20" uuid="dc4e494c-d213-4a15-a45e-685079618fad"/>
+				<reportElement key="" x="155" y="60" width="155" height="20" uuid="dc4e494c-d213-4a15-a45e-685079618fad"/>
 				<box>
 					<topPen lineWidth="0.1"/>
 				</box>
@@ -444,7 +500,7 @@
 				<textFieldExpression><![CDATA["подпись"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement key="" x="345" y="80" width="255" height="20" uuid="d5657c42-5fe9-477e-bede-3ef824124248"/>
+				<reportElement key="" x="345" y="60" width="255" height="20" uuid="d5657c42-5fe9-477e-bede-3ef824124248"/>
 				<box>
 					<topPen lineWidth="0.1"/>
 				</box>
@@ -454,7 +510,7 @@
 				<textFieldExpression><![CDATA["ФИО"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement key="" x="0" y="110" width="70" height="20" uuid="0472b1c5-2d69-4b02-996e-c55ac6b01237">
+				<reportElement key="" x="0" y="80" width="70" height="20" uuid="0472b1c5-2d69-4b02-996e-c55ac6b01237">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Bottom">
@@ -464,7 +520,7 @@
 				<textFieldExpression><![CDATA["Дата"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement key="" x="70" y="130" width="239" height="20" uuid="2b4173eb-7643-4b1c-9f95-c1cd21179e46"/>
+				<reportElement key="" x="70" y="100" width="239" height="20" uuid="2b4173eb-7643-4b1c-9f95-c1cd21179e46"/>
 				<box>
 					<topPen lineWidth="0.1"/>
 				</box>
