@@ -444,24 +444,6 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-
-        EMeter g1 = new EMeter("Гостиница 1", "", 200, "COM23", 20, 0);
-        EMeter g2 = new EMeter("Гостиница 2", "", 200, "COM22", 21, 0);
-        
-        System.out.println("sn " + g2.getMeterSN());
-        System.out.println("июль beg " + g2.getAplusRplusMonthBegining(7));
-        System.out.println("июль end " + g2.getAplusRplusMonthBegining(8));
-        System.out.println("июль " + g2.getAplusRplusMonth(7));
-        
-        System.out.println("август beg " + g2.getAplusRplusMonthBegining(8));
-        System.out.println("август end " + g2.getAplusRplusFromReset());
-        System.out.println("август (?) " + g2.getAplusRplusMonth(8));
-        
-        
-        if (true) {
-            return;
-        }
-        
         BufferedWriter bw = null;
         try {
             try {
@@ -472,7 +454,7 @@ public class MainFrame extends javax.swing.JFrame {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        EMeter[] objects = new EMeter[36];
+        EMeter[] objects = new EMeter[38];
 
         objects[0] = new EMeter("Котельная 1", "Котельная", 60, "COM2", 99, 0);
         objects[1] = new EMeter("Котельная 2", "Котельная", 60, "COM3", 148, 0);
@@ -510,6 +492,9 @@ public class MainFrame extends javax.swing.JFrame {
         objects[33] = new EMeter("Коттедж 19.2", "", 20, "COM39", 31, 0);
         objects[34] = new EMeter("Коттедж 20.1", "", 20, "COM38", 38, 0);
         objects[35] = new EMeter("Коттедж 20.2", "", 20, "COM37", 28, 0);
+        objects[36] = new EMeter("Коттедж 4.1", "", 20, "COM25", 99, 0);
+        objects[37] = new EMeter("Коттедж 4.2", "", 20, "COM24", 61, 0);
+        
 
         for (EMeter o : objects) {
             if (o == null) {
@@ -525,8 +510,8 @@ public class MainFrame extends javax.swing.JFrame {
             int errs = 0;
             while (errs < 10) {
                 try {
-                    aprpb = meter.getAplusRplusMonthBegining(7);
-                    aprpe = meter.getAplusRplusMonthBegining(8);
+                    aprpb = meter.getAplusRplusMonthBegining(8);
+                    aprpe = meter.getAplusRplusMonthBegining(9);
                     //aprpe = meter.getAplusRplusFromReset();
                     metersn = meter.getMeterSN();
 
@@ -661,6 +646,16 @@ public class MainFrame extends javax.swing.JFrame {
             long l2 = Long.valueOf(meterFlags.get("AvgARsTask_i"));
             l1 -= l2;
             meterFlags.put("AvgARsTask_t", String.valueOf(l1));
+
+            l1 = Long.valueOf(meterFlags.get("DaysTask_t"));
+            l2 = Long.valueOf(meterFlags.get("DaysTask_i"));
+            l1 -= l2;
+            meterFlags.put("DaysTask_t", String.valueOf(l1));
+
+            l1 = Long.valueOf(meterFlags.get("MonthTask_t"));
+            l2 = Long.valueOf(meterFlags.get("MonthTask_i"));
+            l1 -= l2;
+            meterFlags.put("MonthTask_t", String.valueOf(l1));
 
             StringBuilder flagsString = new StringBuilder();
             for (Map.Entry<String, String> kvp : meterFlags.entrySet()) {

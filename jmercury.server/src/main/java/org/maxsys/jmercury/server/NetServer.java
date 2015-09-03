@@ -1,7 +1,13 @@
 package org.maxsys.jmercury.server;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -11,6 +17,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
@@ -190,6 +197,9 @@ public class NetServer implements Runnable {
                          GetMinMaxMonth - взять минимальный и максимальный Calendar в таблице месяцев
                          GetForReport - взять ForReport
                          GetLog - взять лог.
+                         RefreshMonths - обновить данные всех счетчиков по месяцам.
+                         GetUpdateNumber - взять индекс обновления.
+                         GetUpdate - взять update.zip
                          */
                         switch (cmd) {
                             case "StopServer":
@@ -272,6 +282,15 @@ public class NetServer implements Runnable {
                                 break;
                             case "GetForReport":
                                 GetForReport(sock);
+                                break;
+                            case "RefreshMonths":
+                                RefreshMonths(sock);
+                                break;
+                            case "GetUpdateNumber":
+                                GetUpdateNumber(sock);
+                                break;
+                            case "GetUpdate":
+                                GetUpdate(sock);
                                 break;
                         }
                     }
@@ -673,28 +692,33 @@ public class NetServer implements Runnable {
 
                     em.setMeterFlag("busy", "yes");
                     em.setMeterFlag("busy_timer", "60");
+                    MeterServer.SaveMeterState(em);
 
                     String resp = ">>>";
                     NetServer.SendToSrv(sock, resp);
 
+                    em.setMeterFlag("statusstr", "Diagr>Time");
                     Calendar camt = em.getMeterTime();
                     if (camt == null) {
                         resp = "err";
                     } else {
                         resp = String.valueOf(camt.getTimeInMillis());
                     }
-
                     NetServer.SendToSrv(sock, resp);
 
+                    em.setMeterFlag("statusstr", "Diagr>U");
                     resp = String.valueOf(em.getU1());
                     NetServer.SendToSrv(sock, resp);
                     resp = String.valueOf(em.getU2());
                     NetServer.SendToSrv(sock, resp);
                     resp = String.valueOf(em.getU3());
                     NetServer.SendToSrv(sock, resp);
+
+                    em.setMeterFlag("statusstr", "Diagr>Freq");
                     resp = String.valueOf(em.getFreq());
                     NetServer.SendToSrv(sock, resp);
 
+                    em.setMeterFlag("statusstr", "Diagr>I");
                     resp = String.valueOf(em.getI1());
                     NetServer.SendToSrv(sock, resp);
                     resp = String.valueOf(em.getI2());
@@ -702,6 +726,7 @@ public class NetServer implements Runnable {
                     resp = String.valueOf(em.getI3());
                     NetServer.SendToSrv(sock, resp);
 
+                    em.setMeterFlag("statusstr", "Diagr>P");
                     resp = String.valueOf(em.getP1());
                     NetServer.SendToSrv(sock, resp);
                     resp = String.valueOf(em.getP2());
@@ -711,6 +736,7 @@ public class NetServer implements Runnable {
                     resp = String.valueOf(em.getPsum());
                     NetServer.SendToSrv(sock, resp);
 
+                    em.setMeterFlag("statusstr", "Diagr>Q");
                     resp = String.valueOf(em.getQ1());
                     NetServer.SendToSrv(sock, resp);
                     resp = String.valueOf(em.getQ2());
@@ -720,6 +746,7 @@ public class NetServer implements Runnable {
                     resp = String.valueOf(em.getQsum());
                     NetServer.SendToSrv(sock, resp);
 
+                    em.setMeterFlag("statusstr", "Diagr>S");
                     resp = String.valueOf(em.getS1());
                     NetServer.SendToSrv(sock, resp);
                     resp = String.valueOf(em.getS2());
@@ -729,6 +756,7 @@ public class NetServer implements Runnable {
                     resp = String.valueOf(em.getSsum());
                     NetServer.SendToSrv(sock, resp);
 
+                    em.setMeterFlag("statusstr", "Diagr>A123");
                     resp = String.valueOf(em.getA12());
                     NetServer.SendToSrv(sock, resp);
                     resp = String.valueOf(em.getA13());
@@ -740,6 +768,7 @@ public class NetServer implements Runnable {
                     em.setMeterFlag("preosv", "no");
                     em.setMeterFlag("osv", "no");
                     em.setMeterFlag("statusstr", "");
+                    MeterServer.SaveMeterState(em);
                 }
 
                 private void GetMinMaxMonth(Socket sock) {
@@ -804,6 +833,103 @@ public class NetServer implements Runnable {
                     pdm.closeResultSet();
 
                     NetServer.SendToSrvBig(sock, PDM.getHexString(resp.toString()));
+                }
+
+                private void RefreshMonths(Socket sock) {
+                    ArrayList<Integer> kis = new ArrayList<>();
+                    for (int ki : Vars.meters.keySet()) {
+                        kis.add(ki);
+                    }
+
+                    String resp = String.valueOf(kis.size());
+                    NetServer.SendToSrv(sock, resp);
+
+                    while (kis.size() > 0) {
+                        Integer ki = kis.get(0);
+                        EMeter em = Vars.meters.get(ki);
+                        String osv = em.getMeterFlag("osv") == null ? "no" : em.getMeterFlag("osv");
+                        if (osv.equals("yes")) {
+                            kis.remove(ki);
+                        } else {
+                            String busy = em.getMeterFlag("busy") == null ? "no" : em.getMeterFlag("busy");
+                            if (!busy.equals("yes")) {
+                                STL.Log("NetServer: " + em.getMeterName() + " - запуск MonthTask RefreshMonths...");
+
+                                em.setMeterFlag("busy", "yes");
+                                em.setMeterFlag("busy_timer", "30");
+                                MeterServer.SaveMeterState(em);
+
+                                Thread thr = new Thread(new MonthTask(em));
+                                thr.start();
+
+                                resp = "Обновляется: " + em.getMeterName();
+                                NetServer.SendToSrv(sock, PDM.getHexString(resp));
+
+                                kis.remove(ki);
+                            }
+                        }
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+
+                    for (int t = 15; t > 0; t--) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        resp = "Ждем: " + t;
+                        NetServer.SendToSrv(sock, PDM.getHexString(resp));
+                    }
+
+                    resp = "Ok";
+                    NetServer.SendToSrv(sock, resp);
+                }
+
+                private void GetUpdateNumber(Socket sock) {
+                    String line = "";
+                    try {
+                        try (BufferedReader br = new BufferedReader(new FileReader(new File("updatenum")))) {
+                            line = br.readLine();
+                        }
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    String resp = "0";
+                    if (!line.isEmpty()) {
+                        resp = line;
+                    }
+                    NetServer.SendToSrv(sock, resp);
+                }
+
+                private void GetUpdate(Socket sock) {
+                    File updatefile = new File("update.zip");
+
+                    if (!updatefile.exists()) {
+                        NetServer.SendToSrv(sock, "0");
+                        return;
+                    }
+
+                    NetServer.SendToSrv(sock, String.valueOf(updatefile.length()));
+
+                    try {
+                        byte[] bytes = new byte[(int) updatefile.length()];
+                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(updatefile));
+                        bis.read(bytes);
+                        OutputStream os = sock.getOutputStream();
+                        os.write(bytes);
+                        os.flush();
+                        os.close();
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
             }
             );

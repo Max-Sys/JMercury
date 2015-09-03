@@ -4,7 +4,6 @@ import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.maxsys.dblib.PDM;
-import static org.maxsys.jmercury.server.MeterServer.SaveMeterState;
 
 public class DaysTask implements Runnable {
 
@@ -83,7 +82,7 @@ public class DaysTask implements Runnable {
         em.setMeterFlag("osv", "no");
         em.setMeterFlag("DaysTask_t", String.valueOf(Calendar.getInstance().getTimeInMillis()));
         em.setMeterFlag("statusstr", "");
-        SaveMeterState(em);
+        MeterServer.SaveMeterState(em);
         STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask завершен.");
     }
 }

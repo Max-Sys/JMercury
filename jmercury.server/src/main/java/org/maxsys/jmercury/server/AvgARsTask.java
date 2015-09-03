@@ -3,7 +3,6 @@ package org.maxsys.jmercury.server;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import org.maxsys.dblib.PDM;
-import static org.maxsys.jmercury.server.MeterServer.SaveMeterState;
 
 public class AvgARsTask implements Runnable {
 
@@ -115,6 +114,6 @@ public class AvgARsTask implements Runnable {
         em.setMeterFlag("osv", "no");
         em.setMeterFlag("AvgARsTask_t", String.valueOf(Calendar.getInstance().getTimeInMillis()));
         em.setMeterFlag("statusstr", "");
-        SaveMeterState(em);
+        MeterServer.SaveMeterState(em);
     }
 }

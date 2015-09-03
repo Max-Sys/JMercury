@@ -156,7 +156,7 @@ public class MeterServer implements Runnable {
                         Thread thr = new Thread(new MonthTask(em));
                         thr.start();
 
-                        STL.Log("MeterServer: " + em.getMeterName() + " - MonthTask запущен.");
+                        //STL.Log("MeterServer: " + em.getMeterName() + " - MonthTask запущен.");
 
                         continue;
                     }
