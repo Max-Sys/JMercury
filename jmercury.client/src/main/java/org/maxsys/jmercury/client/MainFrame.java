@@ -5,7 +5,9 @@ import java.awt.Rectangle;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.Properties;
@@ -116,23 +118,15 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
         String[] metersDatas = metersData.split("\n");
-//        Arrays.sort(metersDatas, new Comparator<Object>() {
-//
-//            @Override
-//            public int compare(Object o1, Object o2) {
-////                int i1 = Integer.valueOf(o1.toString().split("\001")[0]);
-////                int i2 = Integer.valueOf(o2.toString().split("\001")[0]);
-////                if (i1 == i2) {
-////                    return 0;
-////                }
-////                if (i1 > i2) {
-////                    return 1;
-////                } else {
-////                    return -1;
-////                }
-//                return o1.toString().split("\001")[2].compareToIgnoreCase(o2.toString().split("\001")[2]);
-//            }
-//        });
+        Arrays.sort(metersDatas, new Comparator<Object>() {
+
+            @Override
+            public int compare(Object o1, Object o2) {
+                String so1 = Vars.AddNullsInString(o1.toString().split("\001")[2]);
+                String so2 = Vars.AddNullsInString(o2.toString().split("\001")[2]);
+                return so1.compareToIgnoreCase(so2);
+            }
+        });
 
         metersDatas:
         for (String mData : metersDatas) {
@@ -287,6 +281,8 @@ public class MainFrame extends javax.swing.JFrame {
         jMenuItem4 = new javax.swing.JMenuItem();
         jCheckBoxMenuItem1 = new javax.swing.JCheckBoxMenuItem();
         jMenuItem2 = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        jMenuItem5 = new javax.swing.JMenuItem();
         jMenu3 = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
 
@@ -564,6 +560,15 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         jMenu2.add(jMenuItem2);
+        jMenu2.add(jSeparator1);
+
+        jMenuItem5.setText("Обновление программы...");
+        jMenuItem5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem5ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem5);
 
         jMenuBar1.add(jMenu2);
 
@@ -839,6 +844,12 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton3ActionPerformed
 
+    private void jMenuItem5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem5ActionPerformed
+        ProgramUpdateDialog dlg = new ProgramUpdateDialog(this, true);
+        dlg.setLocationRelativeTo(null);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_jMenuItem5ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
@@ -859,6 +870,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
+    private javax.swing.JMenuItem jMenuItem5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -868,6 +880,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;

@@ -2,16 +2,86 @@ package org.maxsys.jmercury.client;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import org.apache.commons.io.FileUtils;
 
 public class App {
 
     public static void main(String[] args) {
+        // After update
+        if (System.getProperty("user.dir").endsWith("update")) {
+            String wp = System.getProperty("user.dir");
+            File dep = new File(wp + "/dependency");
+            File depto = new File(wp.substring(0, wp.length() - 7) + "/dependency");
+
+            if (depto.exists()) {
+                try {
+                    FileUtils.deleteDirectory(depto);
+                } catch (IOException ex) {
+                    Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+
+            try {
+                Files.copy(dep.toPath(), depto.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ex) {
+                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            for (String depfilen : dep.list()) {
+                try {
+                    Files.copy(dep.toPath().resolve(depfilen), depto.toPath().resolve(depfilen), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException ex) {
+                    Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+
+            URI myuri = null;
+            try {
+                myuri = App.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+            } catch (URISyntaxException ex) {
+                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            File me = new File(myuri);
+            File meto = new File(wp.substring(0, wp.length() - 7) + "/" + me.getName());
+            if (meto.exists()) {
+                try {
+                    Files.delete(meto.toPath());
+                } catch (IOException ex) {
+                    Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            try {
+                Files.copy(me.toPath(), meto.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ex) {
+                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            try {
+                Runtime.getRuntime().exec("java -jar " + meto.getPath(), null, new File(wp.substring(0, wp.length() - 7)));
+            } catch (IOException ex) {
+                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            return;
+        }
+
+        File upfolder = new File("update");
+        if (upfolder.exists()) {
+            try {
+                FileUtils.deleteDirectory(upfolder);
+            } catch (IOException ex) {
+                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
 
         // Logger
         String nowTimeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
@@ -64,6 +134,16 @@ public class App {
         } else {
             System.out.println("Подключаемся:");
             System.out.println(status);
+
+            //Check update
+            String myunstr = Vars.prop.getProperty("MyUN") == null ? "0" : Vars.prop.getProperty("MyUN");
+            int myun = Integer.valueOf(myunstr);
+            int updateNumber = NetClient.sendGetUpdateNumber();
+
+            if (updateNumber > myun) {
+                javax.swing.JOptionPane.showMessageDialog(null, "Появилась новая версия программы. Загляните в \"Сервис -> Обновление программы...\"");
+            }
+
             MainFrame frm = new MainFrame();
             frm.setLocationRelativeTo(null);
             frm.setVisible(true);

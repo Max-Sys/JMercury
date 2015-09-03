@@ -340,4 +340,12 @@ public class NetClient {
 
         return frs;
     }
+
+    public static int sendGetUpdateNumber() {
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetUpdateNumber");
+        String resp = GetRespFromSrv(socket);
+        CloseSocket(socket);
+        return Integer.valueOf(resp);
+    }
 }

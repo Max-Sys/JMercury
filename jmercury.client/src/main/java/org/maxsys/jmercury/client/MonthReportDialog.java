@@ -3,7 +3,9 @@ package org.maxsys.jmercury.client;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -141,6 +143,14 @@ public class MonthReportDialog extends javax.swing.JDialog {
         int year = ((myCalendar) jComboBox1.getSelectedItem()).get(Calendar.YEAR);
         int month = ((myCalendar) jComboBox1.getSelectedItem()).get(Calendar.MONTH) + 1;
 
+        if (year == Calendar.getInstance().get(Calendar.YEAR) && month == (Calendar.getInstance().get(Calendar.MONTH) + 1)) {
+            if (JOptionPane.showConfirmDialog(this, "Обновить данные перед выводом отчета?", "Обновление", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                RefreshBeforeReportDialog dlg = new RefreshBeforeReportDialog(null, true);
+                dlg.setLocationRelativeTo(null);
+                dlg.setVisible(true);
+            }
+        }
+
         ForReport[] frs = NetClient.sendGetForReport(year, month);
 
         if (frs == null) {
@@ -151,6 +161,18 @@ public class MonthReportDialog extends javax.swing.JDialog {
         ArrayList<Map> lrr = new ArrayList<>();
 
         double AplusSumAll = 0;
+
+        Arrays.sort(frs, new Comparator<Object>() {
+
+            @Override
+            public int compare(Object o1, Object o2) {
+                ForReport fro1 = (ForReport) o1;
+                ForReport fro2 = (ForReport) o2;
+                String so1 = Vars.AddNullsInString(fro1.getGroupName());
+                String so2 = Vars.AddNullsInString(fro2.getGroupName());
+                return so1.compareToIgnoreCase(so2);
+            }
+        });
 
         for (ForReport fr : frs) {
             Map hm = new HashMap();
