@@ -91,12 +91,9 @@ public class MeterServer implements Runnable {
                 String s_AvgARsTask_i = em.getMeterFlag("AvgARsTask_i") == null ? "0" : em.getMeterFlag("AvgARsTask_i");
                 long AvgARsTask_i = Long.valueOf(s_AvgARsTask_i);
                 if (AvgARsTask.equals("on") && AvgARsTask_t != 0 && AvgARsTask_i != 0) {
-                    //STL.Log(em.getMeterName() + " AvgARsTask is ON - " + (AvgARsTask_t + AvgARsTask_i) + " ? " + Calendar.getInstance().getTimeInMillis() + " ? " + ((AvgARsTask_t + AvgARsTask_i) - Calendar.getInstance().getTimeInMillis()));
                     AvgARsTask_secs = ((AvgARsTask_t + AvgARsTask_i) - Calendar.getInstance().getTimeInMillis()) / 1000;
                     if ((AvgARsTask_t + AvgARsTask_i) < Calendar.getInstance().getTimeInMillis()) {
-                        STL.Log("MeterServer: " + em.getMeterName() + " - запуск AvgARsTask...");
-                        //STL.Log("Время последнего старта - " + AvgARsTask_t);
-                        //STL.Log("Интервал - " + AvgARsTask_i);
+                        STL.Log("MeterServer: " + em.getMeterName() + " - запуск AvgARsTask.");
 
                         em.setMeterFlag("busy", "yes");
                         em.setMeterFlag("busy_timer", "60");
@@ -104,7 +101,6 @@ public class MeterServer implements Runnable {
                         Thread thr = new Thread(new AvgARsTask(em));
                         thr.start();
 
-                        //STL.Log(em.getMeterName() + " - AvgARsTask запущен.");
                         continue;
                     }
                 }
@@ -116,12 +112,9 @@ public class MeterServer implements Runnable {
                 String s_DaysTask_i = em.getMeterFlag("DaysTask_i") == null ? "0" : em.getMeterFlag("DaysTask_i");
                 long DaysTask_i = Long.valueOf(s_DaysTask_i);
                 if (DaysTask.equals("on") && DaysTask_t != 0 && DaysTask_i != 0) {
-                    //System.out.println((em.getMeterName() + " DaysTask is ON - " + (DaysTask_t + DaysTask_i) + " ? " + Calendar.getInstance().getTimeInMillis() + " ? " + ((DaysTask_t + DaysTask_i) - Calendar.getInstance().getTimeInMillis()) / 1000));
                     DaysTask_secs = ((DaysTask_t + DaysTask_i) - Calendar.getInstance().getTimeInMillis()) / 1000;
                     if ((DaysTask_t + DaysTask_i) < Calendar.getInstance().getTimeInMillis()) {
-                        STL.Log("MeterServer: " + em.getMeterName() + " - запуск DaysTask...");
-                        //STL.Log("Время последнего старта - " + DaysTask_t);
-                        //STL.Log("Интервал - " + DaysTask_i);
+                        STL.Log("MeterServer: " + em.getMeterName() + " - запуск DaysTask.");
 
                         em.setMeterFlag("busy", "yes");
                         em.setMeterFlag("busy_timer", "30");
@@ -130,7 +123,6 @@ public class MeterServer implements Runnable {
                         Thread thr = new Thread(new DaysTask(em));
                         thr.start();
 
-                        //STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask запущен.");
                         continue;
                     }
                 }
@@ -142,12 +134,9 @@ public class MeterServer implements Runnable {
                 String s_MonthTask_i = em.getMeterFlag("MonthTask_i") == null ? "0" : em.getMeterFlag("MonthTask_i");
                 long MonthTask_i = Long.valueOf(s_MonthTask_i);
                 if (MonthTask.equals("on") && MonthTask_t != 0 && MonthTask_i != 0) {
-                    //STL.Log(em.getMeterName() + " MonthTask is ON - " + (MonthTask_t + MonthTask_i) + " ? " + Calendar.getInstance().getTimeInMillis() + " ? " + ((MonthTask_t + MonthTask_i) - Calendar.getInstance().getTimeInMillis()));
                     MonthTask_secs = ((MonthTask_t + MonthTask_i) - Calendar.getInstance().getTimeInMillis()) / 1000;
                     if ((MonthTask_t + MonthTask_i) < Calendar.getInstance().getTimeInMillis()) {
-                        STL.Log("MeterServer: " + em.getMeterName() + " - запуск MonthTask...");
-                        //STL.Log("Время последнего старта - " + MonthTask_t);
-                        //STL.Log("Интервал - " + MonthTask_i);
+                        STL.Log("MeterServer: " + em.getMeterName() + " - запуск MonthTask.");
 
                         em.setMeterFlag("busy", "yes");
                         em.setMeterFlag("busy_timer", "30");
@@ -157,8 +146,25 @@ public class MeterServer implements Runnable {
                         thr.start();
 
                         //STL.Log("MeterServer: " + em.getMeterName() + " - MonthTask запущен.");
-
                         continue;
+                    }
+                }
+
+                // MarkerTask
+                String MarkerTask = em.getMeterFlag("MarkerTask") == null ? "" : em.getMeterFlag("MarkerTask");
+                if (!MarkerTask.isEmpty()) {
+                    for (final String mtask : MarkerTask.split(",")) {
+                        if (Calendar.getInstance().getTimeInMillis() > Long.valueOf(mtask)) {
+                            STL.Log("MeterServer: " + em.getMeterName() + " - запуск MarkerTask.");
+                            em.setMeterFlag("busy", "yes");
+                            em.setMeterFlag("busy_timer", "30");
+                            SaveMeterState(em);
+
+                            Thread thr = new Thread(new MarkerTask(em, mtask));
+                            thr.start();
+
+                            break;
+                        }
                     }
                 }
 

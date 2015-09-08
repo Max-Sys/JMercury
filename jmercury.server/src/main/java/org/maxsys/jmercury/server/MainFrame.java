@@ -494,7 +494,6 @@ public class MainFrame extends javax.swing.JFrame {
         objects[35] = new EMeter("Коттедж 20.2", "", 20, "COM37", 28, 0);
         objects[36] = new EMeter("Коттедж 4.1", "", 20, "COM25", 99, 0);
         objects[37] = new EMeter("Коттедж 4.2", "", 20, "COM24", 61, 0);
-        
 
         for (EMeter o : objects) {
             if (o == null) {

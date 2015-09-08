@@ -14,7 +14,7 @@ public class EMeter {
     private final int idInDB;
     private final HashMap<String, String> meterFlags = new HashMap<>();
     private final String meterName;
-    private final String groupName;
+    private String groupName;
     private String serialNumber = "";
     private final String portName;
     private SerialPort serialPort;
@@ -131,6 +131,10 @@ public class EMeter {
 
     public String getGroupName() {
         return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
     }
 
     public int getMeterKi() {
@@ -840,6 +844,7 @@ public class EMeter {
 
     /**
      * Moves the address forward.
+     *
      * @param month 1 = January / 12 = December
      * @return AplusRplus
      */

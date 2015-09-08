@@ -189,17 +189,21 @@ public class NetServer implements Runnable {
                          UpdateMeterInDB - обновить информацию о счетчике в БД.
                          GetSerialPortNames - взять имена портов.
                          GetMeterGroupNames - взять группы счетчиков с сервера.
+                         RenameGroup - переименовать группу.
                          GetMeterInfo - взять информацию о счетчике (имя, порт и т.д.)
-                         GetAvgArs - взять AvgARs с ... по
-                         GetApRpDays - взять ApRp за дни
-                         GetApRpMonths - взять ApRp за месяцы
-                         GetMeterDiagram - взять данные для диаграммы
-                         GetMinMaxMonth - взять минимальный и максимальный Calendar в таблице месяцев
-                         GetForReport - взять ForReport
+                         GetAvgArs - взять AvgARs с ... по.
+                         GetApRpDays - взять ApRp за дни.
+                         GetApRpMonths - взять ApRp за месяцы.
+                         GetMeterDiagram - взять данные для диаграммы.
+                         GetMinMaxMonth - взять минимальный и максимальный Calendar в таблице месяцев.
+                         GetForReport - взять ForReport.
                          GetLog - взять лог.
                          RefreshMonths - обновить данные всех счетчиков по месяцам.
                          GetUpdateNumber - взять индекс обновления.
                          GetUpdate - взять update.zip
+                         AddMarker - добавить отсечку.
+                         GetMarkerTasks - взять маркеры.
+                         RemoveMarker - удалить маркер.
                          */
                         switch (cmd) {
                             case "StopServer":
@@ -292,6 +296,18 @@ public class NetServer implements Runnable {
                             case "GetUpdate":
                                 GetUpdate(sock);
                                 break;
+                            case "AddMarker":
+                                AddMarker(sock);
+                                break;
+                            case "GetMarkerTasks":
+                                GetMarkerTasks(sock);
+                                break;
+                            case "RemoveMarker":
+                                RemoveMarker(sock);
+                                break;
+                            case "RenameGroup":
+                                RenameGroup(sock);
+                                break;
                         }
                     }
                     sockets.remove(mySocket);
@@ -368,7 +384,6 @@ public class NetServer implements Runnable {
                                     emeter.setMeterFlags(flags);
                                     emeter.setMeterFlag("busy", "no");
                                     Vars.meters.put(emeter.getIdInDB(), emeter);
-                                    System.out.println("Adding " + metername);
                                 }
                             }
                         } catch (SQLException ex) {
@@ -919,17 +934,104 @@ public class NetServer implements Runnable {
 
                     try {
                         byte[] bytes = new byte[(int) updatefile.length()];
-                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(updatefile));
-                        bis.read(bytes);
-                        OutputStream os = sock.getOutputStream();
-                        os.write(bytes);
-                        os.flush();
-                        os.close();
+                        try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(updatefile))) {
+                            bis.read(bytes);
+                            try (OutputStream os = sock.getOutputStream()) {
+                                os.write(bytes);
+                                os.flush();
+                            }
+                        }
                     } catch (FileNotFoundException ex) {
                         Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (IOException ex) {
                         Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
                     }
+                }
+
+                private void AddMarker(Socket sock) {
+                    String paramstr = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+                    String[] params = paramstr.split("\n");
+                    int IdInDB = Integer.valueOf(params[0]);
+
+                    String name = params[1];
+
+                    StringBuilder sb = new StringBuilder(Vars.meters.get(IdInDB).getMeterFlag("MarkerTask") == null ? "" : Vars.meters.get(IdInDB).getMeterFlag("MarkerTask"));
+                    sb.append(params[2]).append(",");
+                    Vars.meters.get(IdInDB).setMeterFlag("MarkerTask", sb.toString());
+                    MeterServer.SaveMeterState(Vars.meters.get(IdInDB));
+
+                    PDM pdm = new PDM();
+                    pdm.executeNonQuery("em", "INSERT INTO allmetersdb.markers "
+                            + "(meter_id, `name`, timelong, Aplus, Rplus, hide) "
+                            + "VALUES (" + IdInDB
+                            + ", '" + PDM.getHexString(name) + "'"
+                            + ", " + params[2]
+                            + ", -1.0"
+                            + ", -1.0"
+                            + ", false)");
+
+                    String resp = "ok";
+                    NetServer.SendToSrv(sock, resp);
+                }
+
+                private void GetMarkerTasks(Socket sock) {
+                    String paramstr = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+                    int IdInDB = Integer.valueOf(paramstr);
+                    String resptasks = Vars.meters.get(IdInDB).getMeterFlag("MarkerTask") == null ? "" : Vars.meters.get(IdInDB).getMeterFlag("MarkerTask");
+                    NetServer.SendToSrv(sock, PDM.getHexString(resptasks));
+
+                    PDM pdm = new PDM();
+                    String sql = "SELECT k, `name`, timelong, Aplus, Rplus FROM markers WHERE meter_id = " + IdInDB + " AND hide = 0 ORDER BY timelong";
+                    ResultSet rs = pdm.getResultSet("em", sql);
+                    StringBuilder resp = new StringBuilder();
+                    DecimalFormat df = new DecimalFormat("#.##");
+                    try {
+                        while (rs.next()) {
+                            resp.append(String.valueOf(rs.getInt("k")));
+                            resp.append("\001");
+                            resp.append(PDM.getStringFromHex(rs.getString("name")));
+                            resp.append("\001");
+                            resp.append(String.valueOf(rs.getLong("timelong")));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus")));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Rplus")));
+                            resp.append("\001");
+                            resp.append("\n");
+                        }
+                    } catch (SQLException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    pdm.closeResultSet();
+
+                    NetServer.SendToSrvBig(sock, PDM.getHexString(resp.toString()));
+                }
+
+                private void RemoveMarker(Socket sock) {
+                    String k = NetServer.GetRespFromSrv(sock);
+                    PDM pdm = new PDM();
+                    pdm.executeNonQueryUpdate("em", "UPDATE markers SET `hide` = true WHERE k = " + k);
+                    NetServer.SendToSrv(sock, "Ok");
+                }
+
+                private void RenameGroup(Socket sock) {
+                    String params = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+                    String k = params.split("\001")[0];
+                    String name = params.split("\001")[1];
+                    PDM pdm = new PDM();
+                    Object oldnameo = pdm.getScalar("em", "SELECT groupname FROM metergroups WHERE k = " + k);
+                    if (oldnameo != null) {
+                        String oldname = PDM.getStringFromHex((String) oldnameo);
+                        pdm.executeNonQueryUpdate("em", "UPDATE metergroups SET "
+                                + "`groupname` = '" + PDM.getHexString(name) + "'"
+                                + " WHERE k = " + k);
+                        for (EMeter em : Vars.meters.values()) {
+                            if (em.getGroupName().equals(oldname)) {
+                                em.setGroupName(name);
+                            }
+                        }
+                    }
+                    NetServer.SendToSrv(sock, "Ok");
                 }
             }
             );
