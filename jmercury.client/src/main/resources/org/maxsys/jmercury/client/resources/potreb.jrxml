@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.1.0.final using JasperReports Library version 6.1.0  -->
-<!-- 2015-09-03T16:41:36 -->
+<!-- 2015-09-07T16:54:51 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="potreb" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="3dda483a-a123-4683-be04-cf306b2fe79f">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
@@ -91,7 +91,7 @@
 	<field name="Aplus21" class="java.lang.String"/>
 	<field name="MeterKi" class="java.lang.String"/>
 	<field name="Aplus21Ki" class="java.lang.String"/>
-	<group name="Group1">
+	<group name="Group1" keepTogether="true">
 		<groupExpression><![CDATA[$F{GroupName}]]></groupExpression>
 		<groupFooter>
 			<band>
@@ -153,7 +153,7 @@
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Serif"/>
 				</textElement>
-				<textFieldExpression><![CDATA["№ точки учета по договору"]]></textFieldExpression>
+				<textFieldExpression><![CDATA["№ точки учета"]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement x="210" y="0" width="90" height="65" uuid="ced4a3f2-209a-4d5d-aa35-72ad778d838a"/>
@@ -166,7 +166,7 @@
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Serif"/>
 				</textElement>
-				<textFieldExpression><![CDATA["№ счетчика, сумматора"]]></textFieldExpression>
+				<textFieldExpression><![CDATA["№ счетчика"]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement x="300" y="0" width="180" height="20" uuid="18b4f60d-3ad2-4e4d-8dcc-0c7d5fcea218"/>
@@ -272,7 +272,7 @@
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Serif"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Объект"]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Наименование потребителя"]]></textFieldExpression>
 			</textField>
 		</band>
 	</columnHeader>

@@ -13,6 +13,8 @@ import java.util.GregorianCalendar;
 import java.util.Properties;
 import java.util.TreeMap;
 import javax.swing.JOptionPane;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -73,11 +75,38 @@ public class MainFrame extends javax.swing.JFrame {
         jTable3.getColumnModel().getColumn(2).setPreferredWidth(250);
         jTable3.getColumnModel().getColumn(3).setPreferredWidth(200);
 
+        DefaultTableModel tm4 = new DefaultTableModel(
+                new Object[][]{},
+                //new String[]{"Дата/время", "A+", "R+", "\u0394 A+", "\u0394 R+"}) {
+                new String[]{"Название", "Дата/время", "A+", "R+"}) {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        return false;
+                    }
+                };
+        jTable4.setModel(tm4);
+        jTable4.getColumnModel().getColumn(0).setPreferredWidth(350);
+        jTable4.getColumnModel().getColumn(0).setPreferredWidth(250);
+        jTable4.getColumnModel().getColumn(0).setPreferredWidth(200);
+        jTable4.getColumnModel().getColumn(0).setPreferredWidth(200);
+
+        jTable4.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (jTable4.getSelectedRow() > -1) {
+                    jButton5.setEnabled(true);
+                } else {
+                    jButton5.setEnabled(false);
+                }
+            }
+        });
+
         Calendar ca = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
-        jLabel6.setText(sdf.format(ca.getTime()));
+        jLabel6.setText(" " + sdf.format(ca.getTime()) + " ");
         ca.add(Calendar.DAY_OF_YEAR, -1);
-        jLabel4.setText(sdf.format(ca.getTime()));
+        jLabel4.setText(" " + sdf.format(ca.getTime()) + " ");
 
         RefreshTree();
 
@@ -105,10 +134,15 @@ public class MainFrame extends javax.swing.JFrame {
         while (tm3.getRowCount() > 0) {
             tm3.removeRow(0);
         }
+        DefaultTableModel tm4 = (DefaultTableModel) jTable3.getModel();
+        while (tm4.getRowCount() > 0) {
+            tm4.removeRow(0);
+        }
 
-        jButton1.setEnabled(false);
+        //jButton1.setEnabled(false);
         jButton2.setEnabled(false);
         jButton3.setEnabled(false);
+        jButton4.setEnabled(false);
 
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Группы");
 
@@ -145,52 +179,6 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
         jTree1.setModel(new DefaultTreeModel(rootNode));
-    }
-
-    private void RefreshTable3(int IdInDB) {
-        DefaultTableModel tm = (DefaultTableModel) jTable3.getModel();
-        while (tm.getRowCount() > 0) {
-            tm.removeRow(0);
-        }
-
-        String caFromStr = jLabel4.getText();
-        String[] caFromF = caFromStr.split("\\.");
-        Calendar caFrom;
-        if (caFromF.length == 3) {
-            caFrom = new GregorianCalendar(Integer.valueOf(caFromF[2]), Integer.valueOf(caFromF[1]) - 1, Integer.valueOf(caFromF[0]));
-        } else {
-            caFrom = Calendar.getInstance();
-            caFrom.add(Calendar.DAY_OF_YEAR, -1);
-        }
-
-        String caToStr = jLabel6.getText();
-        String[] caToF = caToStr.split("\\.");
-        Calendar caTo;
-        if (caToF.length == 3) {
-            caTo = new GregorianCalendar(Integer.valueOf(caToF[2]), Integer.valueOf(caToF[1]) - 1, Integer.valueOf(caToF[0]), 23, 59);
-        } else {
-            caTo = Calendar.getInstance();
-        }
-
-        ArrayList<AvgAR> aars = NetClient.sendGetAvgArs(IdInDB, caFrom, caTo);
-
-        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-        DecimalFormat df = new DecimalFormat("#.##");
-
-        for (AvgAR aar : aars) {
-            Object[] rowData = new Object[4];
-            rowData[0] = sdf.format(aar.getArDT().getTime());
-            rowData[1] = df.format(aar.getAplus());
-            rowData[2] = df.format(aar.getRplus());
-            rowData[3] = aar.getArPeriod() + " мин";
-            tm.addRow(rowData);
-        }
-
-        jTable3.scrollRectToVisible(new Rectangle(jTable3.getCellRect(jTable3.getRowCount() - 1, 0, true)));
-
-        if (aars.size() > 0 && jTabbedPane1.getSelectedIndex() == 0) {
-            jButton2.setEnabled(true);
-        }
     }
 
     private void RefreshTable1(int IdInDB) {
@@ -245,6 +233,85 @@ public class MainFrame extends javax.swing.JFrame {
         jTable2.scrollRectToVisible(new Rectangle(jTable2.getCellRect(jTable2.getRowCount() - 1, 0, true)));
     }
 
+    private void RefreshTable3(int IdInDB) {
+        DefaultTableModel tm = (DefaultTableModel) jTable3.getModel();
+        while (tm.getRowCount() > 0) {
+            tm.removeRow(0);
+        }
+
+        String caFromStr = jLabel4.getText().trim();
+        String[] caFromF = caFromStr.split("\\.");
+        Calendar caFrom;
+        if (caFromF.length == 3) {
+            caFrom = new GregorianCalendar(Integer.valueOf(caFromF[2]), Integer.valueOf(caFromF[1]) - 1, Integer.valueOf(caFromF[0]));
+        } else {
+            caFrom = Calendar.getInstance();
+            caFrom.add(Calendar.DAY_OF_YEAR, -1);
+        }
+
+        String caToStr = jLabel6.getText().trim();
+        String[] caToF = caToStr.split("\\.");
+        Calendar caTo;
+        if (caToF.length == 3) {
+            caTo = new GregorianCalendar(Integer.valueOf(caToF[2]), Integer.valueOf(caToF[1]) - 1, Integer.valueOf(caToF[0]), 23, 59);
+        } else {
+            caTo = Calendar.getInstance();
+        }
+
+        ArrayList<AvgAR> aars = NetClient.sendGetAvgArs(IdInDB, caFrom, caTo);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        DecimalFormat df = new DecimalFormat("#.##");
+
+        for (AvgAR aar : aars) {
+            Object[] rowData = new Object[4];
+            rowData[0] = sdf.format(aar.getArDT().getTime());
+            rowData[1] = df.format(aar.getAplus());
+            rowData[2] = df.format(aar.getRplus());
+            rowData[3] = aar.getArPeriod() + " мин";
+            tm.addRow(rowData);
+        }
+
+        jTable3.scrollRectToVisible(new Rectangle(jTable3.getCellRect(jTable3.getRowCount() - 1, 0, true)));
+
+        if (aars.size() > 0 && jTabbedPane1.getSelectedIndex() == 0) {
+            jButton2.setEnabled(true);
+        }
+    }
+
+    private void RefreshTable4(int IdInDB) {
+        DefaultTableModel tm = (DefaultTableModel) jTable4.getModel();
+        while (tm.getRowCount() > 0) {
+            tm.removeRow(0);
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+
+        String[] resp = NetClient.sendGetMarkerTasks(IdInDB);
+        if (!resp[1].isEmpty()) {
+            for (String marker : resp[1].split("\n")) {
+                String[] markerFields = marker.split("\001");
+                Object[] rowData = new Object[4];
+
+                rowData[0] = new IntString(Integer.valueOf(markerFields[0]), markerFields[1]);
+
+                Calendar ca = new GregorianCalendar();
+                ca.setTimeInMillis(Long.valueOf(markerFields[2]));
+                rowData[1] = sdf.format(ca.getTime());
+
+                String ap = markerFields[3].equals("-1") ? "---" : markerFields[3];
+                rowData[2] = ap;
+
+                String rp = markerFields[4].equals("-1") ? "---" : markerFields[4];
+                rowData[3] = rp;
+
+                tm.addRow(rowData);
+            }
+        }
+
+        jTable4.scrollRectToVisible(new Rectangle(jTable4.getCellRect(jTable4.getRowCount() - 1, 0, true)));
+    }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -269,7 +336,10 @@ public class MainFrame extends javax.swing.JFrame {
         jScrollPane3 = new javax.swing.JScrollPane();
         jTable2 = new javax.swing.JTable();
         jPanel6 = new javax.swing.JPanel();
-        jLabel7 = new javax.swing.JLabel();
+        jButton4 = new javax.swing.JButton();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        jTable4 = new javax.swing.JTable();
+        jButton5 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
@@ -280,8 +350,9 @@ public class MainFrame extends javax.swing.JFrame {
         jMenu2 = new javax.swing.JMenu();
         jMenuItem4 = new javax.swing.JMenuItem();
         jCheckBoxMenuItem1 = new javax.swing.JCheckBoxMenuItem();
-        jMenuItem2 = new javax.swing.JMenuItem();
+        jMenuItem6 = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        jMenuItem2 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
         jMenu3 = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
@@ -442,7 +513,35 @@ public class MainFrame extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Накопленная энергия", jPanel3);
 
-        jLabel7.setText("Тут будут отсечки...");
+        jButton4.setText("Создать отсечку");
+        jButton4.setEnabled(false);
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+
+        jTable4.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jTable4.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane5.setViewportView(jTable4);
+
+        jButton5.setText("Убрать отсечку");
+        jButton5.setEnabled(false);
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
@@ -450,15 +549,25 @@ public class MainFrame extends javax.swing.JFrame {
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel7)
-                .addContainerGap(612, Short.MAX_VALUE))
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addComponent(jButton4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton5)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 711, Short.MAX_VALUE))
+                .addContainerGap())
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel7)
-                .addContainerGap(505, Short.MAX_VALUE))
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton4)
+                    .addComponent(jButton5))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         jTabbedPane1.addTab("Отсечки", jPanel6);
@@ -466,7 +575,6 @@ public class MainFrame extends javax.swing.JFrame {
         jLabel1.setText("---");
 
         jButton1.setText("Обновить");
-        jButton1.setEnabled(false);
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -553,6 +661,15 @@ public class MainFrame extends javax.swing.JFrame {
         });
         jMenu2.add(jCheckBoxMenuItem1);
 
+        jMenuItem6.setText("Группы счетчиков...");
+        jMenuItem6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem6ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem6);
+        jMenu2.add(jSeparator1);
+
         jMenuItem2.setText("Настройки...");
         jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -560,7 +677,6 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         jMenu2.add(jMenuItem2);
-        jMenu2.add(jSeparator1);
 
         jMenuItem5.setText("Обновление программы...");
         jMenuItem5.addActionListener(new java.awt.event.ActionListener() {
@@ -632,6 +748,7 @@ public class MainFrame extends javax.swing.JFrame {
                 RefreshTable1(mi.getIdInDB());
                 RefreshTable2(mi.getIdInDB());
                 RefreshTable3(mi.getIdInDB());
+                RefreshTable4(mi.getIdInDB());
             } else {
                 DefaultTableModel tm1 = (DefaultTableModel) jTable1.getModel();
                 while (tm1.getRowCount() > 0) {
@@ -645,15 +762,21 @@ public class MainFrame extends javax.swing.JFrame {
                 while (tm3.getRowCount() > 0) {
                     tm3.removeRow(0);
                 }
-                jButton1.setEnabled(true);
+                DefaultTableModel tm4 = (DefaultTableModel) jTable4.getModel();
+                while (tm4.getRowCount() > 0) {
+                    tm4.removeRow(0);
+                }
+                //jButton1.setEnabled(true);
             }
             jButton3.setEnabled(true);
+            jButton4.setEnabled(true);
         }
 
         if (tn == null || tn.getUserObject().getClass() == String.class) {
             jLabel1.setText("---");
-            jButton1.setEnabled(false);
+            //jButton1.setEnabled(false);
             jButton3.setEnabled(false);
+            jButton4.setEnabled(false);
             DefaultTableModel tm1 = (DefaultTableModel) jTable1.getModel();
             while (tm1.getRowCount() > 0) {
                 tm1.removeRow(0);
@@ -665,6 +788,10 @@ public class MainFrame extends javax.swing.JFrame {
             DefaultTableModel tm3 = (DefaultTableModel) jTable3.getModel();
             while (tm3.getRowCount() > 0) {
                 tm3.removeRow(0);
+            }
+            DefaultTableModel tm4 = (DefaultTableModel) jTable4.getModel();
+            while (tm4.getRowCount() > 0) {
+                tm4.removeRow(0);
             }
         }
     }//GEN-LAST:event_jTree1ValueChanged
@@ -680,7 +807,7 @@ public class MainFrame extends javax.swing.JFrame {
         Calendar ca = cdlg.getCalendar();
         if (ca != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
-            jLabel4.setText(sdf.format(ca.getTime()));
+            jLabel4.setText(" " + sdf.format(ca.getTime()) + " ");
             if (!jLabel1.getText().equals("---") && jCheckBoxMenuItem1.isSelected()) {
                 TreePath tp = jTree1.getSelectionPath();
                 if (tp != null) {
@@ -699,7 +826,7 @@ public class MainFrame extends javax.swing.JFrame {
         Calendar ca = cdlg.getCalendar();
         if (ca != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
-            jLabel6.setText(sdf.format(ca.getTime()));
+            jLabel6.setText(" " + sdf.format(ca.getTime()) + " ");
             if (!jLabel1.getText().equals("---") && jCheckBoxMenuItem1.isSelected()) {
                 TreePath tp = jTree1.getSelectionPath();
                 if (tp != null) {
@@ -719,14 +846,10 @@ public class MainFrame extends javax.swing.JFrame {
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
             if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
                 MeterInfo mi = (MeterInfo) tn.getUserObject();
-                if (jTabbedPane1.getSelectedIndex() < 2) {
-                    RefreshTable1(mi.getIdInDB());
-                    RefreshTable2(mi.getIdInDB());
-                    RefreshTable3(mi.getIdInDB());
-                }
-                if (jTabbedPane1.getSelectedIndex() == 2) {
-                    JOptionPane.showMessageDialog(this, "Тут будет обновление отсечек.");
-                }
+                RefreshTable1(mi.getIdInDB());
+                RefreshTable2(mi.getIdInDB());
+                RefreshTable3(mi.getIdInDB());
+                RefreshTable4(mi.getIdInDB());
             }
         }
     }//GEN-LAST:event_jButton1ActionPerformed
@@ -780,7 +903,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void jCheckBoxMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxMenuItem1ActionPerformed
         if (jCheckBoxMenuItem1.isSelected()) {
-            jButton1.setEnabled(false);
+            //jButton1.setEnabled(false);
             if (!jLabel1.getText().equals("---")) {
                 TreePath tp = jTree1.getSelectionPath();
                 if (tp != null) {
@@ -790,12 +913,13 @@ public class MainFrame extends javax.swing.JFrame {
                         RefreshTable1(mi.getIdInDB());
                         RefreshTable2(mi.getIdInDB());
                         RefreshTable3(mi.getIdInDB());
+                        RefreshTable4(mi.getIdInDB());
                     }
                 }
             }
         } else {
             if (!jLabel1.getText().equals("---")) {
-                jButton1.setEnabled(true);
+                //jButton1.setEnabled(true);
             }
         }
         Vars.prop.setProperty("AutoT3", String.valueOf(jCheckBoxMenuItem1.isSelected()));
@@ -816,14 +940,14 @@ public class MainFrame extends javax.swing.JFrame {
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
             if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
                 if (!jCheckBoxMenuItem1.isSelected()) {
-                    jButton1.setEnabled(true);
+                    //jButton1.setEnabled(true);
                 }
             }
             if (tn == null || tn.getUserObject().getClass() == String.class) {
-                jButton1.setEnabled(false);
+                //jButton1.setEnabled(false);
             }
         } else {
-            jButton1.setEnabled(false);
+            //jButton1.setEnabled(false);
         }
     }//GEN-LAST:event_jTabbedPane1StateChanged
 
@@ -850,10 +974,50 @@ public class MainFrame extends javax.swing.JFrame {
         dlg.setVisible(true);
     }//GEN-LAST:event_jMenuItem5ActionPerformed
 
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        TreePath tp = jTree1.getSelectionPath();
+        if (tp != null) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
+            if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
+                final MeterInfo mi = (MeterInfo) tn.getUserObject();
+                AddMarkerDialog dlg = new AddMarkerDialog(this, mi.getIdInDB());
+                dlg.setLocationRelativeTo(null);
+                dlg.setVisible(true);
+                RefreshTable4(mi.getIdInDB());
+            }
+        }
+    }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jMenuItem6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem6ActionPerformed
+        GroupsDialog dlg = new GroupsDialog(this, true);
+        dlg.setLocationRelativeTo(null);
+        dlg.setVisible(true);
+        RefreshTree();
+    }//GEN-LAST:event_jMenuItem6ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        TreePath tp = jTree1.getSelectionPath();
+        if (tp != null) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
+            if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
+                if (jTable4.getSelectedRow() > -1) {
+                    if (JOptionPane.showConfirmDialog(this, "Вы уверены, что хотите удалить эту отсечку?", "Подтверждение", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                        IntString is = (IntString) jTable4.getValueAt(jTable4.getSelectedRow(), 0);
+                        NetClient.sendRemoveMarker(is.getInt());
+                        MeterInfo mi = (MeterInfo) tn.getUserObject();
+                        RefreshTable4(mi.getIdInDB());
+                    }
+                }
+            }
+        }
+    }//GEN-LAST:event_jButton5ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton5;
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -861,7 +1025,6 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenu jMenu3;
@@ -871,6 +1034,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JMenuItem jMenuItem5;
+    private javax.swing.JMenuItem jMenuItem6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -880,12 +1044,14 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JTable jTable2;
     private javax.swing.JTable jTable3;
+    private javax.swing.JTable jTable4;
     private javax.swing.JTree jTree1;
     // End of variables declaration//GEN-END:variables
 }

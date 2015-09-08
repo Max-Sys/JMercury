@@ -45,15 +45,15 @@
             <version>6.1.0</version>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>calendarlib</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>1.4</version>
             <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>calendarlib</artifactId>
+            <version>1.0</version>
         </dependency>
     </dependencies>
     <properties>

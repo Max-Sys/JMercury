@@ -348,4 +348,55 @@ public class NetClient {
         CloseSocket(socket);
         return Integer.valueOf(resp);
     }
+
+    public static boolean sendAddMarker(int idInDB, String name, Calendar when) {
+        StringBuilder params = new StringBuilder();
+        params.append(String.valueOf(idInDB)).append("\n");
+        params.append(name).append("\n");
+        params.append(String.valueOf(when.getTimeInMillis())).append("\n");
+
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "AddMarker");
+        SendToSrv(socket, PDM.getHexString(params.toString()));
+        String resp = GetRespFromSrv(socket);
+        CloseSocket(socket);
+
+        return resp.equals("ok");
+    }
+
+    public static String[] sendGetMarkerTasks(int idInDB) {
+        String params = String.valueOf(idInDB);
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetMarkerTasks");
+        SendToSrv(socket, PDM.getHexString(params));
+
+        String[] retstr = new String[2];
+        retstr[0] = PDM.getStringFromHex(GetRespFromSrv(socket));
+        retstr[1] = PDM.getStringFromHex(GetRespFromSrv(socket));
+
+        CloseSocket(socket);
+
+        return retstr;
+    }
+
+    public static void sendRemoveMarker(int kInDB) {
+        String params = String.valueOf(kInDB);
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "RemoveMarker");
+        SendToSrv(socket, params);
+        GetRespFromSrv(socket);
+        CloseSocket(socket);
+    }
+
+    public static void sendRenameGroup(int kInDB, String name) {
+        StringBuilder params = new StringBuilder();
+        params.append(String.valueOf(kInDB)).append("\001");
+        params.append(name);
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "RenameGroup");
+        SendToSrv(socket, PDM.getHexString(params.toString()));
+        GetRespFromSrv(socket);
+        CloseSocket(socket);
+    }
+
 }

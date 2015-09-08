@@ -211,6 +211,12 @@ public class ProgramUpdateDialog extends javax.swing.JDialog {
                     Logger.getLogger(ProgramUpdateDialog.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(ProgramUpdateDialog.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
                 System.exit(0);
             }
         });
