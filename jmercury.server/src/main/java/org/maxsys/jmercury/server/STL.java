@@ -16,15 +16,22 @@ import java.util.logging.Logger;
 
 public class STL {
 
-    private static final String fileTimeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
+    private static String fileTimeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
+    private static int LineCounter = 0;
 
     public synchronized static void Log(String logText) {
+        if (LineCounter > 1000) {
+            fileTimeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
+            LineCounter = 0;
+        }
+
         BufferedWriter bw = null;
         try {
             bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileTimeStamp + ".log", true), "UTF-8"));
         } catch (UnsupportedEncodingException | FileNotFoundException ex) {
             Logger.getLogger(STL.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         if (bw != null) {
             String nowTimeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(Calendar.getInstance().getTime());
             try {
@@ -35,6 +42,8 @@ public class STL {
                 Logger.getLogger(STL.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+
+        LineCounter++;
     }
 
     public synchronized static String getLog(String filter) {

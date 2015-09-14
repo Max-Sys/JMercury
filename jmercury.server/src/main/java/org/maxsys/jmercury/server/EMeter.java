@@ -990,6 +990,44 @@ public class EMeter {
         return new AplusRplus(aplus, rplus);
     }
 
+    public AplusRplus getAplusRplusPrevDayBegining() {
+        double aplus = 0d;
+        double rplus = 0d;
+        int addr = 0x06FB;
+        byte addrHi = (byte) (addr >> 8);
+        byte addrLo = (byte) addr;
+        byte[] cmd = new byte[]{
+            addressOnBus,
+            (byte) 0x06,
+            (byte) 0x02,
+            addrHi,
+            addrLo,
+            (byte) 0x10,
+            (byte) 0x00,
+            (byte) 0x00};
+        if (!sendCMD(cmd)) {
+            return null;
+        }
+        byte[] resp = getResponse();
+        if (resp != null) {
+            aplus += (resp[2] & 0xFF) << 24;
+            aplus += (resp[1] & 0xFF) << 16;
+            aplus += (resp[4] & 0xFF) << 8;
+            aplus += (resp[3] & 0xFF);
+            aplus *= Ki;
+            aplus /= 2000;
+            rplus += (resp[10] & 0xFF) << 24;
+            rplus += (resp[9] & 0xFF) << 16;
+            rplus += (resp[12] & 0xFF) << 8;
+            rplus += (resp[11] & 0xFF);
+            rplus /= 2000;
+            rplus *= Ki;
+        } else {
+            return null;
+        }
+        return new AplusRplus(aplus, rplus);
+    }
+
     public Byte getMeterAddress() {
         if (addressOnBus == 0) {
             byte[] cmd = new byte[]{

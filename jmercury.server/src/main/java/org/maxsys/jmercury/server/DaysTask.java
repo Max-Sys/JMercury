@@ -16,19 +16,81 @@ public class DaysTask implements Runnable {
     @Override
     public void run() {
         PDM pdm = new PDM();
+
+        // Заполнить за вчера.
         Calendar canow = em.getMeterTime();
         canow.add(Calendar.DAY_OF_YEAR, -1);
-        Object strs = pdm.getScalar("em", "SELECT * FROM daydata WHERE dayDT = '" + PDM.getDTStringDateOnly(canow) + "' AND meter_id = " + em.getIdInDB());
+        Object strs = pdm.getScalar("em", "SELECT COUNT(*) FROM daydata WHERE dayDT = '" + PDM.getDTStringDateOnly(canow) + "' AND meter_id = " + em.getIdInDB());
         if (strs == null) {
             em.setMeterFlag("statusstr", "d ApRpPrDay");
+
             AplusRplus aprp = em.getAplusRplusPrevDay();
+            if (aprp == null) {
+                aprp = em.getAplusRplusPrevDay();
+                if (aprp == null) {
+                    return;
+                }
+            }
+
+            AplusRplus aprpb = em.getAplusRplusPrevDayBegining();
+            if (aprpb == null) {
+                aprpb = em.getAplusRplusPrevDayBegining();
+                if (aprpb == null) {
+                    return;
+                }
+            }
+
             pdm.executeNonQuery("em", "INSERT INTO daydata "
-                    + "(meter_id, Aplus, Rplus, dayDT, hide) "
+                    + "(meter_id, Aplus, Rplus, AplusOnBeg, RplusOnBeg, dayDT, hide) "
                     + "VALUES (" + em.getIdInDB() + ", "
                     + aprp.getAplus() + ", "
                     + aprp.getRplus() + ", "
+                    + aprpb.getAplus() + ", "
+                    + aprpb.getRplus() + ", "
                     + "'" + PDM.getDTStringDateOnly(canow) + "', 0)");
             STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask - запись данных PrevDay.");
+        }
+
+        // Заполнить за сегодня.
+        em.setMeterFlag("statusstr", "d ApRpNowDay");
+
+        AplusRplus aprp = em.getAplusRplusNowDay();
+        if (aprp == null) {
+            aprp = em.getAplusRplusNowDay();
+            if (aprp == null) {
+                return;
+            }
+        }
+
+        AplusRplus aprpb = em.getAplusRplusNowDayBegining();
+        if (aprpb == null) {
+            aprpb = em.getAplusRplusNowDayBegining();
+            if (aprpb == null) {
+                return;
+            }
+        }
+
+        canow.add(Calendar.DAY_OF_YEAR, 1);
+        Object ko = pdm.getScalar("em", "SELECT k FROM daydata WHERE dayDT = '" + PDM.getDTStringDateOnly(canow) + "' AND meter_id = " + em.getIdInDB());
+        if (ko == null) {
+            pdm.executeNonQuery("em", "INSERT INTO daydata "
+                    + "(meter_id, Aplus, Rplus, AplusOnBeg, RplusOnBeg, dayDT, hide) "
+                    + "VALUES (" + em.getIdInDB() + ", "
+                    + aprp.getAplus() + ", "
+                    + aprp.getRplus() + ", "
+                    + aprpb.getAplus() + ", "
+                    + aprpb.getRplus() + ", "
+                    + "'" + PDM.getDTStringDateOnly(canow) + "', 0)");
+            STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask - запись данных NowDay.");
+        } else {
+            int k = (int) ko;
+            pdm.executeNonQuery("em", "UPDATE daydata "
+                    + "SET `Aplus` = " + aprp.getAplus()
+                    + ", `Rplus` = " + aprp.getRplus()
+                    + ", `AplusOnBeg` = " + aprpb.getAplus()
+                    + ", `RplusOnBeg` = " + aprpb.getRplus()
+                    + " WHERE k = " + k);
+            STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask - обновление данных NowDay.");
         }
 
         // Заполнить недостающие данные за последние 3 месяца.
@@ -38,11 +100,13 @@ public class DaysTask implements Runnable {
         while (dberr < 15) {
             em.setMeterFlag("statusstr", "d p3m");
             ra = pdm.executeNonQueryUpdate("em",
-                    "INSERT INTO daydata (meter_id, Aplus, Rplus, dayDT, hide) "
+                    "INSERT INTO daydata (meter_id, Aplus, Rplus, AplusOnBeg, RplusOnBeg, dayDT, hide) "
                     + "SELECT"
                     + " avgars.meter_id,"
                     + " IFNULL(SUM(avgars.Aplus) / (60 / avgars.arPeriod), 0) AS Aplus,"
                     + " IFNULL(SUM(avgars.Rplus) / (60 / avgars.arPeriod), 0) AS Rplus,"
+                    + " 0 AS AplusOnBeg,"
+                    + " 0 AS RplusOnBeg,"
                     + " DATE(avgars.arDT) AS dayDT,"
                     + " IF(COUNT(*) = 24 * (60 / avgars.arPeriod), 0, 1) AS hide "
                     + "FROM avgars "

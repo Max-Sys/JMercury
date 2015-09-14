@@ -41,7 +41,6 @@ public class MeterServer implements Runnable {
                 // Out of service?
                 String osv = em.getMeterFlag("osv") == null ? "no" : em.getMeterFlag("osv");
                 if (osv.equals("yes")) {
-                    //STL.Log(em.getMeterName() + " is out of service!");
                     em.setStatus("Out of service!");
                     continue;
                 }

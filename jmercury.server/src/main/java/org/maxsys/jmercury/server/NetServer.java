@@ -193,6 +193,7 @@ public class NetServer implements Runnable {
                          GetMeterInfo - взять информацию о счетчике (имя, порт и т.д.)
                          GetAvgArs - взять AvgARs с ... по.
                          GetApRpDays - взять ApRp за дни.
+                         GetApRpDaysFT - взять ApRp за конкретные дни.
                          GetApRpMonths - взять ApRp за месяцы.
                          GetMeterDiagram - взять данные для диаграммы.
                          GetMinMaxMonth - взять минимальный и максимальный Calendar в таблице месяцев.
@@ -307,6 +308,9 @@ public class NetServer implements Runnable {
                                 break;
                             case "RenameGroup":
                                 RenameGroup(sock);
+                                break;
+                            case "GetApRpDaysFT":
+                                GetApRpDaysFT(sock);
                                 break;
                         }
                     }
@@ -443,21 +447,30 @@ public class NetServer implements Runnable {
                     while (!statcmd.equals("close")) {
                         statcmd = GetRespFromSrv(sock);
                         if (statcmd.equals("get")) {
-                            String statuses = "-1\001";
+                            StringBuilder statuses = new StringBuilder();
+                            // isMsvrRunning (-1)
+                            statuses.append("-1").append("\001");
                             if (msrv.isIsMsvrPaused()) {
-                                statuses += "MsvrPaused\n";
+                                statuses.append("MsvrPaused").append("\n");
                             } else {
-                                statuses += "MsvrRunning\n";
+                                statuses.append("MsvrRunning").append("\n");
                             }
 
+                            // PDM status (-2)
+                            statuses.append("-2").append("\001");
+                            statuses.append(PDM.getStaticInfo()).append("\n");
+
+                            // ServerTime (-3)
+                            statuses.append("-3").append("\001");
+                            statuses.append(Calendar.getInstance().getTime()).append("\n");
+
+                            // Meters (IdInDB)
                             for (EMeter em : Vars.meters.values()) {
-                                statuses += em.getIdInDB();
-                                statuses += "\001";
-                                statuses += em.getStatus();
-                                statuses += "\n";
+                                statuses.append(em.getIdInDB()).append("\001");
+                                statuses.append(em.getStatus()).append("\n");
                             }
 
-                            NetServer.SendToSrv(sock, PDM.getHexString(statuses));
+                            NetServer.SendToSrv(sock, PDM.getHexString(statuses.toString()));
                         }
                         if (statcmd.isEmpty()) {
                             break;
@@ -607,7 +620,11 @@ public class NetServer implements Runnable {
                     StringBuilder resp = new StringBuilder();
 
                     PDM pdm = new PDM();
-                    String sql = "SELECT Aplus, Aminus, Rplus, Rminus, arPeriod, arDT FROM avgars WHERE hide = 0 AND meter_id = " + IdInDB + " AND arDT BETWEEN '" + PDM.getDTString(caFrom) + "' AND '" + PDM.getDTString(caTo) + "' ORDER BY arDT";
+                    String sql = "SELECT Aplus, Aminus, Rplus, Rminus, arPeriod, arDT FROM avgars "
+                            + "WHERE hide = 0 "
+                            + "AND meter_id = " + IdInDB
+                            + " AND arDT BETWEEN '" + PDM.getDTString(caFrom) + "' AND '" + PDM.getDTString(caTo) + "'"
+                            + " ORDER BY arDT";
                     ResultSet rs = pdm.getResultSet("em", sql);
                     try {
                         while (rs.next()) {
@@ -1032,6 +1049,50 @@ public class NetServer implements Runnable {
                         }
                     }
                     NetServer.SendToSrv(sock, "Ok");
+                }
+
+                private void GetApRpDaysFT(Socket sock) {
+                    String paramstr = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+
+                    String[] params = paramstr.split("\n");
+                    int IdInDB = Integer.valueOf(params[0]);
+                    long longFrom = Long.valueOf(params[1]);
+                    long longTo = Long.valueOf(params[2]);
+
+                    Calendar caFrom = new GregorianCalendar();
+                    caFrom.setTimeInMillis(longFrom);
+                    Calendar caTo = new GregorianCalendar();
+                    caTo.setTimeInMillis(longTo);
+
+                    StringBuilder resp = new StringBuilder();
+
+                    PDM pdm = new PDM();
+                    String sql = "SELECT Aplus, Rplus, AplusOnBeg, RplusOnBeg, dayDT FROM daydata "
+                            + "WHERE hide = 0 AND "
+                            + "meter_id = " + IdInDB
+                            + " AND dayDT BETWEEN '" + PDM.getDTString(caFrom) + "' AND '" + PDM.getDTString(caTo) + "'"
+                            + " ORDER BY dayDT";
+                    ResultSet rs = pdm.getResultSet("em", sql);
+                    try {
+                        while (rs.next()) {
+                            resp.append(rs.getDouble("Aplus"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("Rplus"));
+                            resp.append("\001");
+                            resp.append(PDM.getCalendarFromTime(rs.getTimestamp("dayDT")).getTimeInMillis());
+                            resp.append("\001");
+                            resp.append(rs.getDouble("AplusOnBeg"));
+                            resp.append("\001");
+                            resp.append(rs.getDouble("RplusOnBeg"));
+                            resp.append("\001");
+                            resp.append("\n");
+                        }
+                    } catch (SQLException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    pdm.closeResultSet();
+                    
+                    NetServer.SendToSrvBig(sock, PDM.getHexString(resp.toString()));
                 }
             }
             );

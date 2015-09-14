@@ -2,6 +2,8 @@ package org.maxsys.jmercury.server;
 
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.maxsys.dblib.PDM;
 
 public class AvgARsTask implements Runnable {
@@ -19,16 +21,43 @@ public class AvgARsTask implements Runnable {
         Calendar lastDTinDB = PDM.getCalendarFromTime((Timestamp) pdm.getScalar("em", "SELECT arDT FROM avgars WHERE meter_id = " + em.getIdInDB() + " AND hide = 0 ORDER BY arDT DESC LIMIT 1"));
         long lTimeDiff = 0;
         if (lastDTinDB != null) {
-            // Надо проверку на nullpointer!
-            lTimeDiff = (em.getAvgARLast().getArDT().getTimeInMillis() - lastDTinDB.getTimeInMillis());
+            AvgAR aarlast = em.getAvgARLast();
+            if (aarlast == null) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(AvgARsTask.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                aarlast = em.getAvgARLast();
+            }
+            if (aarlast == null) {
+                return;
+            }
+            lTimeDiff = (aarlast.getArDT().getTimeInMillis() - lastDTinDB.getTimeInMillis());
             lTimeDiff = Math.abs(lTimeDiff);
             if (lTimeDiff > 2592000000l) {
                 lastDTinDB = null;
             }
         } else {
-            em.getAvgARLast();
+            AvgAR aarlast = em.getAvgARLast();
+            if (aarlast == null) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(AvgARsTask.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                aarlast = em.getAvgARLast();
+            }
+            if (aarlast == null) {
+                return;
+            }
         }
-        em.getAvgARNext();
+
+        AvgAR aarnext = em.getAvgARNext();
+        if (aarnext == null) {
+            return;
+        }
+
         int AvgARsCounter = 2000;
         int FirstK = 0;
 
