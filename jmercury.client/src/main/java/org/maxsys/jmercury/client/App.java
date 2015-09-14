@@ -51,10 +51,9 @@ public class App {
         if (System.getProperty("user.dir").endsWith("update")) {
             javax.swing.JOptionPane.showMessageDialog(null, "Обновление до версии " + Vars.Version + "\n\n"
                     + "Что нового:\n"
-                    + "- добавлена возможность переименовывать группы\n"
-                    + "- добавлена работа с отсечками\n"
-                    + "- всякие мелкие исправления\n\n"
-                    + "Нажмите Ok и, по идее, программа сама запустится...");
+                    + "- зачатки работы с отсечками на графике\n"
+                    + "- дохрена мелких исправлений\n\n"
+                    + "Нажмите Ok для запуска программы.");
 
             String wp = System.getProperty("user.dir");
             File dep = new File(wp + "/dependency");

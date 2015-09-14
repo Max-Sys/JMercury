@@ -10,31 +10,149 @@ import javax.swing.JPanel;
 
 public class TrendPlotter extends JPanel {
 
-    private static HashMap<TreeMap<Calendar, Double>, Properties> trends = new HashMap<>();
-    private static HashMap<TreeMap<Calendar, Double>, Properties> atrends = new HashMap<>();
-    private static ArrayList<Properties> nlines = new ArrayList<>();
+    private class Trend {
+
+        private String Name;
+        private TreeMap<Calendar, Double> TrendValues;
+        private TreeMap<Calendar, Double> TrendAvgValues;
+        private long beginTime;
+        private long endTime;
+        private int colorRGB;
+
+        public Trend(String Name, Color color, TreeMap<Calendar, Double> TrendValues) {
+            this.Name = Name;
+            this.TrendValues = TrendValues;
+            this.colorRGB = color.getRGB();
+            Calendar bt = null;
+            Calendar et = null;
+            for (Calendar tt : TrendValues.keySet()) {
+                if (bt == null || bt.after(tt)) {
+                    bt = tt;
+                }
+                if (et == null || et.before(tt)) {
+                    et = tt;
+                }
+            }
+            if (bt == null) {
+                this.beginTime = 0;
+            } else {
+                this.beginTime = bt.getTimeInMillis();
+            }
+            if (et == null) {
+                this.endTime = 0;
+            } else {
+                this.endTime = et.getTimeInMillis();
+            }
+        }
+
+        public String getName() {
+            return Name;
+        }
+
+        public TreeMap<Calendar, Double> getTrendValues() {
+            return TrendValues;
+        }
+
+        public void setTrendAvgValues(TreeMap<Calendar, Double> TrendAvgValues) {
+            this.TrendAvgValues = TrendAvgValues;
+        }
+
+        public TreeMap<Calendar, Double> getTrendAvgValues() {
+            return TrendAvgValues;
+        }
+
+        public int getColorRGB() {
+            return colorRGB;
+        }
+
+        public long getBeginTime() {
+            return beginTime;
+        }
+
+        public long getEndTime() {
+            return endTime;
+        }
+    }
+
+    private class Markers {
+
+        private Calendar Marker1Ca;
+        private String Marker1Va;
+        private Calendar Marker2Ca;
+        private String Marker2Va;
+
+        public void addMarker1(Calendar ca, String value) {
+            Marker1Ca = ca;
+            Marker1Va = value;
+        }
+
+        public void addMarker2(Calendar ca, String value) {
+            Marker2Ca = ca;
+            Marker2Va = value;
+        }
+
+        public void Clear() {
+            Marker1Ca = null;
+            Marker1Va = null;
+            Marker2Ca = null;
+            Marker2Va = null;
+        }
+
+        public boolean isMarker1Ok() {
+            return Marker1Ca != null && Marker1Va != null;
+        }
+
+        public boolean isMarker2Ok() {
+            return Marker2Ca != null && Marker2Va != null;
+        }
+
+        public Calendar getMarker1Ca() {
+            return Marker1Ca;
+        }
+
+        public String getMarker1Va() {
+            return Marker1Va;
+        }
+
+        public Calendar getMarker2Ca() {
+            return Marker2Ca;
+        }
+
+        public String getMarker2Va() {
+            return Marker2Va;
+        }
+    }
+
+    private ArrayList<Trend> trends = new ArrayList<>();
+    private ArrayList<Properties> nlines = new ArrayList<>();
+    private Markers markers = new Markers();
     private int tmpW = 0;
     private int tmpH = 0;
     private long tmpTB = 0;
     private long tmpTW = 0;
-    private static double tmpTH = 0;
-    private static double tmpTMin = 0;
+    private double tmpTH = 0;
+    private double tmpTMin = 0;
     private int linex = 10;
-    private static int avg = 1;
+    private int avg = 1;
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
 
-        if (atrends.isEmpty()) {
+        if (trends.isEmpty()) {
             return;
         }
 
-        linex = 25 + g.getFontMetrics().stringWidth("0.00");
+        linex = 25 + g.getFontMetrics().stringWidth("0000.00");
         int liney = getHeight() - 10;
 
         int tmpWt = getWidth() - linex - 15;
-        int tmpHt = liney - (atrends.size() * g.getFontMetrics().getHeight());
+        int tmpHt;
+        if (markers.isMarker1Ok() || markers.isMarker2Ok()) {
+            tmpHt = liney - ((trends.size() + 1) * g.getFontMetrics().getHeight());
+        } else {
+            tmpHt = liney - (trends.size() * g.getFontMetrics().getHeight());
+        }
         if (tmpW != tmpWt || tmpH != tmpHt) {
             tmpW = tmpWt;
             tmpH = tmpHt;
@@ -58,26 +176,26 @@ public class TrendPlotter extends JPanel {
         g.drawString(df.format(tmpTMin), 10, getYfromDouble(tmpTMin) - 3);
         g.drawLine(linex, 10, linex, tmpH);
 
-        for (TreeMap<Calendar, Double> trend : atrends.keySet()) {
-            tmpTB = Long.valueOf(atrends.get(trend).getProperty("beginTime"));
-            tmpTW = Long.valueOf(atrends.get(trend).getProperty("endTime")) - tmpTB;
+        for (Trend trend : trends) {
+            tmpTB = trend.getBeginTime();
+            tmpTW = trend.getEndTime() - tmpTB;
 
-            g.setColor(new Color(Integer.valueOf(atrends.get(trend).getProperty("color"))));
+            g.setColor(new Color(trend.getColorRGB()));
 
             Calendar ca = new GregorianCalendar();
-            ca.setTimeInMillis(Long.valueOf(atrends.get(trend).getProperty("endTime")));
+            ca.setTimeInMillis(trend.getEndTime());
             String etstr = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(ca.getTime());
             g.drawString(etstr, tmpW + linex - g.getFontMetrics().stringWidth(etstr), liney);
             ca.setTimeInMillis(tmpTB);
             etstr = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(ca.getTime());
-            g.drawString(etstr + " - " + atrends.get(trend).getProperty("name"), 10, liney);
+            g.drawString(etstr + " - " + trend.getName(), 10, liney);
             liney -= g.getFontMetrics().getHeight();
 
             int lastx = 0;
             int lasty = 0;
-            for (Calendar trpc : trend.keySet()) {
+            for (Calendar trpc : trend.getTrendAvgValues().keySet()) {
                 int x = getXfromCalendar(trpc);
-                int y = getYfromDouble(trend.get(trpc));
+                int y = getYfromDouble(trend.getTrendAvgValues().get(trpc));
                 if (lastx == 0) {
                     lastx = x;
                 }
@@ -113,6 +231,21 @@ public class TrendPlotter extends JPanel {
             g.drawPolygon(polygon);
             g.drawString(new SimpleDateFormat("dd.MM.yyyy HH:mm").format(c1.getTime()) + " - " + df.format(Double.valueOf(v1s)), x2, y2);
         }
+
+        if (markers.isMarker1Ok()) {
+            g.setColor(Color.GRAY);
+            g.drawLine(getXfromCalendar(markers.getMarker1Ca()), 10, getXfromCalendar(markers.getMarker1Ca()), tmpH);
+        }
+
+        if (markers.isMarker2Ok()) {
+            g.setColor(Color.GRAY);
+            g.drawLine(getXfromCalendar(markers.getMarker2Ca()), 10, getXfromCalendar(markers.getMarker2Ca()), tmpH);
+        }
+
+        if (markers.isMarker1Ok() || markers.isMarker2Ok()) {
+            g.setColor(Color.BLACK);
+            g.drawString("тут будут метки...", 10, liney);
+        }
     }
 
     private int getXfromCalendar(Calendar xca) {
@@ -120,7 +253,7 @@ public class TrendPlotter extends JPanel {
         return (int) (lx * tmpW / tmpTW) + linex;
     }
 
-    private Calendar getCalendarFromX(int x) {
+    public Calendar getCalendarFromX(int x) {
         long lx = (x - linex) * tmpTW / tmpW;
         lx += tmpTB;
         Calendar ca = new GregorianCalendar();
@@ -132,61 +265,37 @@ public class TrendPlotter extends JPanel {
         return (int) (tmpH - ((value - tmpTMin) * tmpH / (tmpTH - tmpTMin)));
     }
 
-    private double getDoubleFromY(int y) {
+    public double getDoubleFromY(int y) {
         return ((tmpH - y) * (tmpTH - tmpTMin)) / tmpH + tmpTMin;
     }
 
-    public static void addTrend(String trendName, Color trendColor, TreeMap<Calendar, Double> trend) {
-        Properties prop = new Properties();
-        prop.setProperty("name", trendName);
-        prop.setProperty("color", String.valueOf(trendColor.getRGB()));
-
-        Calendar bt = null;
-        Calendar et = null;
-        for (Calendar tt : trend.keySet()) {
-            if (bt == null || bt.after(tt)) {
-                bt = tt;
-            }
-            if (et == null || et.before(tt)) {
-                et = tt;
-            }
-        }
-        if (bt == null) {
-            prop.setProperty("beginTime", "0");
-        } else {
-            prop.setProperty("beginTime", String.valueOf(bt.getTimeInMillis()));
-        }
-        if (bt == null) {
-            prop.setProperty("endTime", "0");
-        } else {
-            prop.setProperty("endTime", String.valueOf(et.getTimeInMillis()));
-        }
-
-        trends.put(trend, prop);
+    public void addTrend(String trendName, Color trendColor, TreeMap<Calendar, Double> trend) {
+        trends.add(new Trend(trendName, trendColor, trend));
         setAvg(avg);
     }
 
-    public static void removeTrends() {
+    public void removeTrends() {
         trends.clear();
-        atrends.clear();
         nlines.clear();
         tmpTH = 0;
         tmpTMin = 0;
     }
 
-    public static void setAvg(int avgFactor) {
+    public void setAvg(int avgFactor) {
+        tmpTH = 0;
+        tmpTMin = 0;
+
         avg = avgFactor;
 
-        atrends.clear();
-        for (TreeMap<Calendar, Double> trend : trends.keySet()) {
+        for (Trend trend : trends) {
             TreeMap<Calendar, Double> tmpATrend = new TreeMap<>();
-            Object[] cas = trend.keySet().toArray();
+            Object[] cas = trend.getTrendValues().keySet().toArray();
             for (int ic = 0; ic < cas.length; ic++) {
                 double avgd = 0;
                 int avgi = 0;
                 while (avgi < avg && (ic + avgi) < cas.length) {
                     Calendar ca = (Calendar) cas[avgi + ic];
-                    avgd += trend.get(ca);
+                    avgd += trend.getTrendValues().get(ca);
                     avgi++;
                 }
                 avgd /= avgi;
@@ -205,19 +314,22 @@ public class TrendPlotter extends JPanel {
                     valHmin = value;
                 }
             }
-            if (tmpTH < valH || atrends.isEmpty()) {
+            if (tmpTH < valH) {
                 tmpTH = valH;
             }
-            if (tmpTMin > valHmin || atrends.isEmpty()) {
+            if (tmpTMin > valHmin) {
                 tmpTMin = valHmin;
             }
 
-            atrends.put(tmpATrend, trends.get(trend));
+            trend.setTrendAvgValues(tmpATrend);
         }
 
-        double p33 = ((tmpTH - tmpTMin) / 3);
-        tmpTH += p33;
-        tmpTMin -= p33;
+        double p20 = ((tmpTH - tmpTMin) / 5);
+        tmpTH += p20;
+        tmpTMin -= p20;
+        if (tmpTMin < 0) {
+            tmpTMin = 0;
+        }
 
         nlines.clear();
     }
@@ -231,7 +343,28 @@ public class TrendPlotter extends JPanel {
         nlines.add(p);
     }
 
-    public static void removeNLines() {
+    public void removeNLines() {
         nlines.clear();
     }
+
+    public void addMarker1(int x, String value) {
+        markers.addMarker1(getCalendarFromX(x), value);
+    }
+
+    public void addMarker2(int x, String value) {
+        markers.addMarker2(getCalendarFromX(x), value);
+    }
+
+    public void addMarkerNext(int x, String value) {
+        if (!markers.isMarker1Ok()) {
+            addMarker1(x, value);
+        } else {
+            addMarker2(x, value);
+        }
+    }
+
+    public void removeMarkers() {
+        markers.Clear();
+    }
+
 }

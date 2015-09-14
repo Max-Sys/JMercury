@@ -154,7 +154,40 @@ public class NetClient {
                 Calendar dayDT = new GregorianCalendar();
                 long dayDTlong = Long.valueOf(aprpdstr.split("\001")[2]);
                 dayDT.setTimeInMillis(dayDTlong);
-                AplusRplusD aprpd = new AplusRplusD(dayDT, Aplus, Rplus);
+                AplusRplusD aprpd = new AplusRplusD(dayDT, Aplus, Rplus, 0, 0);
+                aprpds.add(aprpd);
+            }
+        }
+
+        return aprpds;
+    }
+
+    public static ArrayList<AplusRplusD> sendGetApRpDays(int IdInDB, Calendar caFrom, Calendar caTo) {
+        StringBuilder params = new StringBuilder();
+        params.append(IdInDB);
+        params.append("\n");
+        params.append(caFrom.getTimeInMillis());
+        params.append("\n");
+        params.append(caTo.getTimeInMillis());
+        params.append("\n");
+
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetApRpDaysFT");
+        SendToSrv(socket, PDM.getHexString(params.toString()));
+        String resp = PDM.getStringFromHex(GetRespFromSrvBig(socket));
+        CloseSocket(socket);
+
+        ArrayList<AplusRplusD> aprpds = new ArrayList<>();
+        if (!resp.isEmpty()) {
+            for (String aprpdstr : resp.split("\n")) {
+                double Aplus = Double.valueOf(aprpdstr.split("\001")[0]);
+                double Rplus = Double.valueOf(aprpdstr.split("\001")[1]);
+                double AplusOnBeg = Double.valueOf(aprpdstr.split("\001")[3]);
+                double RplusOnBeg = Double.valueOf(aprpdstr.split("\001")[4]);
+                Calendar dayDT = new GregorianCalendar();
+                long dayDTlong = Long.valueOf(aprpdstr.split("\001")[2]);
+                dayDT.setTimeInMillis(dayDTlong);
+                AplusRplusD aprpd = new AplusRplusD(dayDT, Aplus, Rplus, AplusOnBeg, RplusOnBeg);
                 aprpds.add(aprpd);
             }
         }
