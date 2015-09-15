@@ -19,6 +19,18 @@ public class DaysTask implements Runnable {
 
         // Заполнить за вчера.
         Calendar canow = em.getMeterTime();
+        if (canow == null) {
+            STL.Log("MeterServer: " + em.getMeterName() + " ошибка чтения (DaysTask, em.getMeterTime() - 1)");
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(DaysTask.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            canow = em.getMeterTime();
+            if (canow == null) {
+                STL.Log("MeterServer: " + em.getMeterName() + " ошибка чтения (DaysTask, em.getMeterTime() - 2, return)");
+            }
+        }
         canow.add(Calendar.DAY_OF_YEAR, -1);
         Object strs = pdm.getScalar("em", "SELECT COUNT(*) FROM daydata WHERE dayDT = '" + PDM.getDTStringDateOnly(canow) + "' AND meter_id = " + em.getIdInDB());
         if (strs == null) {

@@ -1,6 +1,8 @@
 package org.maxsys.jmercury.server;
 
 import java.util.Calendar;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.maxsys.dblib.PDM;
 
 public class MonthTask implements Runnable {
@@ -16,6 +18,19 @@ public class MonthTask implements Runnable {
         em.setMeterFlag("statusstr", "m ApRpMonth");
 
         Calendar mca = em.getMeterTime();
+        if (mca == null) {
+            STL.Log("MeterServer: " + em.getMeterName() + " ошибка чтения (MonthTask, em.getMeterTime() - 1)");
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MonthTask.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            mca = em.getMeterTime();
+            if (mca == null) {
+                STL.Log("MeterServer: " + em.getMeterName() + " ошибка чтения (MonthTask, em.getMeterTime() - 2, return)");
+                return;
+            }
+        }
         int mYear = mca.get(Calendar.YEAR);
         int mMonth = mca.get(Calendar.MONTH) + 1;
 
@@ -81,10 +96,38 @@ public class MonthTask implements Runnable {
             int k = (int) ko;
 
             AplusRplus aprp = em.getAplusRplusMonthBegining(mMonth);
+            if (aprp == null) {
+                STL.Log("MeterServer: " + em.getMeterName() + " ошибка чтения (MonthTask, em.getAplusRplusMonthBegining(mMonth) - 1)");
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MonthTask.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                aprp = em.getAplusRplusMonthBegining(mMonth);
+                if (aprp == null) {
+                    STL.Log("MeterServer: " + em.getMeterName() + " ошибка чтения (MonthTask, em.getAplusRplusMonthBegining(mMonth) - 2, return)");
+                    return;
+                }
+            }
+
             double AplusOnBeg = aprp.getAplus();
             double RplusOnBeg = aprp.getRplus();
 
             aprp = em.getAplusRplusMonth(mMonth);
+            if (aprp == null) {
+                STL.Log("MeterServer: " + em.getMeterName() + " ошибка чтения (MonthTask, em.getAplusRplusMonth(mMonth) - 1)");
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MonthTask.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                aprp = em.getAplusRplusMonth(mMonth);
+                if (aprp == null) {
+                    STL.Log("MeterServer: " + em.getMeterName() + " ошибка чтения (MonthTask, em.getAplusRplusMonth(mMonth) - 2, return)");
+                    return;
+                }
+            }
+
             double Aplus = aprp.getAplus();
             double Rplus = aprp.getRplus();
 

@@ -198,13 +198,16 @@ public class NetServer implements Runnable {
                          GetMeterDiagram - взять данные для диаграммы.
                          GetMinMaxMonth - взять минимальный и максимальный Calendar в таблице месяцев.
                          GetForReport - взять ForReport.
+                         GetForReportDays - взять ForReport за сутки.
                          GetLog - взять лог.
                          RefreshMonths - обновить данные всех счетчиков по месяцам.
+                         RefreshDays - обновить данные всех счетчиков по суткам.
                          GetUpdateNumber - взять индекс обновления.
                          GetUpdate - взять update.zip
                          AddMarker - добавить отсечку.
                          GetMarkerTasks - взять маркеры.
                          RemoveMarker - удалить маркер.
+                         GetAplusSumFromAvgArs - взять потребление за период посчитанное из получасовок.
                          */
                         switch (cmd) {
                             case "StopServer":
@@ -311,6 +314,15 @@ public class NetServer implements Runnable {
                                 break;
                             case "GetApRpDaysFT":
                                 GetApRpDaysFT(sock);
+                                break;
+                            case "GetAplusSumFromAvgArs":
+                                GetAplusSumFromAvgArs(sock);
+                                break;
+                            case "GetForReportDays":
+                                GetForReportDays(sock);
+                                break;
+                            case "RefreshDays":
+                                RefreshDays(sock);
                                 break;
                         }
                     }
@@ -881,6 +893,8 @@ public class NetServer implements Runnable {
                         EMeter em = Vars.meters.get(ki);
                         String osv = em.getMeterFlag("osv") == null ? "no" : em.getMeterFlag("osv");
                         if (osv.equals("yes")) {
+                            resp = em.getMeterName() + " - обновление отключено";
+                            NetServer.SendToSrv(sock, PDM.getHexString(resp));
                             kis.remove(ki);
                         } else {
                             String busy = em.getMeterFlag("busy") == null ? "no" : em.getMeterFlag("busy");
@@ -897,6 +911,10 @@ public class NetServer implements Runnable {
                                 resp = "Обновляется: " + em.getMeterName();
                                 NetServer.SendToSrv(sock, PDM.getHexString(resp));
 
+                                kis.remove(ki);
+                            } else {
+                                resp = em.getMeterName() + " занят";
+                                NetServer.SendToSrv(sock, PDM.getHexString(resp));
                                 kis.remove(ki);
                             }
                         }
@@ -1091,8 +1109,154 @@ public class NetServer implements Runnable {
                         Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     pdm.closeResultSet();
-                    
+
                     NetServer.SendToSrvBig(sock, PDM.getHexString(resp.toString()));
+                }
+
+                private void GetAplusSumFromAvgArs(Socket sock) {
+                    String paramstr = PDM.getStringFromHex(NetServer.GetRespFromSrv(sock));
+
+                    String[] params = paramstr.split("\n");
+                    int IdInDB = Integer.valueOf(params[0]);
+                    long longFrom = Long.valueOf(params[1]);
+                    long longTo = Long.valueOf(params[2]);
+
+                    Calendar caFrom = new GregorianCalendar();
+                    caFrom.setTimeInMillis(longFrom);
+                    caFrom.set(Calendar.SECOND, 0);
+                    caFrom.set(Calendar.MILLISECOND, 0);
+                    Calendar caTo = new GregorianCalendar();
+                    caTo.setTimeInMillis(longTo);
+                    caTo.set(Calendar.SECOND, 0);
+                    caTo.set(Calendar.MILLISECOND, 0);
+                    caTo.add(Calendar.MINUTE, -1);
+
+                    PDM pdm = new PDM();
+                    String sql = "SELECT SUM(Aplus * arPeriod / 60) FROM avgars "
+                            + "WHERE meter_id = " + IdInDB
+                            + " AND arDT BETWEEN '" + PDM.getDTString(caFrom) + "' AND '" + PDM.getDTString(caTo) + "'";
+                    Double sap = (Double) pdm.getScalar("em", sql);
+
+                    String resp;
+                    if (sap != null) {
+                        resp = String.valueOf(sap);
+                    } else {
+                        resp = "";
+                    }
+                    NetServer.SendToSrvBig(sock, PDM.getHexString(resp));
+                }
+
+                private void GetForReportDays(Socket sock) {
+                    int Year = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    int Month = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    int Day = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+
+                    PDM pdm = new PDM();
+                    String sql = "SELECT"
+                            + " metergroups.groupname AS GroupName,"
+                            + " meters.name AS MeterName,"
+                            + " meters.serial AS MeterSN,"
+                            + " daydata.AplusOnBeg / meters.ki AS Aplus1,"
+                            + " (daydata.AplusOnBeg + daydata.Aplus) / meters.ki AS Aplus2,"
+                            + " (daydata.AplusOnBeg + daydata.Aplus - daydata.AplusOnBeg) / meters.ki AS Aplus21,"
+                            + " meters.ki AS MeterKi,"
+                            + " daydata.Aplus AS Aplus21Ki"
+                            + " FROM daydata LEFT JOIN meters ON daydata.meter_id = meters.k LEFT JOIN metergroups ON meters.group_id = metergroups.k"
+                            + " WHERE meters.hide = 0 AND daydata.hide = 0 AND metergroups.hide = 0"
+                            + " AND YEAR(daydata.dayDT) = " + Year
+                            + " AND MONTH(daydata.dayDT) = " + Month
+                            + " AND DAY(daydata.dayDT) = " + Day
+                            + " AND meters.server_id = " + Vars.serverID
+                            + " ORDER BY metergroups.groupname, meters.name";
+                    ResultSet rs = pdm.getResultSet("em", sql);
+                    StringBuilder resp = new StringBuilder();
+                    DecimalFormat df = new DecimalFormat("#.##");
+                    try {
+                        while (rs.next()) {
+                            resp.append(PDM.getStringFromHex(rs.getString("GroupName")));
+                            resp.append("\001");
+                            resp.append(PDM.getStringFromHex(rs.getString("MeterName")));
+                            resp.append("\001");
+                            resp.append(rs.getString("MeterSN"));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus1")));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus2")));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus21")));
+                            resp.append("\001");
+                            resp.append(rs.getInt("MeterKi"));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus21Ki")));
+                            resp.append("\001");
+                            resp.append("\n");
+                        }
+                    } catch (SQLException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    pdm.closeResultSet();
+
+                    NetServer.SendToSrvBig(sock, PDM.getHexString(resp.toString()));
+                }
+
+                private void RefreshDays(Socket sock) {
+                    ArrayList<Integer> kis = new ArrayList<>();
+                    for (int ki : Vars.meters.keySet()) {
+                        kis.add(ki);
+                    }
+
+                    String resp = String.valueOf(kis.size());
+                    NetServer.SendToSrv(sock, resp);
+
+                    while (kis.size() > 0) {
+                        Integer ki = kis.get(0);
+                        EMeter em = Vars.meters.get(ki);
+                        String osv = em.getMeterFlag("osv") == null ? "no" : em.getMeterFlag("osv");
+                        if (osv.equals("yes")) {
+                            resp = em.getMeterName() + " - обновление отключено";
+                            NetServer.SendToSrv(sock, PDM.getHexString(resp));
+                            kis.remove(ki);
+                        } else {
+                            String busy = em.getMeterFlag("busy") == null ? "no" : em.getMeterFlag("busy");
+                            if (!busy.equals("yes")) {
+                                STL.Log("NetServer: " + em.getMeterName() + " - запуск DaysTask RefreshDays...");
+
+                                em.setMeterFlag("busy", "yes");
+                                em.setMeterFlag("busy_timer", "30");
+                                MeterServer.SaveMeterState(em);
+
+                                Thread thr = new Thread(new DaysTask(em));
+                                thr.start();
+
+                                resp = "Обновляется: " + em.getMeterName();
+                                NetServer.SendToSrv(sock, PDM.getHexString(resp));
+
+                                kis.remove(ki);
+                            } else {
+                                resp = em.getMeterName() + " занят";
+                                NetServer.SendToSrv(sock, PDM.getHexString(resp));
+                                kis.remove(ki);
+                            }
+                        }
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+
+                    for (int t = 15; t > 0; t--) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        resp = "Ждем: " + t;
+                        NetServer.SendToSrv(sock, PDM.getHexString(resp));
+                    }
+
+                    resp = "Ok";
+                    NetServer.SendToSrv(sock, resp);
                 }
             }
             );

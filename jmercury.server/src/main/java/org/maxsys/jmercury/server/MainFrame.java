@@ -447,9 +447,9 @@ public class MainFrame extends javax.swing.JFrame {
         if (Vars.SrvAddr.equals("localhost")) {
             NetClient.sendStopServer();
         } else {
-            if (JOptionPane.showConfirmDialog(this, "Do you want to shut down remote server?", "Confirm shuting down server", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-                NetClient.sendStopServer();
-            }
+//            if (JOptionPane.showConfirmDialog(this, "Do you want to shut down remote server?", "Confirm shuting down server", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+//                NetClient.sendStopServer();
+//            }
             System.exit(0);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
