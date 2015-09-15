@@ -1,19 +1,15 @@
 package org.maxsys.jmercury.client;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import net.sf.jasperreports.engine.JRException;
@@ -21,54 +17,31 @@ import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.data.JRMapArrayDataSource;
 import net.sf.jasperreports.view.JRViewer;
+import org.maxsys.calendarlib.CalendarDialog;
 
-public class MonthReportDialog extends javax.swing.JDialog {
+public class DayReportDialog extends javax.swing.JDialog {
 
-    class myCalendar extends GregorianCalendar {
+    CalendarString cs = new CalendarString("dd.MM.yyyy");
 
-        @Override
-        public String toString() {
-            SimpleDateFormat sdf = new SimpleDateFormat("LLLL yyyy");
-            return sdf.format(this.getTime());
-        }
-    }
-
-    public MonthReportDialog(java.awt.Frame parent, boolean modal) {
+    public DayReportDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 
-        DefaultComboBoxModel cm = new DefaultComboBoxModel();
-        Calendar[] cas = NetClient.sendGetMinMaxMonth();
-        if (cas != null) {
-            cas[0].set(Calendar.DAY_OF_MONTH, 1);
-            cas[1].set(Calendar.DAY_OF_MONTH, 2);
-            Calendar ca = new GregorianCalendar();
-            ca.setTimeInMillis(cas[0].getTimeInMillis());
-            while (cas[1].after(ca)) {
-                myCalendar mca = new myCalendar();
-                mca.setTimeInMillis(ca.getTimeInMillis());
-                cm.addElement(mca);
-                ca.add(Calendar.MONTH, 1);
-            }
-        } else {
-            JOptionPane.showMessageDialog(null, "Нет данных для отчета.");
-        }
-        jComboBox1.setModel(cm);
-        jComboBox1.setSelectedIndex(jComboBox1.getItemCount() - 1);
+        jLabel2.setText(" " + cs.toString() + " ");
     }
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jSeparator1 = new javax.swing.JSeparator();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        jComboBox1 = new javax.swing.JComboBox();
-        jSeparator1 = new javax.swing.JSeparator();
+        jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Отчет за месяц");
+        setTitle("Отчет за сутки");
         setResizable(false);
 
         jButton1.setText("Отмена");
@@ -85,12 +58,13 @@ public class MonthReportDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel1.setText("Месяц:");
+        jLabel1.setText("Дата отчета:");
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" }));
-        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox1ActionPerformed(evt);
+        jLabel2.setText(" 01.01.2015 ");
+        jLabel2.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        jLabel2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLabel2MouseClicked(evt);
             }
         });
 
@@ -105,9 +79,10 @@ public class MonthReportDialog extends javax.swing.JDialog {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 32, Short.MAX_VALUE)
+                        .addComponent(jLabel2)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 52, Short.MAX_VALUE)
                         .addComponent(jButton2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton1)))
@@ -119,44 +94,38 @@ public class MonthReportDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel2))
                 .addGap(18, 18, 18)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1)
-                    .addComponent(jButton2))
-                .addContainerGap())
+                    .addComponent(jButton2)
+                    .addComponent(jButton1))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-    }//GEN-LAST:event_jComboBox1ActionPerformed
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        dispose();
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        if (jComboBox1.getSelectedItem() == null) {
-            return;
-        }
-
         dispose();
 
-        int year = ((myCalendar) jComboBox1.getSelectedItem()).get(Calendar.YEAR);
-        int month = ((myCalendar) jComboBox1.getSelectedItem()).get(Calendar.MONTH) + 1;
+        boolean isFullDay = true;
 
-        boolean isFullMonth = true;
-
-        if (year == Calendar.getInstance().get(Calendar.YEAR) && month == (Calendar.getInstance().get(Calendar.MONTH) + 1)) {
+        if (cs.isToday()) {
             if (JOptionPane.showConfirmDialog(this, "Обновить данные перед выводом отчета?", "Обновление", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                RefreshBeforeReportDialog dlg = new RefreshBeforeReportDialog(null, "Months");
+                RefreshBeforeReportDialog dlg = new RefreshBeforeReportDialog(null, "Days");
                 dlg.setLocationRelativeTo(null);
                 dlg.setVisible(true);
             }
-            isFullMonth = false;
+            isFullDay = false;
         }
 
-        ForReport[] frs = NetClient.sendGetForReport(year, month);
+        ForReport[] frs = NetClient.sendGetForReportDays(cs.getYear(), cs.getMonth(), cs.getDay());
 
         if (frs == null) {
             JOptionPane.showMessageDialog(null, "Ошибка получения данных для отчета!");
@@ -198,17 +167,17 @@ public class MonthReportDialog extends javax.swing.JDialog {
         DecimalFormat df = new DecimalFormat("#.##");
 
         Map pm = new HashMap<>();
-        if (isFullMonth) {
-            pm.put("Title_1_date", "об электропотреблении за " + jComboBox1.getSelectedItem().toString() + " г.");
-            pm.put("EndText", "24 час.\nпоследнего\nчисла месяца");
+        if (isFullDay) {
+            pm.put("Title_1_date", "об электропотреблении за сутки " + cs.toString() + " г.");
+            pm.put("EndText", "24 час.");
             pm.put("StarText", "");
         } else {
-            pm.put("Title_1_date", "об электропотреблении за " + jComboBox1.getSelectedItem().toString() + " г. *");
-            pm.put("EndText", "24 час.\nпоследнего\nчисла месяца *");
-            pm.put("StarText", "* показаны данные за неполный месяц.");
+            pm.put("Title_1_date", "об электропотреблении за сутки" + cs.toString() + " г. *");
+            pm.put("EndText", "24 час. *");
+            pm.put("StarText", "* показаны данные за неполные сутки");
         }
         pm.put("AplusSumAll", df.format(AplusSumAll));
-        pm.put("BeginText", "0 час. первого\nчисла месяца");
+        pm.put("BeginText", "0 час.");
 
         Map[] reportRows = new Map[lrr.size()];
         reportRows = lrr.toArray(reportRows);
@@ -216,11 +185,10 @@ public class MonthReportDialog extends javax.swing.JDialog {
         JRMapArrayDataSource dataSource = new JRMapArrayDataSource(reportRows);
 
         JasperPrint jp = null;
-        InputStream rs = System.class.getResourceAsStream("/org/maxsys/jmercury/client/resources/potreb.jasper");
         try {
-            jp = JasperFillManager.fillReport(rs, pm, dataSource);
+            jp = JasperFillManager.fillReport(System.class.getResourceAsStream("/org/maxsys/jmercury/client/resources/potreb.jasper"), pm, dataSource);
         } catch (JRException ex) {
-            Logger.getLogger(MonthReportDialog.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(DayReportDialog.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         JRViewer jrv = new JRViewer(jp);
@@ -236,15 +204,19 @@ public class MonthReportDialog extends javax.swing.JDialog {
         jrv.setFitPageZoomRatio();
     }//GEN-LAST:event_jButton2ActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        dispose();
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void jLabel2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel2MouseClicked
+        CalendarDialog dlg = new CalendarDialog(null, "ru", cs);
+        if (dlg.getCalendar() != null) {
+            cs.setCalendar(dlg.getCalendar());
+            jLabel2.setText(" " + cs.toString() + " ");
+        }
+    }//GEN-LAST:event_jLabel2MouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 }

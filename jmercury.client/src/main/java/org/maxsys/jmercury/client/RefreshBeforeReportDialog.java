@@ -7,7 +7,7 @@ import org.maxsys.dblib.PDM;
 
 public final class RefreshBeforeReportDialog extends javax.swing.JDialog {
 
-    private Thread thr = new Thread(new Runnable() {
+    private Thread thrMonths = new Thread(new Runnable() {
 
         @Override
         public void run() {
@@ -34,15 +34,53 @@ public final class RefreshBeforeReportDialog extends javax.swing.JDialog {
             dispose();
         }
     });
+    private Thread thrDays = new Thread(new Runnable() {
 
-    public RefreshBeforeReportDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+        @Override
+        public void run() {
+            Socket socket = NetClient.GetNewSocket();
+            NetClient.SendToSrv(socket, "RefreshDays");
+
+            String resp = NetClient.GetRespFromSrv(socket);
+            int cnum = Integer.valueOf(resp);
+
+            jProgressBar1.setMaximum(cnum + 15);
+
+            while (!resp.equals("Ok") || resp.isEmpty()) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(RefreshBeforeReportDialog.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                resp = NetClient.GetRespFromSrv(socket);
+                jLabel1.setText(PDM.getStringFromHex(resp));
+                jProgressBar1.setValue(jProgressBar1.getValue() + 1);
+            }
+
+            NetClient.CloseSocket(socket);
+            dispose();
+        }
+    });
+
+    public RefreshBeforeReportDialog(java.awt.Frame parent, String refreshWhat) {
+        super(parent, true);
         initComponents();
-        thrStart();
+
+        if (refreshWhat.equals("Months")) {
+            thrMonthsStart();
+        }
+
+        if (refreshWhat.equals("Days")) {
+            thrDaysStart();
+        }
     }
 
-    public void thrStart() {
-        thr.start();
+    private void thrMonthsStart() {
+        thrMonths.start();
+    }
+
+    private void thrDaysStart() {
+        thrDays.start();
     }
 
     @SuppressWarnings("unchecked")

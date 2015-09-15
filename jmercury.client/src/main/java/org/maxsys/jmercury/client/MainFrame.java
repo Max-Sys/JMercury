@@ -392,12 +392,15 @@ public class MainFrame extends javax.swing.JFrame {
         jMenu2 = new javax.swing.JMenu();
         jMenuItem4 = new javax.swing.JMenuItem();
         jMenuItem6 = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
         jMenuItem2 = new javax.swing.JMenuItem();
+        jSeparator2 = new javax.swing.JPopupMenu.Separator();
         jMenuItem5 = new javax.swing.JMenuItem();
         jMenu4 = new javax.swing.JMenu();
         jCheckBoxMenuItem1 = new javax.swing.JCheckBoxMenuItem();
         jMenu3 = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
+        jMenuItem7 = new javax.swing.JMenuItem();
 
         jLabel3.setText("jLabel3");
 
@@ -655,7 +658,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        jButton2.setText("График");
+        jButton2.setText("График по часам");
         jButton2.setEnabled(false);
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -682,9 +685,9 @@ public class MainFrame extends javax.swing.JFrame {
                     .addGroup(jPanel7Layout.createSequentialGroup()
                         .addComponent(jButton1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton2)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
             .addComponent(jTabbedPane1, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -734,6 +737,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         jMenu2.add(jMenuItem6);
+        jMenu2.add(jSeparator1);
 
         jMenuItem2.setText("Настройки...");
         jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
@@ -742,6 +746,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         jMenu2.add(jMenuItem2);
+        jMenu2.add(jSeparator2);
 
         jMenuItem5.setText("Обновление программы...");
         jMenuItem5.addActionListener(new java.awt.event.ActionListener() {
@@ -774,6 +779,14 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         jMenu3.add(jMenuItem3);
+
+        jMenuItem7.setText("Отчет об электропотреблении за сутки...");
+        jMenuItem7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem7ActionPerformed(evt);
+            }
+        });
+        jMenu3.add(jMenuItem7);
 
         jMenuBar1.add(jMenu3);
 
@@ -880,7 +893,13 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem3ActionPerformed
 
     private void jLabel4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseClicked
-        CalendarDialog cdlg = new CalendarDialog(this, "ru");
+        String setcastr = jLabel4.getText().trim();
+        String[] setcaf = setcastr.split("\\.");
+        Calendar setca = null;
+        if (setcaf.length == 3) {
+            setca = new GregorianCalendar(Integer.valueOf(setcaf[2]), Integer.valueOf(setcaf[1]) - 1, Integer.valueOf(setcaf[0]));
+        }
+        CalendarDialog cdlg = new CalendarDialog(this, "ru", setca);
         Calendar ca = cdlg.getCalendar();
         if (ca != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
@@ -899,7 +918,13 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jLabel4MouseClicked
 
     private void jLabel6MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel6MouseClicked
-        CalendarDialog cdlg = new CalendarDialog(this, "ru");
+        String setcastr = jLabel6.getText().trim();
+        String[] setcaf = setcastr.split("\\.");
+        Calendar setca = null;
+        if (setcaf.length == 3) {
+            setca = new GregorianCalendar(Integer.valueOf(setcaf[2]), Integer.valueOf(setcaf[1]) - 1, Integer.valueOf(setcaf[0]));
+        }
+        CalendarDialog cdlg = new CalendarDialog(this, "ru", setca);
         Calendar ca = cdlg.getCalendar();
         if (ca != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
@@ -936,49 +961,58 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
 
-        if (jTabbedPane1.getSelectedIndex() == 0) {
-            TreeMap<Calendar, Double> tAp = new TreeMap<>();
-            TreeMap<Calendar, Double> tRp = new TreeMap<>();
+        TreePath tp = jTree1.getSelectionPath();
+        if (jTabbedPane1.getSelectedIndex() == 0 && tp != null) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
+            if (tn != null && tn.getUserObject().getClass() == MeterInfo.class) {
+                MeterInfo mi = (MeterInfo) tn.getUserObject();
 
-            for (int rc = 0; rc < jTable3.getRowCount(); rc++) {
-                CalendarString cs = (CalendarString) jTable3.getValueAt(rc, 0);
+                TreeMap<Calendar, Double> tAp = new TreeMap<>();
+                TreeMap<Calendar, Double> tRp = new TreeMap<>();
 
-                Object vr1 = jTable3.getValueAt(rc, 1);
-                double Ap = Double.valueOf(vr1.toString().replace(',', '.'));
+                for (int rc = 0; rc < jTable3.getRowCount(); rc++) {
+                    CalendarString cs = (CalendarString) jTable3.getValueAt(rc, 0);
 
-                Object vr2 = jTable3.getValueAt(rc, 2);
-                double Rp = Double.valueOf(vr2.toString().replace(',', '.'));
+                    Object vr1 = jTable3.getValueAt(rc, 1);
+                    double Ap = Double.valueOf(vr1.toString().replace(',', '.'));
 
-                tAp.put(cs, Ap);
-                tRp.put(cs, Rp);
+                    Object vr2 = jTable3.getValueAt(rc, 2);
+                    double Rp = Double.valueOf(vr2.toString().replace(',', '.'));
+
+                    tAp.put(cs, Ap);
+                    tRp.put(cs, Rp);
+                }
+
+                AvgArsChartDialog dlg = new AvgArsChartDialog(this, tAp, tRp, jLabel1.getText(), mi.getIdInDB());
+                dlg.setLocationRelativeTo(null);
+                dlg.setVisible(true);
             }
-
-            AvgArsChartDialog dlg = new AvgArsChartDialog(this, tAp, tRp, jLabel1.getText());
-            dlg.setLocationRelativeTo(null);
-            dlg.setVisible(true);
         }
 
-        if (jTabbedPane1.getSelectedIndex() == 1) {
-            TreeMap<Calendar, Double> tAp = new TreeMap<>();
-            TreeMap<Calendar, Double> tRp = new TreeMap<>();
-
-            for (int rc = 0; rc < jTable1.getRowCount(); rc++) {
-                CalendarString cs = (CalendarString) jTable1.getValueAt(rc, 0);
-
-                Object vr1 = jTable1.getValueAt(rc, 3);
-                double Ap = Double.valueOf(vr1.toString().replace(',', '.'));
-
-                Object vr2 = jTable1.getValueAt(rc, 4);
-                double Rp = Double.valueOf(vr2.toString().replace(',', '.'));
-
-                tAp.put(cs, Ap);
-                tRp.put(cs, Rp);
-            }
-
-            AvgArsChartDialog dlg = new AvgArsChartDialog(this, tAp, tRp, jLabel1.getText());
-            dlg.setLocationRelativeTo(null);
-            dlg.setVisible(true);
-        }
+//        if (jTabbedPane1.getSelectedIndex() == 1) {
+//            TreeMap<Calendar, Double> tAp = new TreeMap<>();
+//            TreeMap<Calendar, Double> tRp = new TreeMap<>();
+//
+//            for (int rc = 0; rc < jTable1.getRowCount(); rc++) {
+//                CalendarString cs = (CalendarString) jTable1.getValueAt(rc, 0);
+//                if (cs.isToday()) {
+//                    continue;
+//                }
+//
+//                Object vr1 = jTable1.getValueAt(rc, 3);
+//                double Ap = Double.valueOf(vr1.toString().replace(',', '.'));
+//
+//                Object vr2 = jTable1.getValueAt(rc, 4);
+//                double Rp = Double.valueOf(vr2.toString().replace(',', '.'));
+//
+//                tAp.put(cs, Ap);
+//                tRp.put(cs, Rp);
+//            }
+//
+//            AvgArsChartDialog dlg = new AvgArsChartDialog(this, tAp, tRp, jLabel1.getText());
+//            dlg.setLocationRelativeTo(null);
+//            dlg.setVisible(true);
+//        }
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jCheckBoxMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxMenuItem1ActionPerformed
@@ -1011,9 +1045,9 @@ public class MainFrame extends javax.swing.JFrame {
         if (jTabbedPane1.getSelectedIndex() == 0 && jTable3.getRowCount() > 0) {
             jButton2.setEnabled(true);
         }
-        if (jTabbedPane1.getSelectedIndex() == 1 && jTable1.getRowCount() > 0) {
-            jButton2.setEnabled(true);
-        }
+//        if (jTabbedPane1.getSelectedIndex() == 1 && jTable1.getRowCount() > 0) {
+//            jButton2.setEnabled(true);
+//        }
 
         TreePath tp = jTree1.getSelectionPath();
         if (tp != null) {
@@ -1093,7 +1127,13 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jLabel8MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel8MouseClicked
-        CalendarDialog cdlg = new CalendarDialog(this, "ru");
+        String setcastr = jLabel8.getText().trim();
+        String[] setcaf = setcastr.split("\\.");
+        Calendar setca = null;
+        if (setcaf.length == 3) {
+            setca = new GregorianCalendar(Integer.valueOf(setcaf[2]), Integer.valueOf(setcaf[1]) - 1, Integer.valueOf(setcaf[0]));
+        }
+        CalendarDialog cdlg = new CalendarDialog(this, "ru", setca);
         Calendar ca = cdlg.getCalendar();
         if (ca != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
@@ -1112,7 +1152,13 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jLabel8MouseClicked
 
     private void jLabel10MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel10MouseClicked
-        CalendarDialog cdlg = new CalendarDialog(this, "ru");
+        String setcastr = jLabel10.getText().trim();
+        String[] setcaf = setcastr.split("\\.");
+        Calendar setca = null;
+        if (setcaf.length == 3) {
+            setca = new GregorianCalendar(Integer.valueOf(setcaf[2]), Integer.valueOf(setcaf[1]) - 1, Integer.valueOf(setcaf[0]));
+        }
+        CalendarDialog cdlg = new CalendarDialog(this, "ru", setca);
         Calendar ca = cdlg.getCalendar();
         if (ca != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
@@ -1129,6 +1175,12 @@ public class MainFrame extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_jLabel10MouseClicked
+
+    private void jMenuItem7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem7ActionPerformed
+        DayReportDialog dlg = new DayReportDialog(this, true);
+        dlg.setLocationRelativeTo(null);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_jMenuItem7ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
@@ -1158,6 +1210,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JMenuItem jMenuItem5;
     private javax.swing.JMenuItem jMenuItem6;
+    private javax.swing.JMenuItem jMenuItem7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -1168,6 +1221,8 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
+    private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;

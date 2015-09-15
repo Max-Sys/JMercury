@@ -22,12 +22,13 @@ public class AvgArsChartDialog extends javax.swing.JDialog {
     private int tmpY = 0;
     private boolean mPressed = false;
 
-    public AvgArsChartDialog(java.awt.Frame parent, TreeMap<Calendar, Double> tAp, TreeMap<Calendar, Double> tRp, String title) {
+    public AvgArsChartDialog(java.awt.Frame parent, TreeMap<Calendar, Double> tAp, TreeMap<Calendar, Double> tRp, String title, int IdInDB) {
         super(parent, true);
         initComponents();
 
         ((TrendPlotter) jPanel1).addTrend("Rplus", Color.RED, tRp);
         ((TrendPlotter) jPanel1).addTrend("Aplus", Color.BLACK, tAp);
+        ((TrendPlotter) jPanel1).setIdInDB(IdInDB);
 
         setTitle(title);
     }
@@ -228,7 +229,7 @@ public class AvgArsChartDialog extends javax.swing.JDialog {
                     return Printable.NO_SUCH_PAGE;
                 }
 
-                TrendPlotter tp = new TrendPlotter();
+                TrendPlotter tp = (TrendPlotter) jPanel1;
                 tp.setBounds(0, 0, ((int) pf.getImageableWidth()) * 2, ((int) pf.getImageableHeight()) * 2);
                 Graphics2D g2 = (Graphics2D) pg;
                 double scaleX = pf.getImageableWidth() / tp.getWidth();

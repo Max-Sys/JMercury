@@ -27,8 +27,16 @@ public class CalendarString extends GregorianCalendar {
         setTimeInMillis(ca.getTimeInMillis());
     }
 
+    public CalendarString(String format) {
+        this.format = format;
+    }
+
     public void setFormat(String format) {
         this.format = format;
+    }
+
+    public void setCalendar(Calendar ca) {
+        setTimeInMillis(ca.getTimeInMillis());
     }
 
     @Override

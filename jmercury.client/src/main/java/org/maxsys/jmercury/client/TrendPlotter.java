@@ -77,49 +77,60 @@ public class TrendPlotter extends JPanel {
     private class Markers {
 
         private Calendar Marker1Ca;
-        private String Marker1Va;
         private Calendar Marker2Ca;
-        private String Marker2Va;
+        private double Aplus;
 
-        public void addMarker1(Calendar ca, String value) {
-            Marker1Ca = ca;
-            Marker1Va = value;
+        public void addMarker1(Calendar ca) {
+            if (Marker2Ca != null) {
+                if (Marker2Ca.after(ca)) {
+                    Marker1Ca = ca;
+                } else {
+                    Marker1Ca = Marker2Ca;
+                    Marker2Ca = ca;
+                }
+                Aplus = NetClient.sendGetAplusSumFromAvgArs(IdInDB, Marker1Ca, Marker2Ca);
+            } else {
+                Marker1Ca = ca;
+            }
         }
 
-        public void addMarker2(Calendar ca, String value) {
-            Marker2Ca = ca;
-            Marker2Va = value;
+        public void addMarker2(Calendar ca) {
+            if (Marker1Ca != null) {
+                if (Marker1Ca.before(ca)) {
+                    Marker2Ca = ca;
+                } else {
+                    Marker2Ca = Marker1Ca;
+                    Marker1Ca = ca;
+                }
+                Aplus = NetClient.sendGetAplusSumFromAvgArs(IdInDB, Marker1Ca, Marker2Ca);
+            } else {
+                Marker2Ca = ca;
+            }
         }
 
         public void Clear() {
             Marker1Ca = null;
-            Marker1Va = null;
             Marker2Ca = null;
-            Marker2Va = null;
         }
 
         public boolean isMarker1Ok() {
-            return Marker1Ca != null && Marker1Va != null;
+            return Marker1Ca != null;
         }
 
         public boolean isMarker2Ok() {
-            return Marker2Ca != null && Marker2Va != null;
+            return Marker2Ca != null;
         }
 
         public Calendar getMarker1Ca() {
             return Marker1Ca;
         }
 
-        public String getMarker1Va() {
-            return Marker1Va;
-        }
-
         public Calendar getMarker2Ca() {
             return Marker2Ca;
         }
 
-        public String getMarker2Va() {
-            return Marker2Va;
+        public double getAplus() {
+            return Aplus;
         }
     }
 
@@ -134,6 +145,7 @@ public class TrendPlotter extends JPanel {
     private double tmpTMin = 0;
     private int linex = 10;
     private int avg = 1;
+    private int IdInDB;
 
     @Override
     public void paint(Graphics g) {
@@ -148,7 +160,7 @@ public class TrendPlotter extends JPanel {
 
         int tmpWt = getWidth() - linex - 15;
         int tmpHt;
-        if (markers.isMarker1Ok() || markers.isMarker2Ok()) {
+        if (markers.isMarker1Ok() && markers.isMarker2Ok()) {
             tmpHt = liney - ((trends.size() + 1) * g.getFontMetrics().getHeight());
         } else {
             tmpHt = liney - (trends.size() * g.getFontMetrics().getHeight());
@@ -242,9 +254,13 @@ public class TrendPlotter extends JPanel {
             g.drawLine(getXfromCalendar(markers.getMarker2Ca()), 10, getXfromCalendar(markers.getMarker2Ca()), tmpH);
         }
 
-        if (markers.isMarker1Ok() || markers.isMarker2Ok()) {
+        if (markers.isMarker1Ok() && markers.isMarker2Ok()) {
             g.setColor(Color.BLACK);
-            g.drawString("тут будут метки...", 10, liney);
+            CalendarString csm1 = new CalendarString(markers.getMarker1Ca());
+            CalendarString csm2 = new CalendarString(markers.getMarker2Ca());
+            csm1.setFormat("dd.MM.yyyy HH:mm");
+            csm2.setFormat("dd.MM.yyyy HH:mm");
+            g.drawString("Потребление (A+) с " + csm1.toString() + " по " + csm2.toString() + " составило " + df.format(markers.getAplus()) + " кВт⋅ч", 10, liney);
         }
     }
 
@@ -348,11 +364,33 @@ public class TrendPlotter extends JPanel {
     }
 
     public void addMarker1(int x, String value) {
-        markers.addMarker1(getCalendarFromX(x), value);
+        Calendar ca = getCalendarFromX(x);
+        if (ca.get(Calendar.MINUTE) > 15 && ca.get(Calendar.MINUTE) < 45) {
+            ca.set(Calendar.MINUTE, 30);
+        } else {
+            if (ca.get(Calendar.MINUTE) < 30) {
+                ca.set(Calendar.MINUTE, 0);
+            } else {
+                ca.set(Calendar.MINUTE, 0);
+                ca.add(Calendar.HOUR, 1);
+            }
+        }
+        markers.addMarker1(ca);
     }
 
     public void addMarker2(int x, String value) {
-        markers.addMarker2(getCalendarFromX(x), value);
+        Calendar ca = getCalendarFromX(x);
+        if (ca.get(Calendar.MINUTE) > 15 && ca.get(Calendar.MINUTE) < 45) {
+            ca.set(Calendar.MINUTE, 30);
+        } else {
+            if (ca.get(Calendar.MINUTE) < 30) {
+                ca.set(Calendar.MINUTE, 0);
+            } else {
+                ca.set(Calendar.MINUTE, 0);
+                ca.add(Calendar.HOUR, 1);
+            }
+        }
+        markers.addMarker2(ca);
     }
 
     public void addMarkerNext(int x, String value) {
@@ -367,4 +405,7 @@ public class TrendPlotter extends JPanel {
         markers.Clear();
     }
 
+    public void setIdInDB(int IdInDB) {
+        this.IdInDB = IdInDB;
+    }
 }

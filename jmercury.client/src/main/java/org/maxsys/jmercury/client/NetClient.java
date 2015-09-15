@@ -432,4 +432,74 @@ public class NetClient {
         CloseSocket(socket);
     }
 
+    public static double sendGetAplusSumFromAvgArs(int IdInDB, Calendar caFrom, Calendar caTo) {
+        StringBuilder params = new StringBuilder();
+        params.append(IdInDB);
+        params.append("\n");
+        params.append(caFrom.getTimeInMillis());
+        params.append("\n");
+        params.append(caTo.getTimeInMillis());
+        params.append("\n");
+
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetAplusSumFromAvgArs");
+        SendToSrv(socket, PDM.getHexString(params.toString()));
+        String resp = PDM.getStringFromHex(GetRespFromSrvBig(socket));
+        CloseSocket(socket);
+
+        if (resp != null && !resp.isEmpty()) {
+            return Double.valueOf(resp);
+        } else {
+            return 0;
+        }
+    }
+
+    public static ForReport[] sendGetForReportDays(int Year, int Month, int Day) {
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetForReportDays");
+        SendToSrv(socket, String.valueOf(Year));
+        SendToSrv(socket, String.valueOf(Month));
+        SendToSrv(socket, String.valueOf(Day));
+        String resp = PDM.getStringFromHex(GetRespFromSrv(socket));
+        CloseSocket(socket);
+
+        if (resp == null || resp.isEmpty()) {
+            return null;
+        }
+
+        String[] resps = resp.split("\n");
+        if (resps.length == 0) {
+            return null;
+        }
+
+        ForReport[] frs = new ForReport[resps.length];
+        int frsk = 0;
+        for (String frss : resps) {
+            String[] frssf = frss.split("\001");
+            String GroupName = frssf[0];
+            String MeterName = frssf[1];
+            String MeterSN = frssf[2];
+            String Aplus1 = frssf[3];
+            String Aplus2 = frssf[4];
+            String Aplus21 = frssf[5];
+            String MeterKi = frssf[6];
+            String Aplus21Ki = frssf[7];
+            frs[frsk] = new ForReport(GroupName, MeterName, MeterSN, Aplus1, Aplus2, Aplus21, MeterKi, Aplus21Ki, "0");
+            frsk++;
+        }
+
+        DecimalFormat df = new DecimalFormat("#.##");
+        for (ForReport fr : frs) {
+            double AplusGroupSum = 0;
+            for (ForReport subfr : frs) {
+                if (fr.getGroupName().equals(subfr.getGroupName())) {
+                    double Aplus21Ki = Double.valueOf(subfr.getAplus21Ki().replace(',', '.'));
+                    AplusGroupSum += Aplus21Ki;
+                }
+            }
+            fr.setAplusGroupSum(df.format(AplusGroupSum));
+        }
+
+        return frs;
+    }
 }

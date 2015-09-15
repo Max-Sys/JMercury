@@ -137,12 +137,20 @@ public class AddMarkerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jLabel5MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel5MouseClicked
-        TimeDialog dlg = new TimeDialog(null, "ru");
-        jLabel5.setText(" " + dlg.getStringTime() + " ");
+        TimeDialog dlg = new TimeDialog(null, "ru", jLabel5.getText().trim());
+        if (dlg.getStringTime() != null && !dlg.getStringTime().isEmpty()) {
+            jLabel5.setText(" " + dlg.getStringTime() + " ");
+        }
     }//GEN-LAST:event_jLabel5MouseClicked
 
     private void jLabel4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseClicked
-        CalendarDialog dlg = new CalendarDialog(null, "ru");
+        String setcastr = jLabel4.getText().trim();
+        String[] setcaf = setcastr.split("\\.");
+        Calendar setca = null;
+        if (setcaf.length == 3) {
+            setca = new GregorianCalendar(Integer.valueOf(setcaf[2]), Integer.valueOf(setcaf[1]) - 1, Integer.valueOf(setcaf[0]));
+        }
+        CalendarDialog dlg = new CalendarDialog(null, "ru", setca);
         Calendar ca = dlg.getCalendar();
         if (ca != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");

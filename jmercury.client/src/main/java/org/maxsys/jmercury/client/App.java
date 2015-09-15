@@ -51,8 +51,7 @@ public class App {
         if (System.getProperty("user.dir").endsWith("update")) {
             javax.swing.JOptionPane.showMessageDialog(null, "Обновление до версии " + Vars.Version + "\n\n"
                     + "Что нового:\n"
-                    + "- зачатки работы с отсечками на графике\n"
-                    + "- дохрена мелких исправлений\n\n"
+                    + "- суточные отчеты.\n\n"
                     + "Нажмите Ok для запуска программы.");
 
             String wp = System.getProperty("user.dir");
@@ -206,7 +205,11 @@ public class App {
             int updateNumber = NetClient.sendGetUpdateNumber();
 
             if (updateNumber > myun) {
-                javax.swing.JOptionPane.showMessageDialog(null, "Появилась новая версия программы. Загляните в \"Сервис -> Обновление программы...\"");
+                if (javax.swing.JOptionPane.showConfirmDialog(null, "Появилась новая версия программы. Обновить сейчас?", "Обновление", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+                    ProgramUpdateDialog dlg = new ProgramUpdateDialog(null, true);
+                    dlg.setLocationRelativeTo(null);
+                    dlg.setVisible(true);
+                }
             }
 
             MainFrame frm = new MainFrame();
