@@ -111,33 +111,50 @@ public class DaysTask implements Runnable {
         int dberr = 0;
         while (dberr < 15) {
             em.setMeterFlag("statusstr", "d p3m");
-            ra = pdm.executeNonQueryUpdate("em",
-                    "INSERT INTO daydata (meter_id, Aplus, Rplus, AplusOnBeg, RplusOnBeg, dayDT, hide) "
-                    + "SELECT"
+
+            Object sc = pdm.getScalar("em", "SELECT"
                     + " avgars.meter_id,"
-                    + " IFNULL(SUM(avgars.Aplus) / (60 / avgars.arPeriod), 0) AS Aplus,"
-                    + " IFNULL(SUM(avgars.Rplus) / (60 / avgars.arPeriod), 0) AS Rplus,"
-                    + " 0 AS AplusOnBeg,"
-                    + " 0 AS RplusOnBeg,"
-                    + " DATE(avgars.arDT) AS dayDT,"
                     + " IF(COUNT(*) = 24 * (60 / avgars.arPeriod), 0, 1) AS hide "
                     + "FROM avgars "
                     + "WHERE"
                     + " avgars.meter_id = " + em.getIdInDB()
                     + " AND avgars.hide = 0"
                     + " AND DATE(avgars.arDT) >= '" + PDM.getDTStringDateOnly(canow) + "'"
-                    + " AND DATE(avgars.arDT) NOT IN (SELECT dayDT FROM daydata WHERE meter_id = " + em.getIdInDB() + ") "
+                    + " AND DATE(avgars.arDT) NOT IN (SELECT dayDT FROM daydata WHERE meter_id = " + em.getIdInDB() + " AND hide = 0) "
                     + "GROUP BY DATE(avgars.arDT) HAVING hide = 0");
 
-            if (ra == -1) {
-                dberr++;
-                STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask - ошибка записи данных Prev 3 month. Пробуем еще раз... (" + dberr + ")");
-                em.setMeterFlag("busy_timer", "30");
-                em.setMeterFlag("statusstr", "d p3m wait " + dberr);
-                try {
-                    Thread.sleep((long) (Math.random() * 10000));
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(MeterServer.class.getName()).log(Level.SEVERE, null, ex);
+            if (sc != null) {
+                ra = pdm.executeNonQueryUpdate("em",
+                        "INSERT INTO daydata (meter_id, Aplus, Rplus, AplusOnBeg, RplusOnBeg, dayDT, hide) "
+                        + "SELECT"
+                        + " avgars.meter_id,"
+                        + " IFNULL(SUM(avgars.Aplus) / (60 / avgars.arPeriod), 0) AS Aplus,"
+                        + " IFNULL(SUM(avgars.Rplus) / (60 / avgars.arPeriod), 0) AS Rplus,"
+                        + " 0 AS AplusOnBeg,"
+                        + " 0 AS RplusOnBeg,"
+                        + " DATE(avgars.arDT) AS dayDT,"
+                        + " IF(COUNT(*) = 24 * (60 / avgars.arPeriod), 0, 1) AS hide "
+                        + "FROM avgars "
+                        + "WHERE"
+                        + " avgars.meter_id = " + em.getIdInDB()
+                        + " AND avgars.hide = 0"
+                        + " AND DATE(avgars.arDT) >= '" + PDM.getDTStringDateOnly(canow) + "'"
+                        + " AND DATE(avgars.arDT) NOT IN (SELECT dayDT FROM daydata WHERE meter_id = " + em.getIdInDB() + " AND hide = 0) "
+                        + "GROUP BY DATE(avgars.arDT) HAVING hide = 0");
+
+                if (ra == -1) {
+                    dberr++;
+                    STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask - ошибка записи данных Prev 3 month. Пробуем еще раз... (" + dberr + ")");
+                    em.setMeterFlag("busy_timer", "30");
+                    em.setMeterFlag("statusstr", "d p3m wait " + dberr);
+                    try {
+                        Thread.sleep((long) (Math.random() * 10000));
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(MeterServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else {
+                    dberr = 0;
+                    break;
                 }
             } else {
                 dberr = 0;

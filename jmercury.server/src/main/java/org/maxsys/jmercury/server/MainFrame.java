@@ -549,9 +549,9 @@ public class MainFrame extends javax.swing.JFrame {
             int errs = 0;
             while (errs < 10) {
                 try {
-                    aprpb = meter.getAplusRplusMonthBegining(8);
-                    aprpe = meter.getAplusRplusMonthBegining(9);
-                    //aprpe = meter.getAplusRplusFromReset();
+                    aprpb = meter.getAplusRplusMonthBegining(9);
+                    //aprpe = meter.getAplusRplusMonthBegining(10);
+                    aprpe = meter.getAplusRplusFromReset();
                     metersn = meter.getMeterSN();
 
                     if (aprpb == null || aprpe == null) {
