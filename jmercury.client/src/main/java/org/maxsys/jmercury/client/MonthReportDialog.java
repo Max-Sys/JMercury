@@ -225,7 +225,7 @@ public class MonthReportDialog extends javax.swing.JDialog {
 
         JRViewer jrv = new JRViewer(jp);
 
-        JFrame frame = new JFrame("Report test");
+        JFrame frame = new JFrame("Отчет за месяц");
         frame.getContentPane().add(jrv);
         int w = java.awt.Toolkit.getDefaultToolkit().getScreenSize().width - 100;
         int h = java.awt.Toolkit.getDefaultToolkit().getScreenSize().height - 100;

@@ -40,18 +40,14 @@ public class App {
         } catch (IOException | SecurityException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
-//        try {
-//            System.setOut(new PrintStream(new File(nowTimeStamp + ".log")));
-//        } catch (FileNotFoundException ex) {
-//            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        System.out.println(Vars.Version + " started.");
 
         // After update
         if (System.getProperty("user.dir").endsWith("update")) {
             javax.swing.JOptionPane.showMessageDialog(null, "Обновление до версии " + Vars.Version + "\n\n"
                     + "Что нового:\n"
-                    + "- суточные отчеты.\n\n"
+                    + "- суточний отчет;\n"
+                    + "- всякие мелкие исправления;\n"
+                    + "- домики.\n\n"
                     + "Нажмите Ok для запуска программы.");
 
             String wp = System.getProperty("user.dir");

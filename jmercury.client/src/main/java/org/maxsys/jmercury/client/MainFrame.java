@@ -1,5 +1,6 @@
 package org.maxsys.jmercury.client;
 
+import java.awt.Component;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.text.DecimalFormat;
@@ -12,12 +13,18 @@ import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.Properties;
 import java.util.TreeMap;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTree;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import org.maxsys.calendarlib.CalendarDialog;
 
@@ -28,7 +35,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         Properties srvProps = NetClient.sendGetServerProps();
         setTitle(Vars.Version + " - подключено к " + srvProps.getProperty("Servername"));
-        Image icon = new javax.swing.ImageIcon(getClass().getResource("/org/maxsys/jmercury/client/resources/icon_1_1.png")).getImage();
+        Image icon = new ImageIcon(getClass().getResource("/org/maxsys/jmercury/client/resources/icon_1_1.png")).getImage();
         setIconImage(icon);
 
         DefaultTableModel tm1 = new DefaultTableModel(
@@ -112,6 +119,13 @@ public class MainFrame extends javax.swing.JFrame {
         ca.add(Calendar.DAY_OF_YEAR, 1);
         ca.add(Calendar.MONTH, -3);
         jLabel8.setText(" " + sdf.format(ca.getTime()) + " ");
+
+        DefaultTreeCellRenderer tcr = new DefaultTreeCellRenderer();
+        tcr.setClosedIcon(new ImageIcon(getClass().getResource("/org/maxsys/jmercury/client/resources/hc16.png")));
+        tcr.setOpenIcon(new ImageIcon(getClass().getResource("/org/maxsys/jmercury/client/resources/ho16.png")));
+        tcr.setLeafIcon(new ImageIcon(getClass().getResource("/org/maxsys/jmercury/client/resources/meter.png")));
+        jTree1.setCellRenderer(tcr);
+        jTree1.setToggleClickCount(1);
 
         RefreshTree();
 
