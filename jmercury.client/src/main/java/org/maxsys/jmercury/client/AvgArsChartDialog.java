@@ -47,6 +47,7 @@ public class AvgArsChartDialog extends javax.swing.JDialog {
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
+        jButton3 = new javax.swing.JButton();
 
         jMenuItem1.setText("Добавить первую отметку");
         jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
@@ -95,7 +96,7 @@ public class AvgArsChartDialog extends javax.swing.JDialog {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1072, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -130,6 +131,14 @@ public class AvgArsChartDialog extends javax.swing.JDialog {
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("...");
 
+        jButton3.setText("Сохранить событие...");
+        jButton3.setEnabled(false);
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -143,7 +152,9 @@ public class AvgArsChartDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -161,7 +172,8 @@ public class AvgArsChartDialog extends javax.swing.JDialog {
                         .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButton1)
                         .addComponent(jButton2)
-                        .addComponent(jLabel2))
+                        .addComponent(jLabel2)
+                        .addComponent(jButton3))
                     .addComponent(jSlider1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
@@ -181,8 +193,11 @@ public class AvgArsChartDialog extends javax.swing.JDialog {
                 ((TrendPlotter) jPanel1).addNLine(tmpX, tmpY, evt.getX(), evt.getY());
                 jPanel1.paint(jPanel1.getGraphics());
             } else {
-                ((TrendPlotter) jPanel1).addMarkerNext(tmpX, "Значение 1 или 2");
+                ((TrendPlotter) jPanel1).addMarkerNext(tmpX);
                 jPanel1.paint(jPanel1.getGraphics());
+                if (((TrendPlotter) jPanel1).isMarkersSet()) {
+                    jButton3.setEnabled(true);
+                }
             }
         }
         if (evt.getButton() == MouseEvent.BUTTON3) {
@@ -202,6 +217,7 @@ public class AvgArsChartDialog extends javax.swing.JDialog {
         ((TrendPlotter) jPanel1).removeNLines();
         ((TrendPlotter) jPanel1).removeMarkers();
         jPanel1.paint(jPanel1.getGraphics());
+        jButton3.setEnabled(false);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -264,23 +280,37 @@ public class AvgArsChartDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_jPanel1MouseMoved
 
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        ((TrendPlotter) jPanel1).addMarker1(tmpX, "Значение 1");
+        ((TrendPlotter) jPanel1).addMarker1(tmpX);
         jPanel1.paint(jPanel1.getGraphics());
+        if (((TrendPlotter) jPanel1).isMarkersSet()) {
+            jButton3.setEnabled(true);
+        }
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
-        ((TrendPlotter) jPanel1).addMarker2(tmpX, "Значение 2");
+        ((TrendPlotter) jPanel1).addMarker2(tmpX);
         jPanel1.paint(jPanel1.getGraphics());
+        if (((TrendPlotter) jPanel1).isMarkersSet()) {
+            jButton3.setEnabled(true);
+        }
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
         ((TrendPlotter) jPanel1).removeMarkers();
         jPanel1.paint(jPanel1.getGraphics());
+        jButton3.setEnabled(false);
     }//GEN-LAST:event_jMenuItem3ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        if (((TrendPlotter) jPanel1).isMarkersSet()) {
+            javax.swing.JOptionPane.showMessageDialog(null, "Тут будет создаваться событие из отсечек.");
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JMenuItem jMenuItem1;

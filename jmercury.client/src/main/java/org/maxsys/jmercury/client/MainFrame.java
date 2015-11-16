@@ -1,6 +1,5 @@
 package org.maxsys.jmercury.client;
 
-import java.awt.Component;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.text.DecimalFormat;
@@ -13,18 +12,14 @@ import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.Properties;
 import java.util.TreeMap;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JTree;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import org.maxsys.calendarlib.CalendarDialog;
 

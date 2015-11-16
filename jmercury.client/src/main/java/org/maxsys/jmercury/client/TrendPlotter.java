@@ -363,7 +363,7 @@ public class TrendPlotter extends JPanel {
         nlines.clear();
     }
 
-    public void addMarker1(int x, String value) {
+    public void addMarker1(int x) {
         Calendar ca = getCalendarFromX(x);
         if (ca.get(Calendar.MINUTE) > 15 && ca.get(Calendar.MINUTE) < 45) {
             ca.set(Calendar.MINUTE, 30);
@@ -378,7 +378,7 @@ public class TrendPlotter extends JPanel {
         markers.addMarker1(ca);
     }
 
-    public void addMarker2(int x, String value) {
+    public void addMarker2(int x) {
         Calendar ca = getCalendarFromX(x);
         if (ca.get(Calendar.MINUTE) > 15 && ca.get(Calendar.MINUTE) < 45) {
             ca.set(Calendar.MINUTE, 30);
@@ -393,11 +393,11 @@ public class TrendPlotter extends JPanel {
         markers.addMarker2(ca);
     }
 
-    public void addMarkerNext(int x, String value) {
+    public void addMarkerNext(int x) {
         if (!markers.isMarker1Ok()) {
-            addMarker1(x, value);
+            addMarker1(x);
         } else {
-            addMarker2(x, value);
+            addMarker2(x);
         }
     }
 
@@ -407,5 +407,9 @@ public class TrendPlotter extends JPanel {
 
     public void setIdInDB(int IdInDB) {
         this.IdInDB = IdInDB;
+    }
+
+    public boolean isMarkersSet() {
+        return markers.isMarker1Ok() && markers.isMarker2Ok();
     }
 }
