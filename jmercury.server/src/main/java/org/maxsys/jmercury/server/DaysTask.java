@@ -32,8 +32,8 @@ public class DaysTask implements Runnable {
             }
         }
         canow.add(Calendar.DAY_OF_YEAR, -1);
-        Object strs = pdm.getScalar("em", "SELECT COUNT(*) FROM daydata WHERE dayDT = '" + PDM.getDTStringDateOnly(canow) + "' AND meter_id = " + em.getIdInDB());
-        if (strs == null) {
+        Object strs = pdm.getScalar("em", "SELECT COUNT(*) FROM daydata WHERE hide = 0 AND dayDT = '" + PDM.getDTStringDateOnly(canow) + "' AND meter_id = " + em.getIdInDB());
+        if (strs != null) {
             em.setMeterFlag("statusstr", "d ApRpPrDay");
 
             AplusRplus aprp = em.getAplusRplusPrevDay();
@@ -52,15 +52,29 @@ public class DaysTask implements Runnable {
                 }
             }
 
-            pdm.executeNonQuery("em", "INSERT INTO daydata "
-                    + "(meter_id, Aplus, Rplus, AplusOnBeg, RplusOnBeg, dayDT, hide) "
-                    + "VALUES (" + em.getIdInDB() + ", "
-                    + aprp.getAplus() + ", "
-                    + aprp.getRplus() + ", "
-                    + aprpb.getAplus() + ", "
-                    + aprpb.getRplus() + ", "
-                    + "'" + PDM.getDTStringDateOnly(canow) + "', 0)");
-            STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask - запись данных PrevDay.");
+            if ((Long) strs == 0) {
+                pdm.executeNonQuery("em", "INSERT INTO daydata "
+                        + "(meter_id, Aplus, Rplus, AplusOnBeg, RplusOnBeg, dayDT, hide) "
+                        + "VALUES (" + em.getIdInDB() + ", "
+                        + aprp.getAplus() + ", "
+                        + aprp.getRplus() + ", "
+                        + aprpb.getAplus() + ", "
+                        + aprpb.getRplus() + ", "
+                        + "'" + PDM.getDTStringDateOnly(canow) + "', 0)");
+                STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask - запись данных PrevDay.");
+            } else {
+                Object ko = pdm.getScalar("em", "SELECT k FROM daydata WHERE hide = 0 AND dayDT = '" + PDM.getDTStringDateOnly(canow) + "' AND meter_id = " + em.getIdInDB());
+                if (ko != null) {
+                    int k = (int) ko;
+                    pdm.executeNonQuery("em", "UPDATE daydata "
+                            + "SET `Aplus` = " + aprp.getAplus()
+                            + ", `Rplus` = " + aprp.getRplus()
+                            + ", `AplusOnBeg` = " + aprpb.getAplus()
+                            + ", `RplusOnBeg` = " + aprpb.getRplus()
+                            + " WHERE k = " + k);
+                    STL.Log("MeterServer: " + em.getMeterName() + " - DaysTask - обновление данных PrevDay.");
+                }
+            }
         }
 
         // Заполнить за сегодня.
@@ -83,7 +97,7 @@ public class DaysTask implements Runnable {
         }
 
         canow.add(Calendar.DAY_OF_YEAR, 1);
-        Object ko = pdm.getScalar("em", "SELECT k FROM daydata WHERE dayDT = '" + PDM.getDTStringDateOnly(canow) + "' AND meter_id = " + em.getIdInDB());
+        Object ko = pdm.getScalar("em", "SELECT k FROM daydata WHERE hide = 0 AND dayDT = '" + PDM.getDTStringDateOnly(canow) + "' AND meter_id = " + em.getIdInDB());
         if (ko == null) {
             pdm.executeNonQuery("em", "INSERT INTO daydata "
                     + "(meter_id, Aplus, Rplus, AplusOnBeg, RplusOnBeg, dayDT, hide) "

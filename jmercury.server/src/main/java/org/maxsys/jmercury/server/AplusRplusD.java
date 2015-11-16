@@ -38,6 +38,14 @@ public class AplusRplusD {
         return RplusOnBeg;
     }
 
+    public void setAplus(double Aplus) {
+        this.Aplus = Aplus;
+    }
+
+    public void setRplus(double Rplus) {
+        this.Rplus = Rplus;
+    }
+
     @Override
     public String toString() {
         return "AplusRplusD{" + "aprpDate=" + aprpDate + ", Aplus=" + Aplus + ", Rplus=" + Rplus + ", AplusOnBeg=" + AplusOnBeg + ", RplusOnBeg=" + RplusOnBeg + '}';

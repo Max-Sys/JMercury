@@ -13,6 +13,10 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -549,9 +553,9 @@ public class MainFrame extends javax.swing.JFrame {
             int errs = 0;
             while (errs < 10) {
                 try {
-                    aprpb = meter.getAplusRplusMonthBegining(9);
-                    //aprpe = meter.getAplusRplusMonthBegining(10);
-                    aprpe = meter.getAplusRplusFromReset();
+                    aprpb = meter.getAplusRplusMonthBegining(5);
+                    aprpe = meter.getAplusRplusMonthBegining(6);
+                    //aprpe = meter.getAplusRplusFromReset();
                     metersn = meter.getMeterSN();
 
                     if (aprpb == null || aprpe == null) {
@@ -592,6 +596,7 @@ public class MainFrame extends javax.swing.JFrame {
         } catch (IOException ex) {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
+
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
@@ -666,6 +671,11 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton8ActionPerformed
 
     private void jButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton11ActionPerformed
+        boolean resetosv = false;
+        if (JOptionPane.showConfirmDialog(this, "Do you want to reset OSV flags?", "", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+            resetosv = true;
+        }
+
         for (int rc = 0; rc < jTable1.getRowCount(); rc++) {
             int k = ((IntString) jTable1.getValueAt(rc, 0)).getInt();
             String nflags = NetClient.sendGetMeterFlags(k);
@@ -695,6 +705,10 @@ public class MainFrame extends javax.swing.JFrame {
             l2 = Long.valueOf(meterFlags.get("MonthTask_i"));
             l1 -= l2;
             meterFlags.put("MonthTask_t", String.valueOf(l1));
+
+            if (resetosv && meterFlags.get("osv").equals("yes")) {
+                meterFlags.put("osv", "no");
+            }
 
             StringBuilder flagsString = new StringBuilder();
             for (Map.Entry<String, String> kvp : meterFlags.entrySet()) {
