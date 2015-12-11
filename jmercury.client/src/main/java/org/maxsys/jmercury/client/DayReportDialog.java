@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import net.sf.jasperreports.engine.JRException;
@@ -26,17 +27,43 @@ public class DayReportDialog extends javax.swing.JDialog {
         initComponents();
 
         jLabel2.setText(" " + cs.toString() + " ");
+
+        IntString[] mgns = NetClient.sendGetMeterGroupNames();
+        if (mgns.length > 0) {
+            Arrays.sort(mgns, new Comparator<Object>() {
+
+                @Override
+                public int compare(Object o1, Object o2) {
+                    IntString is1 = (IntString) o1;
+                    IntString is2 = (IntString) o2;
+                    return is1.getString().compareToIgnoreCase(is2.getString());
+                }
+            });
+
+            DefaultListModel lm = new DefaultListModel();
+            for (IntString is : mgns) {
+                lm.addElement(is);
+            }
+            jList1.setModel(lm);
+        } else {
+            jRadioButton2.setEnabled(false);
+        }
     }
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         jSeparator1 = new javax.swing.JSeparator();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
+        jRadioButton1 = new javax.swing.JRadioButton();
+        jRadioButton2 = new javax.swing.JRadioButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jList1 = new javax.swing.JList();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Отчет за сутки");
@@ -66,6 +93,21 @@ public class DayReportDialog extends javax.swing.JDialog {
             }
         });
 
+        buttonGroup1.add(jRadioButton1);
+        jRadioButton1.setSelected(true);
+        jRadioButton1.setText("Все счетчики");
+
+        buttonGroup1.add(jRadioButton2);
+        jRadioButton2.setText("Выбрать группы счетчиков:");
+        jRadioButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jRadioButton2ActionPerformed(evt);
+            }
+        });
+
+        jList1.setEnabled(false);
+        jScrollPane1.setViewportView(jList1);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -75,15 +117,20 @@ public class DayReportDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel2)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 52, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jButton2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1)))
+                        .addComponent(jButton1))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jRadioButton2)
+                            .addComponent(jRadioButton1)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel2)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -93,13 +140,19 @@ public class DayReportDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(jLabel2))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jRadioButton1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jRadioButton2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton2)
                     .addComponent(jButton1))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -110,6 +163,17 @@ public class DayReportDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        ArrayList<String> selGrNs = new ArrayList<>();
+        if (jRadioButton1.isSelected()) {
+            for (int lp = 0; lp < jList1.getModel().getSize(); lp++) {
+                selGrNs.add(jList1.getModel().getElementAt(lp).toString());
+            }
+        } else {
+            for (int lp : jList1.getSelectedIndices()) {
+                selGrNs.add(jList1.getModel().getElementAt(lp).toString());
+            }
+        }
+
         dispose();
 
         boolean isFullDay = true;
@@ -147,19 +211,21 @@ public class DayReportDialog extends javax.swing.JDialog {
         });
 
         for (ForReport fr : frs) {
-            Map hm = new HashMap();
-            hm.put("GroupName", fr.getGroupName());
-            hm.put("MeterName", fr.getMeterName());
-            hm.put("MeterSN", fr.getMeterSN());
-            hm.put("Aplus1", fr.getAplus1());
-            hm.put("Aplus2", fr.getAplus2());
-            hm.put("Aplus21", fr.getAplus21());
-            hm.put("MeterKi", fr.getMeterKi());
-            hm.put("Aplus21Ki", fr.getAplus21Ki());
-            hm.put("AplusGroupSum", fr.getAplusGroupSum());
-            lrr.add(hm);
-            double Aplus21Ki = Double.valueOf(fr.getAplus21Ki().replace(',', '.'));
-            AplusSumAll += Aplus21Ki;
+            if (selGrNs.contains(fr.getGroupName())) {
+                Map hm = new HashMap();
+                hm.put("GroupName", fr.getGroupName());
+                hm.put("MeterName", fr.getMeterName());
+                hm.put("MeterSN", fr.getMeterSN());
+                hm.put("Aplus1", fr.getAplus1());
+                hm.put("Aplus2", fr.getAplus2());
+                hm.put("Aplus21", fr.getAplus21());
+                hm.put("MeterKi", fr.getMeterKi());
+                hm.put("Aplus21Ki", fr.getAplus21Ki());
+                hm.put("AplusGroupSum", fr.getAplusGroupSum());
+                lrr.add(hm);
+                double Aplus21Ki = Double.valueOf(fr.getAplus21Ki().replace(',', '.'));
+                AplusSumAll += Aplus21Ki;
+            }
         }
 
         DecimalFormat df = new DecimalFormat("#.##");
@@ -170,7 +236,7 @@ public class DayReportDialog extends javax.swing.JDialog {
             pm.put("EndText", "24 час.");
             pm.put("StarText", "");
         } else {
-            pm.put("Title_1_date", "об электропотреблении за сутки" + cs.toString() + " г. *");
+            pm.put("Title_1_date", "об электропотреблении за сутки " + cs.toString() + " г. *");
             pm.put("EndText", "24 час. *");
             pm.put("StarText", "* показаны данные за неполные сутки");
         }
@@ -210,11 +276,24 @@ public class DayReportDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_jLabel2MouseClicked
 
+    private void jRadioButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton2ActionPerformed
+        if (jRadioButton2.isSelected()) {
+            jList1.setEnabled(true);
+        } else {
+            jList1.setEnabled(false);
+        }
+    }//GEN-LAST:event_jRadioButton2ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JList jList1;
+    private javax.swing.JRadioButton jRadioButton1;
+    private javax.swing.JRadioButton jRadioButton2;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 }
