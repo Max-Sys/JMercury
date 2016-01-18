@@ -436,6 +436,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            p1 += (resp[1] & 0x3F) << 16;
             p1 += (resp[3] & 0xFF) << 8;
             p1 += (resp[2] & 0xFF);
             if ((resp[1] & 0x80) == 0x80) {
@@ -464,6 +465,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            p2 += (resp[1] & 0x3F) << 16;
             p2 += (resp[3] & 0xFF) << 8;
             p2 += (resp[2] & 0xFF);
             if ((resp[1] & 0x80) == 0x80) {
@@ -492,6 +494,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            p3 += (resp[1] & 0x3F) << 16;
             p3 += (resp[3] & 0xFF) << 8;
             p3 += (resp[2] & 0xFF);
             if ((resp[1] & 0x80) == 0x80) {
@@ -520,6 +523,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            psum += (resp[1] & 0x3F) << 16;
             psum += (resp[3] & 0xFF) << 8;
             psum += (resp[2] & 0xFF);
             if ((resp[1] & 0x80) == 0x80) {
@@ -548,6 +552,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            q1 += (resp[1] & 0x3F) << 16;
             q1 += (resp[3] & 0xFF) << 8;
             q1 += (resp[2] & 0xFF);
             if ((resp[1] & 0x40) == 0x40) {
@@ -576,6 +581,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            q2 += (resp[1] & 0x3F) << 16;
             q2 += (resp[3] & 0xFF) << 8;
             q2 += (resp[2] & 0xFF);
             if ((resp[1] & 0x40) == 0x40) {
@@ -604,6 +610,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            q3 += (resp[1] & 0x3F) << 16;
             q3 += (resp[3] & 0xFF) << 8;
             q3 += (resp[2] & 0xFF);
             if ((resp[1] & 0x40) == 0x40) {
@@ -632,6 +639,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            qsum += (resp[1] & 0x3F) << 16;
             qsum += (resp[3] & 0xFF) << 8;
             qsum += (resp[2] & 0xFF);
             if ((resp[1] & 0x40) == 0x40) {
@@ -660,6 +668,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            s1 += (resp[1] & 0x3F) << 16;
             s1 += (resp[3] & 0xFF) << 8;
             s1 += (resp[2] & 0xFF);
             s1 /= 100;
@@ -684,6 +693,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            s2 += (resp[1] & 0x3F) << 16;
             s2 += (resp[3] & 0xFF) << 8;
             s2 += (resp[2] & 0xFF);
             s2 /= 100;
@@ -708,6 +718,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            s3 += (resp[1] & 0x3F) << 16;
             s3 += (resp[3] & 0xFF) << 8;
             s3 += (resp[2] & 0xFF);
             s3 /= 100;
@@ -732,6 +743,7 @@ public class EMeter {
         }
         byte[] resp = getResponse();
         if (resp != null && resp.length == 6) {
+            ssum += (resp[1] & 0x3F) << 16;
             ssum += (resp[3] & 0xFF) << 8;
             ssum += (resp[2] & 0xFF);
             ssum /= 100;

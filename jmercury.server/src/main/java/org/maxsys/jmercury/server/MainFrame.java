@@ -158,11 +158,11 @@ public class MainFrame extends javax.swing.JFrame {
         jTable1.setModel(new DefaultTableModel(
                 new Object[][]{},
                 new String[]{"Meter", "Status"}) {
-                    @Override
-                    public boolean isCellEditable(int row, int column) {
-                        return false;
-                    }
-                });
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
 
         jTable1.getColumnModel().getColumn(0).setPreferredWidth(750);
         jTable1.getColumnModel().getColumn(1).setPreferredWidth(250);
@@ -484,114 +484,130 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        BufferedWriter bw = null;
-        try {
-            try {
-                bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("outfile.txt"), "UTF-8"));
-            } catch (UnsupportedEncodingException ex) {
-            }
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
-        EMeter[] objects = new EMeter[38];
-
-        objects[0] = new EMeter("Котельная 1", "Котельная", 60, "COM2", 99, 0);
-        objects[1] = new EMeter("Котельная 2", "Котельная", 60, "COM3", 148, 0);
-        objects[2] = new EMeter("Коттедж 1.1", "Коттедж 1", 20, "COM4", 42, 0);
-        objects[3] = new EMeter("Коттедж 1.2", "Коттедж 1", 20, "COM5", 37, 0);
-        objects[4] = new EMeter("Коттедж 2.1", "Коттедж 2", 20, "COM8", 43, 0);
-        objects[5] = new EMeter("Коттедж 2.2", "Коттедж 2", 20, "COM9", 86, 0);
-        objects[6] = new EMeter("Коттедж 3.1", "Коттедж 3", 20, "COM6", 57, 0);
-        objects[7] = new EMeter("Коттедж 3.2", "", 20, "COM7", 54, 0);
-        objects[8] = new EMeter("Коттедж 5.1", "", 20, "COM10", 64, 0);
-        objects[9] = new EMeter("Коттедж 5.2", "", 20, "COM11", 66, 0);
-        objects[10] = new EMeter("Коттедж 10.1", "", 20, "COM12", 56, 0);
-        objects[11] = new EMeter("Коттедж 10.2", "", 20, "COM13", 18, 0);
-        objects[12] = new EMeter("Павильон 1", "", 50, "COM14", 78, 0);
-        objects[13] = new EMeter("Павильон 2", "", 50, "COM15", 79, 0);
-        objects[14] = new EMeter("КД Сила 1", "", 200, "COM16", 49, 0);
-        objects[15] = new EMeter("КД Сила 2", "", 200, "COM17", 38, 0);
-        objects[16] = new EMeter("КД Осв 1", "", 160, "COM18", 87, 0);
-        objects[17] = new EMeter("КД Осв 2", "", 160, "COM19", 13, 0);
-        objects[18] = new EMeter("ПЦ 1", "", 200, "COM27", 26, 0);
-        objects[19] = new EMeter("ПЦ 2", "", 200, "COM28", 1, 0);
-        objects[20] = new EMeter("Гостиница 1", "", 200, "COM23", 20, 0);
-        objects[21] = new EMeter("Гостиница 2", "", 200, "COM22", 21, 0);
-        objects[22] = new EMeter("АХК 1", "", 200, "COM30", 2, 0);
-        objects[23] = new EMeter("АХК 2", "", 200, "COM29", 217, 0);
-        objects[24] = new EMeter("Коттедж 15.1", "", 20, "COM42", 11, 0);
-        objects[25] = new EMeter("Коттедж 15.2", "", 20, "COM41", 12, 0);
-        objects[26] = new EMeter("Коттедж 16.1", "", 20, "COM32", 87, 0);
-        objects[27] = new EMeter("Коттедж 16.2", "", 20, "COM31", 69, 0);
-        objects[28] = new EMeter("Коттедж 17.1", "", 20, "COM34", 71, 0);
-        objects[29] = new EMeter("Коттедж 17.2", "", 20, "COM33", 83, 0);
-        objects[30] = new EMeter("Коттедж 18.1", "", 20, "COM36", 96, 0);
-        objects[31] = new EMeter("Коттедж 18.2", "", 20, "COM35", 8, 0);
-        objects[32] = new EMeter("Коттедж 19.1", "", 20, "COM40", 61, 0);
-        objects[33] = new EMeter("Коттедж 19.2", "", 20, "COM39", 31, 0);
-        objects[34] = new EMeter("Коттедж 20.1", "", 20, "COM38", 38, 0);
-        objects[35] = new EMeter("Коттедж 20.2", "", 20, "COM37", 28, 0);
-        objects[36] = new EMeter("Коттедж 4.1", "", 20, "COM25", 99, 0);
-        objects[37] = new EMeter("Коттедж 4.2", "", 20, "COM24", 61, 0);
-
-        for (EMeter o : objects) {
-            if (o == null) {
-                continue;
-            }
-
-            EMeter meter = o;
-
-            AplusRplus aprpb = null;
-            AplusRplus aprpe = null;
-            String metersn = null;
-
-            int errs = 0;
-            while (errs < 10) {
-                try {
-                    aprpb = meter.getAplusRplusMonthBegining(5);
-                    aprpe = meter.getAplusRplusMonthBegining(6);
-                    //aprpe = meter.getAplusRplusFromReset();
-                    metersn = meter.getMeterSN();
-
-                    if (aprpb == null || aprpe == null) {
-                        errs++;
-                        //System.out.println(meter.getMeterName() + ": ERR NULL!!! " + errs);
-                        continue;
-                    }
-                    errs = 0;
-                    break;
-                } catch (Exception ex) {
-                    errs++;
-                    //System.out.println(meter.getMeterName() + ": ERR!!! " + errs);
-                }
-            }
-//            if (errs != 0) {
-//                System.out.println(meter.getMeterName() + ": ERR!!!ERR!!!ERR!!!");
-//                return;
+        EMeter em = new EMeter("Коттедж 10.2", "", 20, "COM13", 18, 0);
+        //EMeter em = new EMeter("Коттедж 10.1", "", 20, "COM12", 56, 0);
+        System.out.println("P1 = " + (em.getP1() / 20));
+        System.out.println("P2 = " + (em.getP2() / 20));
+        System.out.println("P3 = " + (em.getP3() / 20));
+        System.out.println("Psum = " + (em.getPsum() / 20));
+        System.out.println("Q1 = " + (em.getQ1() / 20));
+        System.out.println("Q2 = " + (em.getQ2() / 20));
+        System.out.println("Q3 = " + (em.getQ3() / 20));
+        System.out.println("Qsum = " + (em.getQsum() / 20));
+        System.out.println("S1 = " + (em.getS1() / 20));
+        System.out.println("S2 = " + (em.getS2() / 20));
+        System.out.println("S3 = " + (em.getS3() / 20));
+        System.out.println("Ssum = " + (em.getSsum() / 20));
+        
+//        BufferedWriter bw = null;
+//        try {
+//            try {
+//                bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("outfile.txt"), "UTF-8"));
+//            } catch (UnsupportedEncodingException ex) {
 //            }
-
-            String ostr;
-            if (errs == 0) {
-                ostr = metersn + ";" + aprpb.getAplus() / meter.getMeterKi() + ";" + aprpe.getAplus() / meter.getMeterKi();
-            } else {
-                ostr = "Err;Err;Err";
-            }
-
-            System.out.println(ostr);
-            try {
-                bw.write(ostr);
-                bw.newLine();
-            } catch (IOException ex) {
-                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        try {
-            bw.close();
-        } catch (IOException ex) {
-            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        } catch (FileNotFoundException ex) {
+//            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//
+//        EMeter[] objects = new EMeter[38];
+//
+//        objects[0] = new EMeter("Котельная 1", "Котельная", 60, "COM2", 99, 0);
+//        objects[1] = new EMeter("Котельная 2", "Котельная", 60, "COM3", 148, 0);
+//        objects[2] = new EMeter("Коттедж 1.1", "Коттедж 1", 20, "COM4", 42, 0);
+//        objects[3] = new EMeter("Коттедж 1.2", "Коттедж 1", 20, "COM5", 37, 0);
+//        objects[4] = new EMeter("Коттедж 2.1", "Коттедж 2", 20, "COM8", 43, 0);
+//        objects[5] = new EMeter("Коттедж 2.2", "Коттедж 2", 20, "COM9", 86, 0);
+//        objects[6] = new EMeter("Коттедж 3.1", "Коттедж 3", 20, "COM6", 57, 0);
+//        objects[7] = new EMeter("Коттедж 3.2", "", 20, "COM7", 54, 0);
+//        objects[8] = new EMeter("Коттедж 5.1", "", 20, "COM10", 64, 0);
+//        objects[9] = new EMeter("Коттедж 5.2", "", 20, "COM11", 66, 0);
+//        objects[10] = new EMeter("Коттедж 10.1", "", 20, "COM12", 56, 0);
+//        objects[11] = new EMeter("Коттедж 10.2", "", 20, "COM13", 18, 0);
+//        objects[12] = new EMeter("Павильон 1", "", 50, "COM14", 78, 0);
+//        objects[13] = new EMeter("Павильон 2", "", 50, "COM15", 79, 0);
+//        objects[14] = new EMeter("КД Сила 1", "", 200, "COM16", 49, 0);
+//        objects[15] = new EMeter("КД Сила 2", "", 200, "COM17", 38, 0);
+//        objects[16] = new EMeter("КД Осв 1", "", 160, "COM18", 87, 0);
+//        objects[17] = new EMeter("КД Осв 2", "", 160, "COM19", 13, 0);
+//        objects[18] = new EMeter("ПЦ 1", "", 200, "COM27", 26, 0);
+//        objects[19] = new EMeter("ПЦ 2", "", 200, "COM28", 1, 0);
+//        objects[20] = new EMeter("Гостиница 1", "", 200, "COM23", 20, 0);
+//        objects[21] = new EMeter("Гостиница 2", "", 200, "COM22", 21, 0);
+//        objects[22] = new EMeter("АХК 1", "", 200, "COM30", 2, 0);
+//        objects[23] = new EMeter("АХК 2", "", 200, "COM29", 217, 0);
+//        objects[24] = new EMeter("Коттедж 15.1", "", 20, "COM42", 11, 0);
+//        objects[25] = new EMeter("Коттедж 15.2", "", 20, "COM41", 12, 0);
+//        objects[26] = new EMeter("Коттедж 16.1", "", 20, "COM32", 87, 0);
+//        objects[27] = new EMeter("Коттедж 16.2", "", 20, "COM31", 69, 0);
+//        objects[28] = new EMeter("Коттедж 17.1", "", 20, "COM34", 71, 0);
+//        objects[29] = new EMeter("Коттедж 17.2", "", 20, "COM33", 83, 0);
+//        objects[30] = new EMeter("Коттедж 18.1", "", 20, "COM36", 96, 0);
+//        objects[31] = new EMeter("Коттедж 18.2", "", 20, "COM35", 8, 0);
+//        objects[32] = new EMeter("Коттедж 19.1", "", 20, "COM40", 61, 0);
+//        objects[33] = new EMeter("Коттедж 19.2", "", 20, "COM39", 31, 0);
+//        objects[34] = new EMeter("Коттедж 20.1", "", 20, "COM38", 38, 0);
+//        objects[35] = new EMeter("Коттедж 20.2", "", 20, "COM37", 28, 0);
+//        objects[36] = new EMeter("Коттедж 4.1", "", 20, "COM25", 99, 0);
+//        objects[37] = new EMeter("Коттедж 4.2", "", 20, "COM24", 61, 0);
+//
+//        for (EMeter o : objects) {
+//            if (o == null) {
+//                continue;
+//            }
+//
+//            EMeter meter = o;
+//
+//            AplusRplus aprpb = null;
+//            AplusRplus aprpe = null;
+//            String metersn = null;
+//
+//            int errs = 0;
+//            while (errs < 10) {
+//                try {
+//                    aprpb = meter.getAplusRplusMonthBegining(5);
+//                    aprpe = meter.getAplusRplusMonthBegining(6);
+//                    //aprpe = meter.getAplusRplusFromReset();
+//                    metersn = meter.getMeterSN();
+//
+//                    if (aprpb == null || aprpe == null) {
+//                        errs++;
+//                        //System.out.println(meter.getMeterName() + ": ERR NULL!!! " + errs);
+//                        continue;
+//                    }
+//                    errs = 0;
+//                    break;
+//                } catch (Exception ex) {
+//                    errs++;
+//                    //System.out.println(meter.getMeterName() + ": ERR!!! " + errs);
+//                }
+//            }
+////            if (errs != 0) {
+////                System.out.println(meter.getMeterName() + ": ERR!!!ERR!!!ERR!!!");
+////                return;
+////            }
+//
+//            String ostr;
+//            if (errs == 0) {
+//                ostr = metersn + ";" + aprpb.getAplus() / meter.getMeterKi() + ";" + aprpe.getAplus() / meter.getMeterKi();
+//            } else {
+//                ostr = "Err;Err;Err";
+//            }
+//
+//            System.out.println(ostr);
+//            try {
+//                bw.write(ostr);
+//                bw.newLine();
+//            } catch (IOException ex) {
+//                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+//        }
+//
+//        try {
+//            bw.close();
+//        } catch (IOException ex) {
+//            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+//        }
 
     }//GEN-LAST:event_jButton3ActionPerformed
 
