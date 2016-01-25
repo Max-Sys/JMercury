@@ -730,6 +730,9 @@ public class DiagramDialog extends javax.swing.JDialog {
                 jProgressBar1.setValue(jProgressBar1.getValue() + 1);
 
                 if (psum != 0 && ssum != 0) {
+                    if (psum > ssum) {
+                        psum = ssum;
+                    }
                     jLabel39.setText("Cos \u03C6 = " + df.format(psum / ssum));
                 } else {
                     jLabel39.setText("Cos \u03C6 = XXXXX");

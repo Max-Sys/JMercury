@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 public class Vars {
 
-    public static String Version = "JMercury Client 0.20-00";
+    public static String Version = "JMercury Client 0.20-01";
     public static Properties prop = new Properties();
     public static String PropFileName = "";
     public static String PropPath = "";
