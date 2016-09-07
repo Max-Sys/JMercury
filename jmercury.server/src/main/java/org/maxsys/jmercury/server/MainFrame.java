@@ -200,6 +200,8 @@ public class MainFrame extends javax.swing.JFrame {
         });
         popupMenu1.add(menuItem1);
 
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+
         jButton1.setText("Shut down");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
