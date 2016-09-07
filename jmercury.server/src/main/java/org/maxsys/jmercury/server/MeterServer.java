@@ -41,7 +41,17 @@ public class MeterServer implements Runnable {
                 // Out of service?
                 String osv = em.getMeterFlag("osv") == null ? "no" : em.getMeterFlag("osv");
                 if (osv.equals("yes")) {
-                    em.setStatus("Out of service!");
+                    int osvTestCounter = em.getOsvTestCounter();
+                    if (osvTestCounter > 0) {
+                        osvTestCounter--;
+                        em.setStatus("OSV! (" + osvTestCounter + ")");
+                        em.setOsvTestCounter(osvTestCounter);
+                    } else {
+                        em.setMeterFlag("busy", "no");
+                        em.setMeterFlag("preosv", "no");
+                        em.setMeterFlag("osv", "no");
+                        SaveMeterState(em);
+                    }
                     continue;
                 }
 
@@ -72,6 +82,7 @@ public class MeterServer implements Runnable {
                             em.setMeterFlag("busy", "no");
                             em.setMeterFlag("preosv", "no");
                             em.setMeterFlag("osv", "yes");
+                            em.setOsvTestCounter(3600 * 24);
                         }
                         SaveMeterState(em);
                         continue;

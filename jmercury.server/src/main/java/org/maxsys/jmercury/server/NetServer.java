@@ -586,6 +586,11 @@ public class NetServer implements Runnable {
 
                     Vars.meters.get(ki).setMeterFlags(flags);
 
+                    String osv = Vars.meters.get(ki).getMeterFlag("osv") == null ? "no" : Vars.meters.get(ki).getMeterFlag("osv");
+                    if (osv.equals("yes")) {
+                        Vars.meters.get(ki).setOsvTestCounter(3600 * 24);
+                    }
+
                     PDM pdm = new PDM();
                     pdm.executeNonQueryUpdate("em", "UPDATE meters SET flags = '" + Vars.meters.get(ki).getMeterFlags() + "' WHERE k = " + Vars.meters.get(ki).getIdInDB());
                 }
