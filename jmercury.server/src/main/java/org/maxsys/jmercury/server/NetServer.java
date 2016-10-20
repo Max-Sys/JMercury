@@ -199,6 +199,7 @@ public class NetServer implements Runnable {
                          GetMinMaxMonth - взять минимальный и максимальный Calendar в таблице месяцев.
                          GetForReport - взять ForReport.
                          GetForReportDays - взять ForReport за сутки.
+                         GetForReportPeriod - взять ForReport за период.
                          GetLog - взять лог.
                          RefreshMonths - обновить данные всех счетчиков по месяцам.
                          RefreshDays - обновить данные всех счетчиков по суткам.
@@ -323,6 +324,9 @@ public class NetServer implements Runnable {
                                 break;
                             case "RefreshDays":
                                 RefreshDays(sock);
+                                break;
+                            case "GetForReportPeriod":
+                                GetForReportPeriod(sock);
                                 break;
                         }
                     }
@@ -1262,6 +1266,66 @@ public class NetServer implements Runnable {
 
                     resp = "Ok";
                     NetServer.SendToSrv(sock, resp);
+                }
+
+                private void GetForReportPeriod(Socket sock) {
+                    int Year0 = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    int Month0 = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    int Day0 = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    int Year = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    int Month = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+                    int Day = Integer.valueOf(NetServer.GetRespFromSrv(sock));
+
+                    String date0 = Year0 + "-" + Month0 + "-" + Day0;
+                    String date1 = Year + "-" + Month + "-" + Day;
+
+                    PDM pdm = new PDM();
+                    String sql = "SELECT\n"
+                            + " metergroups.groupname AS GroupName,\n"
+                            + " meters.name AS MeterName,\n"
+                            + " meters.serial AS MeterSN,\n"
+                            + " daydata.AplusOnBeg / meters.ki AS Aplus1,\n"
+                            + " (daydata.AplusOnBeg + SUM(daydata.Aplus)) / meters.ki AS Aplus2,\n"
+                            + " (daydata.AplusOnBeg + SUM(daydata.Aplus) - daydata.AplusOnBeg) / meters.ki AS Aplus21,\n"
+                            + " meters.ki AS MeterKi,\n"
+                            + " SUM(daydata.Aplus) AS Aplus21Ki\n"
+                            + "FROM daydata\n"
+                            + " LEFT JOIN meters ON daydata.meter_id = meters.k\n"
+                            + " LEFT JOIN metergroups ON meters.group_id = metergroups.k\n"
+                            + "WHERE meters.hide = 0 AND daydata.hide = 0 AND metergroups.hide = 0\n"
+                            + " AND daydata.dayDT BETWEEN '" + date0 + "' AND '" + date1 + "'\n"
+                            + " AND meters.server_id = 5\n"
+                            + "GROUP BY MeterName\n"
+                            + "ORDER BY metergroups.groupname, meters.name";
+                    ResultSet rs = pdm.getResultSet("em", sql);
+                    StringBuilder resp = new StringBuilder();
+                    DecimalFormat df = new DecimalFormat("#.##");
+                    try {
+                        while (rs.next()) {
+                            resp.append(PDM.getStringFromHex(rs.getString("GroupName")));
+                            resp.append("\001");
+                            resp.append(PDM.getStringFromHex(rs.getString("MeterName")));
+                            resp.append("\001");
+                            resp.append(rs.getString("MeterSN"));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus1")));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus2")));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus21")));
+                            resp.append("\001");
+                            resp.append(rs.getInt("MeterKi"));
+                            resp.append("\001");
+                            resp.append(df.format(rs.getDouble("Aplus21Ki")));
+                            resp.append("\001");
+                            resp.append("\n");
+                        }
+                    } catch (SQLException ex) {
+                        Logger.getLogger(NetServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    pdm.closeResultSet();
+
+                    NetServer.SendToSrvBig(sock, PDM.getHexString(resp.toString()));
                 }
             }
             );
