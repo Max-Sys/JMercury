@@ -36,11 +36,11 @@ public class MainFrame extends javax.swing.JFrame {
         DefaultTableModel tm1 = new DefaultTableModel(
                 new Object[][]{},
                 new String[]{"Дата (дни)", "A+ на 00:00, кВт⋅ч", "R+ на 00:00, квар⋅ч", "A+, кВт⋅ч", "R+, квар⋅ч"}) {
-                    @Override
-                    public boolean isCellEditable(int row, int column) {
-                        return false;
-                    }
-                };
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         jTable1.setModel(tm1);
         jTable1.getColumnModel().getColumn(0).setPreferredWidth(300);
         jTable1.getColumnModel().getColumn(1).setPreferredWidth(175);
@@ -51,11 +51,11 @@ public class MainFrame extends javax.swing.JFrame {
         DefaultTableModel tm2 = new DefaultTableModel(
                 new Object[][]{},
                 new String[]{"Дата (мес)", "A+ начало", "A+ конец", "A+", "R+ начало", "R+ конец", "R+"}) {
-                    @Override
-                    public boolean isCellEditable(int row, int column) {
-                        return false;
-                    }
-                };
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         jTable2.setModel(tm2);
         jTable2.getColumnModel().getColumn(0).setPreferredWidth(160);
         jTable2.getColumnModel().getColumn(1).setPreferredWidth(140);
@@ -68,11 +68,11 @@ public class MainFrame extends javax.swing.JFrame {
         DefaultTableModel tm3 = new DefaultTableModel(
                 new Object[][]{},
                 new String[]{"Дата/время", "A+, кВт", "R+, квар", "Период"}) {
-                    @Override
-                    public boolean isCellEditable(int row, int column) {
-                        return false;
-                    }
-                };
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         jTable3.setModel(tm3);
         jTable3.getColumnModel().getColumn(0).setPreferredWidth(300);
         jTable3.getColumnModel().getColumn(1).setPreferredWidth(250);
@@ -82,11 +82,11 @@ public class MainFrame extends javax.swing.JFrame {
         DefaultTableModel tm4 = new DefaultTableModel(
                 new Object[][]{},
                 new String[]{"Название", "Дата/время", "A+, кВт⋅ч", "R+, квар⋅ч"}) {
-                    @Override
-                    public boolean isCellEditable(int row, int column) {
-                        return false;
-                    }
-                };
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         jTable4.setModel(tm4);
         jTable4.getColumnModel().getColumn(0).setPreferredWidth(350);
         jTable4.getColumnModel().getColumn(0).setPreferredWidth(250);
@@ -410,6 +410,7 @@ public class MainFrame extends javax.swing.JFrame {
         jMenu3 = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
         jMenuItem7 = new javax.swing.JMenuItem();
+        jMenuItem8 = new javax.swing.JMenuItem();
 
         jLabel3.setText("jLabel3");
 
@@ -796,6 +797,14 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         jMenu3.add(jMenuItem7);
+
+        jMenuItem8.setText("Отчет об электропотреблении за любой период...");
+        jMenuItem8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem8ActionPerformed(evt);
+            }
+        });
+        jMenu3.add(jMenuItem8);
 
         jMenuBar1.add(jMenu3);
 
@@ -1191,6 +1200,12 @@ public class MainFrame extends javax.swing.JFrame {
         dlg.setVisible(true);
     }//GEN-LAST:event_jMenuItem7ActionPerformed
 
+    private void jMenuItem8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem8ActionPerformed
+        PeriodReportDialog dlg = new PeriodReportDialog(this, true);
+        dlg.setLocationRelativeTo(null);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_jMenuItem8ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
@@ -1220,6 +1235,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem5;
     private javax.swing.JMenuItem jMenuItem6;
     private javax.swing.JMenuItem jMenuItem7;
+    private javax.swing.JMenuItem jMenuItem8;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;

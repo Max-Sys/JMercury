@@ -45,7 +45,8 @@ public class App {
         if (System.getProperty("user.dir").endsWith("update")) {
             javax.swing.JOptionPane.showMessageDialog(null, "Обновление до версии " + Vars.Version + "\n\n"
                     + "Что нового:\n"
-                    + "- Исправлен глюк с косинусом фи.\n\n"
+                    + "- Добавлены отчеты за произвольный период.\n"
+                    + "- Исправлено несколько глюков и добавлена куча новых.\n\n"
                     + "Нажмите Ok для запуска программы.");
 
             String wp = System.getProperty("user.dir");
@@ -109,8 +110,12 @@ public class App {
             }
 
             try {
+                System.out.println("executing...");
+                System.out.println("java -jar \"" + meto.getPath() + "\" at " + new File(wp.substring(0, wp.length() - 7)));
                 Runtime.getRuntime().exec("java -jar \"" + meto.getPath() + "\"", null, new File(wp.substring(0, wp.length() - 7)));
+                System.out.println("Ok?");
             } catch (IOException ex) {
+                System.out.println("Not ok!");
                 Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
                 return;
             }

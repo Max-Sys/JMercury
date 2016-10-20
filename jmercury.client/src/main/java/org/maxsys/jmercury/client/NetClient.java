@@ -502,4 +502,56 @@ public class NetClient {
 
         return frs;
     }
+
+    static ForReport[] sendGetForReportPeriod(int year0, int month0, int day0, int year, int month, int day) {
+        Socket socket = GetNewSocket();
+        SendToSrv(socket, "GetForReportPeriod");
+        SendToSrv(socket, String.valueOf(year0));
+        SendToSrv(socket, String.valueOf(month0));
+        SendToSrv(socket, String.valueOf(day0));
+        SendToSrv(socket, String.valueOf(year));
+        SendToSrv(socket, String.valueOf(month));
+        SendToSrv(socket, String.valueOf(day));
+        String resp = PDM.getStringFromHex(GetRespFromSrv(socket));
+        CloseSocket(socket);
+
+        if (resp == null || resp.isEmpty()) {
+            return null;
+        }
+
+        String[] resps = resp.split("\n");
+        if (resps.length == 0) {
+            return null;
+        }
+
+        ForReport[] frs = new ForReport[resps.length];
+        int frsk = 0;
+        for (String frss : resps) {
+            String[] frssf = frss.split("\001");
+            String GroupName = frssf[0];
+            String MeterName = frssf[1];
+            String MeterSN = frssf[2];
+            String Aplus1 = frssf[3];
+            String Aplus2 = frssf[4];
+            String Aplus21 = frssf[5];
+            String MeterKi = frssf[6];
+            String Aplus21Ki = frssf[7];
+            frs[frsk] = new ForReport(GroupName, MeterName, MeterSN, Aplus1, Aplus2, Aplus21, MeterKi, Aplus21Ki, "0");
+            frsk++;
+        }
+
+        DecimalFormat df = new DecimalFormat("#.##");
+        for (ForReport fr : frs) {
+            double AplusGroupSum = 0;
+            for (ForReport subfr : frs) {
+                if (fr.getGroupName().equals(subfr.getGroupName())) {
+                    double Aplus21Ki = Double.valueOf(subfr.getAplus21Ki().replace(',', '.'));
+                    AplusGroupSum += Aplus21Ki;
+                }
+            }
+            fr.setAplusGroupSum(df.format(AplusGroupSum));
+        }
+
+        return frs;
+    }
 }
