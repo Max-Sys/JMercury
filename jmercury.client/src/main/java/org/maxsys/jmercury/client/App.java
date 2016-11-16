@@ -45,8 +45,7 @@ public class App {
         if (System.getProperty("user.dir").endsWith("update")) {
             javax.swing.JOptionPane.showMessageDialog(null, "Обновление до версии " + Vars.Version + "\n\n"
                     + "Что нового:\n"
-                    + "- Добавлены отчеты за произвольный период.\n"
-                    + "- Исправлено несколько глюков и добавлена куча новых.\n\n"
+                    + "- Добавлена функция установки базового нуля на графике (правой кнопкой).\n\n"
                     + "Нажмите Ok для запуска программы.");
 
             String wp = System.getProperty("user.dir");

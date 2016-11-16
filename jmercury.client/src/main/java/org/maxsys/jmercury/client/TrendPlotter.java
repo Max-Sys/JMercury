@@ -79,6 +79,8 @@ public class TrendPlotter extends JPanel {
         private Calendar Marker1Ca;
         private Calendar Marker2Ca;
         private double Aplus;
+        private double baseAPlus;
+        private double nullPoint = 0.0;
 
         public void addMarker1(Calendar ca) {
             if (Marker2Ca != null) {
@@ -88,6 +90,11 @@ public class TrendPlotter extends JPanel {
                     Marker1Ca = Marker2Ca;
                     Marker2Ca = ca;
                 }
+                long m2m1 = Marker2Ca.getTimeInMillis() - Marker1Ca.getTimeInMillis();
+                m2m1 /= 1000;
+                m2m1 /= 60;
+                m2m1 /= 30;
+                baseAPlus = nullPoint * m2m1 / 2;
                 Aplus = NetClient.sendGetAplusSumFromAvgArs(IdInDB, Marker1Ca, Marker2Ca);
             } else {
                 Marker1Ca = ca;
@@ -102,6 +109,11 @@ public class TrendPlotter extends JPanel {
                     Marker2Ca = Marker1Ca;
                     Marker1Ca = ca;
                 }
+                long m2m1 = Marker2Ca.getTimeInMillis() - Marker1Ca.getTimeInMillis();
+                m2m1 /= 1000;
+                m2m1 /= 60;
+                m2m1 /= 30;
+                baseAPlus = nullPoint * m2m1 / 2;
                 Aplus = NetClient.sendGetAplusSumFromAvgArs(IdInDB, Marker1Ca, Marker2Ca);
             } else {
                 Marker2Ca = ca;
@@ -111,6 +123,7 @@ public class TrendPlotter extends JPanel {
         public void Clear() {
             Marker1Ca = null;
             Marker2Ca = null;
+            nullPoint = 0.0;
         }
 
         public boolean isMarker1Ok() {
@@ -131,6 +144,25 @@ public class TrendPlotter extends JPanel {
 
         public double getAplus() {
             return Aplus;
+        }
+
+        public void setNullPoint(double nullPoint) {
+            this.nullPoint = nullPoint;
+            if (isMarker1Ok() && isMarker2Ok()) {
+                long m2m1 = Marker2Ca.getTimeInMillis() - Marker1Ca.getTimeInMillis();
+                m2m1 /= 1000;
+                m2m1 /= 60;
+                m2m1 /= 30;
+                baseAPlus = nullPoint * m2m1 / 2;
+            }
+        }
+
+        public double getNullPoint() {
+            return nullPoint;
+        }
+
+        public double getBaseAPlus() {
+            return baseAPlus;
         }
     }
 
@@ -254,13 +286,22 @@ public class TrendPlotter extends JPanel {
             g.drawLine(getXfromCalendar(markers.getMarker2Ca()), 10, getXfromCalendar(markers.getMarker2Ca()), tmpH);
         }
 
+        if (markers.getNullPoint() > 0) {
+            g.setColor(Color.BLUE);
+            g.drawLine(linex, getYfromDouble(markers.getNullPoint()), tmpW + linex, getYfromDouble(markers.getNullPoint()));
+        }
+
         if (markers.isMarker1Ok() && markers.isMarker2Ok()) {
             g.setColor(Color.BLACK);
             CalendarString csm1 = new CalendarString(markers.getMarker1Ca());
             CalendarString csm2 = new CalendarString(markers.getMarker2Ca());
             csm1.setFormat("dd.MM.yyyy HH:mm");
             csm2.setFormat("dd.MM.yyyy HH:mm");
-            g.drawString("Потребление (A+) с " + csm1.toString() + " по " + csm2.toString() + " составило " + df.format(markers.getAplus()) + " кВт⋅ч", 10, liney);
+            if (markers.getBaseAPlus() > 0) {
+                g.drawString("Потребление (A+) с " + csm1.toString() + " по " + csm2.toString() + " составило " + df.format(markers.getAplus()) + " кВт⋅ч, с учетом установленной базы (" + df.format(markers.getNullPoint()) + ") составило " + df.format(markers.getAplus() - markers.getBaseAPlus()) + " кВт⋅ч", 10, liney);
+            } else {
+                g.drawString("Потребление (A+) с " + csm1.toString() + " по " + csm2.toString() + " составило " + df.format(markers.getAplus()) + " кВт⋅ч", 10, liney);
+            }
         }
     }
 
@@ -375,6 +416,8 @@ public class TrendPlotter extends JPanel {
                 ca.add(Calendar.HOUR, 1);
             }
         }
+        ca.set(Calendar.SECOND, 0);
+        ca.set(Calendar.MILLISECOND, 0);
         markers.addMarker1(ca);
     }
 
@@ -390,6 +433,8 @@ public class TrendPlotter extends JPanel {
                 ca.add(Calendar.HOUR, 1);
             }
         }
+        ca.set(Calendar.SECOND, 0);
+        ca.set(Calendar.MILLISECOND, 0);
         markers.addMarker2(ca);
     }
 
@@ -411,5 +456,9 @@ public class TrendPlotter extends JPanel {
 
     public boolean isMarkersSet() {
         return markers.isMarker1Ok() && markers.isMarker2Ok();
+    }
+
+    void addNull(int tmpY) {
+        markers.setNullPoint(getDoubleFromY(tmpY));
     }
 }
